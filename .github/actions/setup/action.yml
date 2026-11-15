@@ -1,0 +1,38 @@
+name: Set up aTerm build tools
+description: Install the configured macOS Go toolchain, Node.js, and matching Wails CLI.
+runs:
+  using: composite
+  steps:
+    - name: Read pinned toolchain versions
+      id: versions
+      shell: bash
+      run: |
+        python3 - <<'PY'
+        import os, re, sys
+        from pathlib import Path
+        sys.path.insert(0, 'scripts')
+        from build_metadata import parse_info, require
+        go = require(parse_info(Path('build/config.yml')), 'macOSGoToolchain').removeprefix('go')
+        wails = re.search(r'^\s*github.com/wailsapp/wails/v3\s+(\S+)', Path('go.mod').read_text(), re.M)[1]
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write(f'go={go}\nwails={wails}\n')
+        PY
+    - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+      with:
+        go-version: ${{ steps.versions.outputs.go }}
+        cache: true
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      with:
+        node-version: '22.13.0'
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - name: Install build tools
+      shell: bash
+      env:
+        WAILS_VERSION: ${{ steps.versions.outputs.wails }}
+      run: |
+        python3 scripts/go-macos.py install "github.com/wailsapp/wails/v3/cmd/wails3@${WAILS_VERSION}"
+        if ! command -v rg >/dev/null; then
+          brew install ripgrep
+        fi
+        wails3 version
