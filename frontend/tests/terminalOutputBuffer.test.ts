@@ -1,0 +1,102 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {createTerminalOutputBuffer} from '../src/renderer/src/api/terminalOutputBuffer'
+import type {TerminalEvent} from '../src/shared/contracts/terminal'
+
+const encoded = (value: string | Uint8Array) => Buffer.from(value).toString('base64')
+const attach = (buffer: ReturnType<typeof createTerminalOutputBuffer>, id: string, snapshot: {data: string; seq: number}) => buffer.beginAttach(id).complete(snapshot)
+const text = (events: TerminalEvent[]) => events.flatMap(event => event.type === 'data' ? [event.data] : []).join('')
+
+test('snapshot/live races reconcile by byte watermark, without deduplicating equal text', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  const attachment = buffer.beginAttach('a')
+  buffer.output({sessionID:'a', data:encoded('same'), offset:4})
+  buffer.output({sessionID:'a', data:encoded('same'), offset:8})
+  const snapshot = attachment.complete({data:encoded('same'), seq:4})
+  assert.equal(snapshot.data + text(events), 'samesame')
+  buffer.output({sessionID:'a', data:encoded('same'), offset:8})
+  assert.equal(snapshot.data + text(events), 'samesame')
+})
+test('out-of-order chunks wait for gaps and preserve overlapping byte ranges', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  attach(buffer,'a', {data:'', seq:0})
+  buffer.output({sessionID:'a',data:encoded('def'),offset:6})
+  assert.equal(events.length,0)
+  buffer.output({sessionID:'a',data:encoded('abc'),offset:3})
+  buffer.output({sessionID:'a',data:encoded('efg'),offset:7})
+  assert.equal(text(events),'abcdefg')
+  assert.deepEqual(events.map(event => event.type==='data' && event.seq),[3,6,7])
+})
+test('truncated snapshots retain absolute offsets and decode split UTF-8 once', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  const unicode = Buffer.from('中文')
+  const attachment = buffer.beginAttach('a')
+  buffer.output({sessionID:'a',data:encoded(unicode.subarray(2)),offset:106})
+  const snapshot=attachment.complete({data:encoded(unicode.subarray(0,2)),seq:102})
+  assert.equal(snapshot.data + text(events),'中文')
+  assert.equal(events[0].type==='data' && events[0].seq,106)
+})
+test('session output and decoder state remain independent and release permits fresh attach', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  attach(buffer,'a',{data:encoded('A'),seq:1})
+  buffer.output({sessionID:'b',data:encoded('B'),offset:1})
+  assert.equal(events.length,0)
+  assert.equal(attach(buffer,'b',{data:encoded('B'),seq:1}).data,'B')
+  buffer.release('a')
+  buffer.output({sessionID:'a',data:encoded('fresh'),offset:5})
+  assert.equal(events.length,0)
+  assert.equal(attach(buffer,'a',{data:encoded('fresh'),seq:5}).data,'fresh')
+  buffer.output({sessionID:'b',data:encoded('!'),offset:2})
+  assert.equal(text(events),'!')
+})
+
+test('closed and never-attached sessions ignore late output without even decoding it', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  attach(buffer,'closed',{data:'',seq:0})
+  buffer.release('closed')
+  for (let index=0; index<1000; index++) {
+    // Invalid base64 would throw if unknown output allocated a decoder/queue.
+    buffer.output({sessionID:'closed',data:'not base64!',offset:index+1})
+    buffer.output({sessionID:`unknown-${index}`,data:'not base64!',offset:index+1})
+  }
+  assert.equal(events.length,0)
+  assert.equal(attach(buffer,'closed',{data:encoded('fresh replay'),seq:12}).data,'fresh replay')
+})
+test('a close invalidates an in-flight attachment even if the same id attaches again', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  const stale = buffer.beginAttach('a')
+  buffer.output({sessionID:'a',data:encoded('old'),offset:3})
+  buffer.release('a')
+  attach(buffer,'a',{data:encoded('new'),seq:3})
+  assert.throws(()=>stale.complete({data:encoded('old'),seq:3}),/canceled/)
+  stale.cancel()
+  buffer.output({sessionID:'a',data:encoded('!'),offset:4})
+  assert.equal(text(events),'!')
+})
+test('failed attachment releases pending state while another active ticket is retained', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  const first=buffer.beginAttach('a'), second=buffer.beginAttach('a')
+  first.cancel()
+  buffer.output({sessionID:'a',data:encoded('tail'),offset:8})
+  assert.equal(second.complete({data:encoded('head'),seq:4}).data,'head')
+  assert.equal(text(events),'tail')
+  const failed=buffer.beginAttach('b')
+  buffer.output({sessionID:'b',data:encoded('discard'),offset:7})
+  failed.cancel()
+  failed.cancel()
+  assert.throws(()=>failed.complete({data:'',seq:0}),/canceled/)
+  buffer.output({sessionID:'b',data:'not base64!',offset:8})
+  attach(buffer,'b',{data:encoded('fresh'),seq:5})
+  assert.equal(text(events),'tail')
+})
+
+test('a failed reattachment does not discard a live decoder or reset its watermark', () => {
+  const events: TerminalEvent[] = [], buffer = createTerminalOutputBuffer(event => events.push(event))
+  attach(buffer,'a',{data:encoded('hello'),seq:5})
+  const failed=buffer.beginAttach('a')
+  assert.throws(()=>failed.complete({data:'not base64!',seq:0}))
+  failed.cancel()
+  buffer.output({sessionID:'a',data:encoded('!'),offset:6})
+  assert.equal(text(events),'!')
+  assert.equal(events[0].type==='data' && events[0].seq,6)
+})

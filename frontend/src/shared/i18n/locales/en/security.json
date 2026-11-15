@@ -1,0 +1,21 @@
+{
+  "operationFailed": "Operation failed.",
+  "restoreFromIcloud": "Restore from iCloud",
+  "changeEncryptionPassword": "Change encryption password",
+  "continue": "Continue",
+  "changePassword": "Change password",
+  "backupPassword": "Backup password",
+  "currentPassword": "Current password",
+  "newPassword": "New password",
+  "confirmNewPassword": "Confirm new password",
+  "passwordsMustMatchAndContainAtLeast8Characters": "Passwords must match and contain at least 8 characters.",
+  "icloudBackupComplete": "iCloud backup complete.",
+  "backUpToIcloud": "Back up to iCloud?",
+  "backUp": "Back Up",
+  "replaceBackupWarning": "Save your current encrypted data to iCloud. Any existing backup will be replaced, and its previous version will not be kept.",
+  "exportOpensshConfiguration": "Export OpenSSH configuration?",
+  "export": "Export",
+  "update": "Update",
+  "exportWarning": "Update {{generatedPath}} and add its Include line to {{configPath}}. Existing configuration is preserved; passwords are never exported.",
+  "exportComplete": "Hosts exported to OpenSSH."
+}

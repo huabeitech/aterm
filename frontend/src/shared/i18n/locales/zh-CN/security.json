@@ -1,0 +1,21 @@
+{
+  "operationFailed": "操作失败。",
+  "restoreFromIcloud": "从 iCloud 恢复",
+  "changeEncryptionPassword": "更改加密密码",
+  "continue": "继续",
+  "changePassword": "更改密码",
+  "backupPassword": "备份密码",
+  "currentPassword": "当前密码",
+  "newPassword": "新密码",
+  "confirmNewPassword": "确认新密码",
+  "passwordsMustMatchAndContainAtLeast8Characters": "两次输入的密码必须一致，且至少包含 8 个字符。",
+  "icloudBackupComplete": "iCloud 备份完成。",
+  "backUpToIcloud": "备份到 iCloud？",
+  "backUp": "备份",
+  "replaceBackupWarning": "将当前加密数据保存到 iCloud。已有备份将被替换，旧版本不会保留。",
+  "exportOpensshConfiguration": "导出 OpenSSH 配置？",
+  "export": "导出",
+  "update": "更新",
+  "exportWarning": "更新 {{generatedPath}}，并在 {{configPath}} 中添加对应的 Include 配置。现有配置会保留，密码不会被导出。",
+  "exportComplete": "已将主机导出到 OpenSSH。"
+}

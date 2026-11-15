@@ -1,0 +1,40 @@
+version: '3'
+
+info:
+  companyName: "mlogclub"
+  productName: "aTerm"
+  productIdentifier: "pro.huabei.sshconfig"
+  description: "Native SSH client"
+  copyright: "Copyright © 2026 Wuhan Huabei Technology Co., Ltd. All rights reserved."
+  comments: ""
+  version: "2.5.4"
+  buildNumber: "65"
+  macOSMinimumVersion: "12.0"
+  macOSGoToolchain: "go1.26.11"
+
+dev_mode:
+  root_path: .
+  log_level: warn
+  debounce: 1000
+  ignore:
+    dir:
+      - .git
+      - frontend/node_modules
+      - frontend/dist
+      - build/bin
+    file:
+      - .DS_Store
+    watched_extension:
+      - "*.go"
+    git_ignore: true
+  executes:
+    - cmd: npm --prefix frontend ci
+      type: once
+    - cmd: npm --prefix frontend run dev -- --host 127.0.0.1
+      type: background
+    - cmd: until curl -fsS "http://127.0.0.1:${WAILS_VITE_PORT:-9245}/" >/dev/null; do sleep 0.2; done
+      type: blocking
+    - cmd: wails3 task build DEV=true FRONTEND_DEPS_INSTALLED=true EXTRA_TAGS="${EXTRA_TAGS:-dev}"
+      type: blocking
+    - cmd: wails3 task run
+      type: primary

@@ -1,0 +1,20 @@
+{
+  "Collapse unchanged lines": "Recolher linhas não alteradas",
+  "Show {0} hidden lines": "Mostrar {0} linhas ocultas",
+  "Go to {0}": "Ir para {0}",
+  "Binary file changed": "Arquivo binário alterado",
+  "Open Diff": "Abrir comparação",
+  "Controls whether original line numbers are hidden in inline diffs. When set to null, uses the editor's default: hidden in compact multi diff editors and visible in other diff editors.": "Controla se os números das linhas originais ficam ocultos nas comparações em linha. Quando definido como null, usa o padrão do editor: ocultos nos editores compactos de múltiplas comparações e visíveis nos demais editores de comparação.",
+  "Render full-width characters using the width defined by the font.": "Renderizar caracteres de largura inteira usando a largura definida pela fonte.",
+  "Render full-width characters centered in exactly two character cells. Only applies to monospace fonts. Does not apply to multi codepoint full-width characters or to GPU rendering. This has a performance impact on line rendering.": "Renderizar caracteres de largura inteira centralizados em exatamente duas células de caractere. Aplica-se apenas a fontes monoespaçadas. Não se aplica a caracteres de largura inteira com vários pontos de código nem à renderização por GPU. Isso afeta o desempenho da renderização das linhas.",
+  "Controls the width used to render full-width characters.": "Controla a largura usada para renderizar caracteres de largura inteira.",
+  "Controls whether an indicator is rendered at the wrapping column of lines that wrap. Only has an effect when `#editor.wordWrap#` is enabled.": "Controla se um indicador é exibido na coluna de quebra das linhas que são quebradas. Só tem efeito quando `#editor.wordWrap#` está habilitado.",
+  "Color of the indicator shown at the end of a soft wrapped line in the editor.": "Cor do indicador exibido ao final de uma linha com quebra automática no editor.",
+  "Whether inline mode is temporarily active after manually resizing the diff editor": "Indica se o modo em linha está temporariamente ativo após redimensionar manualmente o editor de comparação",
+  "Whether automatic diff editor layout would render side by side": "Indica se o layout automático do editor de comparação exibiria os arquivos lado a lado",
+  "Task Completed": "Tarefa concluída",
+  "Clear": "Limpar",
+  "{0}, on": "{0}, ativado",
+  "{0}, off": "{0}, desativado",
+  "Whether the operating system is ChromeOS": "Indica se o sistema operacional é o ChromeOS"
+}

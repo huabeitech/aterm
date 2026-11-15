@@ -1,0 +1,125 @@
+diff --git a/node_modules/@xterm/xterm/lib/ime-compat.cjs b/node_modules/@xterm/xterm/lib/ime-compat.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..376f3ec072a2e0b7d38a647ec70244d6dc1d1285
+--- /dev/null
++++ b/node_modules/@xterm/xterm/lib/ime-compat.cjs
+@@ -0,0 +1,76 @@
++/*
++ * macOS IME punctuation compatibility for @xterm/xterm 6.1.0-beta.337.
++ *
++ * Upstream #4486 / #6294: keydown can contain ASCII while keypress.charCode
++ * contains the IME's committed punctuation. Defer text-producing punctuation
++ * to keypress, retaining xterm's composition handling, dedupe and shortcuts.
++ * Unlike #6294, the enhanced path feeds committed text back into xterm's own
++ * keyboard encoder, so Kitty modifiers, event types and associated text survive.
++ * No application/process detection and no application-specific key mappings.
++ * Remove this version-pinned adapter once upstream supports both paths.
++ */
++const installed = Symbol('macIMECompatibility');
++
++function committedEvent(event, physical, text) {
++  const overrides = { key: text, keyCode: physical.keyCode, code: physical.code,
++    repeat: physical.repeat };
++  return new Proxy(event, {
++    get(target, property) {
++      if (Object.hasOwn(overrides, property)) return overrides[property];
++      const value = Reflect.get(target, property, target);
++      return typeof value === 'function' ? value.bind(target) : value;
++    }
++  });
++}
++
++exports.install = function install(core) {
++  if (!core.browser.isMac || core[installed]) return;
++  core[installed] = true;
++  const keyboard = core._keyboardService;
++  const evaluate = keyboard.evaluateKeyDown;
++  const keyDown = core._keyDown;
++  const keyPress = core._keyPress;
++  const keyUp = core._keyUp;
++  const releases = new Map();
++  let pending;
++
++  keyboard.evaluateKeyDown = function(event) {
++    const codepoint = event.key.length === 1 ? event.key.codePointAt(0) : -1;
++    // Same printable punctuation/digit range as #6294, plus full-width space.
++    // Composition has already been delegated before this encoder is called.
++    const textKey = (codepoint >= 32 && codepoint <= 64) ||
++      (codepoint >= 91 && codepoint <= 96) || (codepoint >= 123 && codepoint <= 126);
++    if (event.type === 'keydown' && textKey && !event.isComposing &&
++        !event.ctrlKey && !event.altKey && !event.metaKey && !this.useWin32InputMode) {
++      pending = event;
++      // Host bubbling shortcuts must not suppress the eventual IME keypress.
++      event.stopPropagation();
++      return { type: 0, cancel: false, key: undefined };
++    }
++    return evaluate.call(this, event);
++  };
++
++  core._keyPress = function(event) {
++    const physical = pending;
++    pending = undefined;
++    if (!physical || !event.charCode || !keyboard.useKitty) {
++      return keyPress.call(this, event);
++    }
++    const text = String.fromCodePoint(event.charCode);
++    releases.set(physical.code, { physical, text });
++    // Running the original keydown with the keypress event reuses the complete
++    // upstream encoder/delivery path. Its event type prevents another deferral.
++    const result = keyDown.call(this, committedEvent(event, physical, text));
++    this._keyPressHandled = true;
++    return result;
++  };
++
++  core._keyUp = function(event) {
++    if (pending && pending.code === event.code) pending = undefined;
++    const committed = releases.get(event.code);
++    releases.delete(event.code);
++    return keyUp.call(this, committed
++      ? committedEvent(event, committed.physical, committed.text)
++      : event);
++  };
++};
+diff --git a/node_modules/@xterm/xterm/lib/xterm-ime.js b/node_modules/@xterm/xterm/lib/xterm-ime.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..4795e25f009caa4dcf3d494aa808c01b8d928e34
+--- /dev/null
++++ b/node_modules/@xterm/xterm/lib/xterm-ime.js
+@@ -0,0 +1,8 @@
++const { Terminal: UpstreamTerminal } = require('./xterm.js');
++const { install } = require('./ime-compat.cjs');
++exports.Terminal = class Terminal extends UpstreamTerminal {
++  open(parent) {
++    super.open(parent);
++    install(this._core);
++  }
++};
+diff --git a/node_modules/@xterm/xterm/lib/xterm-ime.mjs b/node_modules/@xterm/xterm/lib/xterm-ime.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..49a5ca06ee4c16aa2a8d478c4b301c49cda5e6da
+--- /dev/null
++++ b/node_modules/@xterm/xterm/lib/xterm-ime.mjs
+@@ -0,0 +1,8 @@
++import { Terminal as UpstreamTerminal } from './xterm.mjs';
++import { install } from './ime-compat.cjs';
++export class Terminal extends UpstreamTerminal {
++  open(parent) {
++    super.open(parent);
++    install(this._core);
++  }
++}
+diff --git a/node_modules/@xterm/xterm/package.json b/node_modules/@xterm/xterm/package.json
+index 5323c9fc29e9adc7f3217682a7dc5266bfaac14c..6b1ac913bade5132f35c8a114d806524ec0a8e9e 100644
+--- a/node_modules/@xterm/xterm/package.json
++++ b/node_modules/@xterm/xterm/package.json
+@@ -2,8 +2,8 @@
+   "name": "@xterm/xterm",
+   "description": "Full xterm terminal, in your browser",
+   "version": "6.1.0-beta.337",
+-  "main": "lib/xterm.js",
+-  "module": "lib/xterm.mjs",
++  "main": "lib/xterm-ime.js",
++  "module": "lib/xterm-ime.mjs",
+   "style": "css/xterm.css",
+   "types": "typings/xterm.d.ts",
+   "repository": "https://github.com/xtermjs/xterm.js",

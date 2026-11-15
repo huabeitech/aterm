@@ -1,0 +1,4 @@
+/* Native window transport only. Product styling lives in the shared Electron UI. */
+.workspace-tab-bar { --wails-draggable: drag; }
+.source-sidebar { --wails-draggable: no-drag; }
+button, input, textarea, select, [role="button"], [role="tab"], [role="menu"], [role="dialog"], .split-handle, .workspace-tab { --wails-draggable: no-drag; }

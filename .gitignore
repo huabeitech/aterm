@@ -1,0 +1,34 @@
+build/bin
+internal/storekit/build
+build/appstore-demo-home
+build/appstore-screenshots
+build/transporter-logs
+build/transporter-verify.log
+node_modules
+frontend/dist
+
+.DS_Store
+
+# Local signing material (keep outside the repository).
+*.key
+*.p12
+*.pfx
+*.p8
+*.provisionprofile
+*.mobileprovision
+*.certSigningRequest
+/build/darwin/*.cer
+/build/darwin/*.cert
+
+# Local environment credentials (keep shareable templates).
+.env
+.env.*
+!.env.example
+!.env.*.example
+/private_keys/
+
+# Local runtime data, backups, and debug output.
+/.local/
+/build/local-data/
+/build/backups/
+/build/debug-logs/

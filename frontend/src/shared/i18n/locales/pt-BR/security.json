@@ -1,0 +1,21 @@
+{
+  "operationFailed": "A operação falhou.",
+  "restoreFromIcloud": "Restaurar do iCloud",
+  "changeEncryptionPassword": "Alterar senha de criptografia",
+  "continue": "Continuar",
+  "changePassword": "Alterar senha",
+  "backupPassword": "Senha do backup",
+  "currentPassword": "Senha atual",
+  "newPassword": "Nova senha",
+  "confirmNewPassword": "Confirmar nova senha",
+  "passwordsMustMatchAndContainAtLeast8Characters": "As senhas devem ser iguais e ter pelo menos 8 caracteres.",
+  "icloudBackupComplete": "Backup do iCloud concluído.",
+  "backUpToIcloud": "Fazer backup no iCloud?",
+  "backUp": "Fazer backup",
+  "replaceBackupWarning": "Salva os dados criptografados atuais no iCloud. O backup existente será substituído e a versão anterior não será mantida.",
+  "exportOpensshConfiguration": "Exportar configuração do OpenSSH?",
+  "export": "Exportar",
+  "update": "Atualizar",
+  "exportWarning": "Atualiza {{generatedPath}} e adiciona a linha Include correspondente a {{configPath}}. A configuração existente é preservada; senhas nunca são exportadas.",
+  "exportComplete": "Hosts exportados para o OpenSSH."
+}

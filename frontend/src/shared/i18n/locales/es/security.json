@@ -1,0 +1,21 @@
+{
+  "operationFailed": "La operación falló.",
+  "restoreFromIcloud": "Restaurar desde iCloud",
+  "changeEncryptionPassword": "Cambiar contraseña de cifrado",
+  "continue": "Continuar",
+  "changePassword": "Cambiar contraseña",
+  "backupPassword": "Contraseña de la copia de seguridad",
+  "currentPassword": "Contraseña actual",
+  "newPassword": "Nueva contraseña",
+  "confirmNewPassword": "Confirmar nueva contraseña",
+  "passwordsMustMatchAndContainAtLeast8Characters": "Las contraseñas deben coincidir y tener al menos 8 caracteres.",
+  "icloudBackupComplete": "Copia de seguridad de iCloud completada.",
+  "backUpToIcloud": "¿Crear una copia de seguridad en iCloud?",
+  "backUp": "Crear copia de seguridad",
+  "replaceBackupWarning": "Guarda los datos cifrados actuales en iCloud. Se reemplazará la copia de seguridad existente y no se conservará su versión anterior.",
+  "exportOpensshConfiguration": "¿Exportar la configuración de OpenSSH?",
+  "export": "Exportar",
+  "update": "Actualizar",
+  "exportWarning": "Actualiza {{generatedPath}} y añade su línea Include a {{configPath}}. Se conserva la configuración existente; nunca se exportan contraseñas.",
+  "exportComplete": "Hosts exportados a OpenSSH."
+}

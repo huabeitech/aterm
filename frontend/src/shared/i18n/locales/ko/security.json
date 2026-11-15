@@ -1,0 +1,21 @@
+{
+  "operationFailed": "작업에 실패했습니다.",
+  "restoreFromIcloud": "iCloud에서 복원",
+  "changeEncryptionPassword": "암호화 비밀번호 변경",
+  "continue": "계속",
+  "changePassword": "비밀번호 변경",
+  "backupPassword": "백업 비밀번호",
+  "currentPassword": "현재 비밀번호",
+  "newPassword": "새 비밀번호",
+  "confirmNewPassword": "새 비밀번호 확인",
+  "passwordsMustMatchAndContainAtLeast8Characters": "비밀번호는 서로 일치해야 하며 8자 이상이어야 합니다.",
+  "icloudBackupComplete": "iCloud 백업을 완료했습니다.",
+  "backUpToIcloud": "iCloud에 백업할까요?",
+  "backUp": "백업",
+  "replaceBackupWarning": "현재 암호화된 데이터를 iCloud에 저장합니다. 기존 백업은 교체되며 이전 버전은 보관되지 않습니다.",
+  "exportOpensshConfiguration": "OpenSSH 설정을 내보낼까요?",
+  "export": "내보내기",
+  "update": "업데이트",
+  "exportWarning": "{{generatedPath}}을(를) 업데이트하고 {{configPath}}에 해당 Include 줄을 추가합니다. 기존 설정은 유지되며 비밀번호는 내보내지 않습니다.",
+  "exportComplete": "호스트를 OpenSSH로 내보냈습니다."
+}

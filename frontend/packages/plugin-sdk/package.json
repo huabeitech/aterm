@@ -1,0 +1,9 @@
+{
+  "name": "@aterm/plugin-sdk",
+  "version": "0.4.0",
+  "types": "index.d.ts",
+  "description": "Types for aTerm sandbox plugin protocol v1",
+  "files": [
+    "index.d.ts"
+  ]
+}

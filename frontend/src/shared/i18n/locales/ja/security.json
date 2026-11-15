@@ -1,0 +1,21 @@
+{
+  "operationFailed": "操作に失敗しました。",
+  "restoreFromIcloud": "iCloud から復元",
+  "changeEncryptionPassword": "暗号化パスワードを変更",
+  "continue": "続行",
+  "changePassword": "パスワードを変更",
+  "backupPassword": "バックアップのパスワード",
+  "currentPassword": "現在のパスワード",
+  "newPassword": "新しいパスワード",
+  "confirmNewPassword": "新しいパスワードを確認",
+  "passwordsMustMatchAndContainAtLeast8Characters": "パスワードは一致している必要があり、8 文字以上で入力してください。",
+  "icloudBackupComplete": "iCloud バックアップが完了しました。",
+  "backUpToIcloud": "iCloud にバックアップしますか？",
+  "backUp": "バックアップ",
+  "replaceBackupWarning": "現在の暗号化データを iCloud に保存します。既存のバックアップは置き換えられ、以前のバージョンは残りません。",
+  "exportOpensshConfiguration": "OpenSSH 設定をエクスポートしますか？",
+  "export": "エクスポート",
+  "update": "更新",
+  "exportWarning": "{{generatedPath}} を更新し、{{configPath}} に対応する Include 行を追加します。既存の設定は保持され、パスワードはエクスポートされません。",
+  "exportComplete": "ホストを OpenSSH にエクスポートしました。"
+}

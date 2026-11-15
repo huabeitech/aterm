@@ -1,0 +1,717 @@
+.settings-page {
+  display: grid;
+  grid-template-columns: calc(180px * var(--app-layout-scale)) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mac-text);
+  background: color-mix(in srgb, var(--mac-content) 55%, var(--mac-sidebar));
+  font-size: var(--app-text-13);
+  line-height: 1.4;
+}
+.settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 20px 10px;
+  overflow-y: auto;
+  background: var(--mac-sidebar);
+  border-right: 1px solid var(--mac-separator);
+}
+.settings-nav-title {
+  padding: 0 10px 18px;
+  font-weight: 600;
+}
+.settings-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mac-text);
+  text-align: left;
+  cursor: default;
+}
+.settings-tabs button:hover {
+  background: var(--mac-hover-background);
+}
+.settings-tabs button.is-selected {
+  background: var(--primary);
+  color: white;
+}
+.settings-tabs button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.settings-tabs button svg {
+  flex-shrink: 0;
+}
+.settings-detail {
+  display: grid;
+  grid-template-rows: 56px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  container: settings-detail / inline-size;
+}
+.settings-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--mac-separator);
+}
+.settings-toolbar h1 {
+  margin: 0;
+  font-size: var(--app-text-15);
+  font-weight: 600;
+}
+.settings-toolbar [role='status'] {
+  font-size: var(--app-text-11);
+  color: var(--mac-secondary-text);
+}
+.settings-scroll {
+  min-height: 0;
+}
+.settings-content {
+  width: 100%;
+  max-width: calc(752px * var(--app-layout-scale));
+  padding: 28px 28px 48px;
+  margin: 0 auto;
+}
+.settings-group {
+  margin-bottom: 24px;
+  min-width: 0;
+}
+.settings-group h2 {
+  margin: 0 0 8px 12px;
+  font-size: var(--app-text-12);
+  line-height: calc(17px * var(--app-font-scale));
+  font-weight: 600;
+  color: var(--mac-secondary-text);
+}
+.settings-group-rows {
+  overflow: hidden;
+  border: 1px solid var(--mac-separator);
+  border-radius: 8px;
+  background: var(--mac-content);
+}
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 20px;
+  min-height: 44px;
+  padding: 9px 12px;
+}
+.settings-row + .settings-row,
+.settings-link-row + .settings-link-row {
+  border-top: 1px solid var(--mac-separator);
+}
+.settings-row-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.settings-row-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: min(100%, calc(340px * var(--app-layout-scale)));
+  gap: 8px;
+}
+.settings-value {
+  color: var(--mac-secondary-text);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.settings-path {
+  font-family: var(--font-family-mono);
+  font-size: var(--app-text-11);
+}
+.settings-footnote,
+.settings-intro {
+  margin: 8px 12px 0;
+  font-size: var(--app-text-11);
+  line-height: 1.55;
+  color: var(--mac-secondary-text);
+  overflow-wrap: anywhere;
+}
+.settings-content > .settings-footnote {
+  margin: -12px 12px 24px;
+}
+.settings-intro {
+  margin: 0 12px 24px;
+  font-size: var(--app-text-12);
+}
+.settings-inline-error {
+  color: var(--destructive);
+  font-size: var(--app-text-11);
+  line-height: 1.5;
+  margin: 3px 0 0;
+  grid-column: 1 / -1;
+}
+.settings-font-field {
+  max-width: 210px;
+  text-align: right;
+}
+.settings-font-input {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: var(--mac-secondary-text);
+}
+.settings-font-input [data-slot='input-group'] {
+  width: calc(64px * var(--app-layout-scale));
+}
+.settings-font-input input {
+  text-align: right;
+}
+.settings-page .settings-row-control [data-slot='select-trigger'] {
+  min-width: min(100%, calc(170px * var(--app-layout-scale)));
+  max-width: min(100%, calc(240px * var(--app-layout-scale)));
+  height: calc(26px * max(1, var(--app-font-scale)));
+  font-size: var(--app-text-12);
+  background: var(--mac-content);
+  box-shadow: none;
+}
+.settings-page [data-slot='button'] {
+  min-height: calc(26px * max(1, var(--app-font-scale)));
+  height: calc(26px * max(1, var(--app-font-scale)));
+  padding: 0 9px;
+  border-radius: 5px;
+  font-size: var(--app-text-12);
+  font-weight: 400;
+  box-shadow: none;
+}
+.settings-page [data-slot='input-group'] {
+  min-height: calc(26px * max(1, var(--app-font-scale)));
+  height: calc(26px * max(1, var(--app-font-scale)));
+  border-radius: 5px;
+  box-shadow: none;
+}
+.settings-page [data-slot='input-group'] input {
+  height: calc(24px * max(1, var(--app-font-scale)));
+  font-size: var(--app-text-12);
+}
+.settings-row-control > [data-slot='input-group'] {
+  width: min(100%, calc(154px * var(--app-layout-scale)));
+}
+.settings-page .shortcut-recorder {
+  text-align: center;
+  font-family: var(--font-family-sans);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+.settings-page .shortcut-recorder:focus {
+  font-size: var(--app-text-11);
+}
+.settings-management {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: var(--mac-secondary-text);
+  font-size: var(--app-text-12);
+}
+.settings-management [data-slot='button'] {
+  width: 28px;
+  padding: 0;
+}
+.settings-about {
+  text-align: center;
+  padding: 14px 0 30px;
+  color: var(--mac-secondary-text);
+}
+.settings-app-name {
+  font-size: var(--app-text-27);
+  font-weight: 600;
+  color: var(--mac-text);
+  margin-bottom: 5px;
+  letter-spacing: -0.7px;
+}
+.settings-about p {
+  font-size: var(--app-text-12);
+  margin: 4px 0;
+}
+.settings-link-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  background: transparent;
+}
+.settings-link-row svg {
+  color: var(--mac-secondary-text);
+}
+.settings-link-row:hover {
+  background: var(--mac-hover-background);
+}
+.settings-keys {
+  margin-bottom: 24px;
+}
+.settings-keys-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px 12px;
+}
+.settings-keys-heading h2 {
+  font-size: var(--app-text-12);
+  font-weight: 600;
+  color: var(--mac-secondary-text);
+}
+.settings-key-actions {
+  display: flex;
+  gap: 6px;
+}
+.settings-keys-list {
+  border: 1px solid var(--mac-separator);
+  border-radius: 8px;
+  background: var(--mac-content);
+  overflow: hidden;
+}
+.settings-key-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--mac-secondary-text);
+  font-size: var(--app-text-12);
+}
+.settings-key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+.settings-key-row + .settings-key-row {
+  border-top: 1px solid var(--mac-separator);
+}
+.settings-key-name {
+  font-size: var(--app-text-13);
+  font-weight: 500;
+}
+.settings-key-detail {
+  font-size: var(--app-text-11);
+  color: var(--mac-secondary-text);
+  overflow-wrap: anywhere;
+  margin-top: 3px;
+}
+.settings-key-row [data-slot='button'] {
+  width: 26px;
+  padding: 0;
+}
+@media (max-width: 760px) {
+  .settings-page {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  .settings-content {
+    padding: 22px 16px 40px;
+  }
+  .settings-toolbar {
+    padding: 0 20px;
+  }
+  .settings-row {
+    gap: 8px 12px;
+  }
+  .settings-row-control {
+    max-width: 210px;
+  }
+}
+@media (max-width: 580px) {
+  .settings-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .settings-tabs {
+    flex-direction: row;
+    padding: 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--mac-separator);
+    overflow-x: auto;
+  }
+  .settings-nav-title {
+    display: none;
+  }
+  .settings-tabs button {
+    gap: 5px;
+  }
+  .settings-detail {
+    grid-template-rows: 48px minmax(0, 1fr);
+  }
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-row-control {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+  .settings-value {
+    text-align: left;
+  }
+  .settings-key-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Reflow based on the space available to the form, including its current font size. */
+@container settings-detail (max-width: 40em) {
+  .settings-content {
+    padding-inline: 16px;
+  }
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .settings-row-control {
+    justify-content: flex-start;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  .settings-value {
+    text-align: left;
+  }
+  .settings-key-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-keys-heading {
+    flex-wrap: wrap;
+  }
+}
+
+.theme-management {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.theme-management-row,
+.theme-management-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.theme-management-actions {
+  justify-content: flex-start;
+}
+.theme-management p {
+  color: var(--mac-secondary-text);
+  overflow-wrap: anywhere;
+}
+.theme-management [role='alert'] {
+  color: var(--theme-files-error, var(--mac-text));
+}
+.theme-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.theme-package {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--mac-separator);
+  border-radius: 4px;
+}
+.theme-package:hover {
+  background: var(--mac-hover-background);
+}
+.theme-package[data-active='true'] {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.theme-package > .theme-management-actions .theme-remove:hover:not(:disabled) {
+  color: var(--theme-files-error);
+}
+.theme-info {
+  min-width: 0;
+}
+.theme-heading,
+.theme-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.theme-heading strong {
+  font-size: var(--app-text-14);
+  line-height: calc(20px * var(--app-font-scale));
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.theme-meta,
+.theme-status {
+  font-size: var(--app-text-12);
+  line-height: calc(16px * var(--app-font-scale));
+}
+.theme-meta {
+  color: var(--mac-secondary-text);
+}
+.theme-author {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.theme-status {
+  color: var(--mac-secondary-text);
+}
+.theme-package[data-active='true'] .theme-status {
+  color: var(--mac-text);
+}
+.theme-package[data-active='true'] .theme-status::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.theme-status:empty {
+  display: none;
+}
+@container settings-detail (max-width: 480px) {
+  .theme-package {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .theme-package > .theme-management-actions {
+    justify-content: flex-end;
+  }
+}
+
+.plugin-management {
+  display: grid;
+  gap: 24px;
+  font-size: var(--app-text-13);
+  color: var(--mac-text);
+}
+.plugin-management-heading,
+.plugin-package-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+}
+.plugin-management-heading > p {
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+.plugin-package {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--mac-separator);
+  border-radius: 8px;
+  background: var(--mac-content);
+  overflow-wrap: anywhere;
+}
+.plugin-package-heading > div {
+  flex: 1;
+  min-width: min(100%, 180px);
+}
+.plugin-package-name {
+  font-size: var(--app-text-14);
+  font-weight: 500;
+}
+.plugin-package-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--app-text-12);
+}
+.plugin-state-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--mac-secondary-text);
+}
+.plugin-package-status[data-state='active'] .plugin-state-dot {
+  background: var(--primary);
+}
+.plugin-package-status[data-state='failed'],
+.plugin-package-error {
+  color: var(--destructive);
+}
+.plugin-package-status[data-state='failed'] .plugin-state-dot {
+  background: currentColor;
+}
+.plugin-package-status[data-state='disabled'] {
+  color: var(--mac-secondary-text);
+}
+.plugin-package-meta {
+  margin-top: 4px;
+  font-family: var(--font-family-mono);
+  font-size: var(--app-text-12);
+  color: var(--mac-secondary-text);
+}
+.plugin-management .text-sm {
+  font-size: var(--app-text-13);
+}
+.plugin-management .text-xs {
+  font-size: var(--app-text-12);
+}
+.plugin-management .text-muted-foreground,
+.plugin-permission-note,
+.plugin-package-feedback {
+  color: var(--mac-secondary-text);
+}
+.plugin-permission-note {
+  font-size: var(--app-text-12);
+  line-height: 1.6;
+}
+.plugin-settings-rows {
+  margin: 0;
+}
+.plugin-settings-rows .settings-row {
+  padding: 8px 0;
+  min-height: 40px;
+}
+.plugin-settings-rows dd {
+  margin: 0;
+}
+.plugin-grants {
+  display: grid;
+  gap: 8px;
+}
+.plugin-grants h3 {
+  font-size: var(--app-text-12);
+  font-weight: 500;
+  color: var(--mac-secondary-text);
+}
+.plugin-grant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 36px;
+}
+.plugin-grant-row > span {
+  min-width: 0;
+}
+.plugin-maintenance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mac-separator);
+}
+.plugin-uninstall {
+  color: var(--destructive);
+}
+.plugin-uninstall:hover {
+  color: var(--destructive);
+}
+/* Activity is rendered in a portal outside the settings page. */
+.plugin-activity-dialog {
+  font-size: var(--app-text-13);
+}
+.plugin-activity-dialog [data-slot='dialog-title'] {
+  padding-right: 24px;
+  font-size: var(--app-text-15);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.plugin-activity-dialog [data-slot='dialog-description'],
+.plugin-activity-plugin-name {
+  font-size: var(--app-text-12);
+  color: var(--mac-secondary-text);
+  overflow-wrap: anywhere;
+}
+.plugin-activity-body {
+  max-height: min(480px, 55dvh);
+  overflow-y: auto;
+  min-width: 0;
+  font-size: var(--app-text-12);
+}
+.plugin-activity-dialog [data-slot='button'] {
+  font-size: var(--app-text-12);
+  transition-property: color, background-color, border-color, opacity;
+}
+.plugin-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.plugin-activity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mac-separator);
+}
+.plugin-activity-row:last-child {
+  border-bottom: 0;
+}
+.plugin-activity-row time {
+  color: var(--mac-secondary-text);
+  font-variant-numeric: tabular-nums;
+}
+.plugin-activity-row code {
+  grid-column: 1 / -1;
+  font-family: var(--font-family-mono);
+  overflow-wrap: anywhere;
+}
+.plugin-activity-row code:last-child {
+  color: var(--mac-secondary-text);
+}
+.plugin-activity-outcome[data-outcome='failed'],
+.plugin-activity-outcome[data-outcome='denied'] {
+  color: var(--destructive);
+}
+.plugin-activity-failure {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.plugin-management-empty {
+  padding: 24px 16px;
+  border: 1px solid var(--mac-separator);
+  border-radius: 8px;
+  color: var(--mac-secondary-text);
+}
+.plugin-management [data-slot='button'],
+.plugin-management [data-slot='select-trigger'] {
+  transition-property: color, background-color, border-color, opacity;
+}
+
+/* DialogTrigger changes data-slot, so size maintenance actions by a shared class. */
+.settings-page .plugin-maintenance-button {
+  height: calc(26px * max(1, var(--app-font-scale)));
+  min-height: calc(26px * max(1, var(--app-font-scale)));
+  padding: 0 9px;
+  border: 1px solid var(--mac-separator);
+  border-radius: 5px;
+  background: var(--mac-content);
+  color: var(--mac-text);
+  font-size: var(--app-text-12);
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: none;
+}
+.settings-page .plugin-maintenance-button:hover {
+  background: var(--mac-hover-background);
+}
+.settings-page .plugin-maintenance-button.plugin-uninstall {
+  color: var(--destructive);
+}

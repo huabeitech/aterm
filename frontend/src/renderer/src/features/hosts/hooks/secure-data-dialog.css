@@ -1,0 +1,177 @@
+/* Authentication alerts use a compact macOS layout and the app's system font. */
+.secure-data-alert {
+  --alert-surface: #f4f4f4;
+  --alert-field: #ffffff;
+  --alert-border: rgb(0 0 0 / 18%);
+  --alert-secondary: #606060;
+  --alert-action: #1263d6;
+  --alert-action-hover: #0e55bb;
+  --alert-action-pressed: #0b469c;
+  --alert-focus: rgb(18 99 214 / 45%);
+  --alert-error: #b42318;
+  width: calc(360px * var(--app-layout-scale));
+  max-width: calc(100vw - 32px);
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--alert-border);
+  border-radius: 16px;
+  background: var(--alert-surface);
+  color: var(--foreground);
+  box-shadow:
+    0 24px 64px rgb(0 0 0 / 24%),
+    0 0 0 1px rgb(255 255 255 / 35%) inset;
+}
+
+.dark .secure-data-alert {
+  --alert-surface: #272727;
+  --alert-field: #1f1f1f;
+  --alert-border: rgb(255 255 255 / 20%);
+  --alert-secondary: #bcbcbc;
+  --alert-focus: rgb(100 165 255 / 65%);
+  --alert-error: #ffaaa3;
+  box-shadow:
+    0 24px 64px rgb(0 0 0 / 45%),
+    0 0 0 1px rgb(255 255 255 / 6%) inset;
+}
+
+.secure-data-overlay {
+  background: rgb(0 0 0 / 16%);
+}
+
+.secure-data-alert [data-slot='dialog-header'] {
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.secure-data-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.secure-data-alert [data-slot='dialog-title'] {
+  font-size: var(--app-text-16);
+  line-height: 1.5;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.sync-password-dialog,
+.sync-password-dialog-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.sync-password-dialog p {
+  margin: 0;
+}
+
+.secure-data-description {
+  color: var(--foreground);
+  font-size: var(--app-text-14);
+  line-height: 1.43;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.secure-data-field {
+  display: grid;
+  gap: 8px;
+}
+
+.secure-data-field > label,
+.sync-dialog-note,
+.sync-dialog-error {
+  font-size: var(--app-text-12);
+  line-height: 1.34;
+  color: var(--alert-secondary);
+}
+
+.secure-data-field [data-slot='input-group'] {
+  height: calc(32px * var(--app-layout-scale));
+  border-color: var(--alert-border);
+  border-radius: 6px;
+  background: var(--alert-field);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%) inset;
+}
+
+.secure-data-field input {
+  font-size: var(--app-text-14);
+}
+
+.secure-data-field [data-slot='input-group']:has(input:focus-visible) {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 25%, transparent);
+}
+
+.secure-data-field [data-slot='input-group']:has(input[aria-invalid='true']) {
+  border-color: var(--alert-error);
+}
+
+.sync-dialog-error {
+  color: var(--alert-error);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > button {
+  height: auto;
+  min-height: calc(32px * var(--app-layout-scale));
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: var(--app-text-14);
+  font-weight: 500;
+  line-height: 1.43;
+  white-space: normal;
+  transition: background-color 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='outline'] {
+  border-color: var(--alert-border);
+  background: var(--alert-field);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='outline']:hover {
+  background: var(--accent);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='outline']:active {
+  background: var(--muted);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='default'] {
+  background: var(--alert-action);
+  color: #ffffff;
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='default']:hover {
+  background: var(--alert-action-hover);
+}
+
+.secure-data-alert [data-slot='dialog-footer'] > [data-variant='default']:active {
+  background: var(--alert-action-pressed);
+}
+
+.secure-data-alert button:focus-visible {
+  outline: 3px solid var(--alert-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secure-data-alert,
+  .secure-data-overlay {
+    animation: none;
+  }
+
+  .secure-data-alert button {
+    transition: none;
+  }
+}

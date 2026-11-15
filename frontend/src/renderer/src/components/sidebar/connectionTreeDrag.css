@@ -1,0 +1,44 @@
+.connection-tree-row[draggable='true'] {
+  cursor: grab;
+}
+.connection-tree-row[data-dragging='true'] {
+  cursor: grabbing;
+  opacity: 0.45;
+}
+.connection-tree-row[data-drop-position] {
+  position: relative;
+}
+.connection-tree-row[data-drop-position='before']::before,
+.connection-tree-row[data-drop-position='after']::after {
+  content: '';
+  position: absolute;
+  left: var(--drop-indent, 8px);
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  pointer-events: none;
+  z-index: 1;
+}
+.connection-tree-row[data-drop-position='before']::before {
+  top: 0;
+}
+.connection-tree-row[data-drop-position='after']::after {
+  bottom: 0;
+}
+.connection-drag-preview {
+  position: fixed;
+  top: -1000px;
+  left: 0;
+  max-width: 320px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font-size: 14px;
+  line-height: 20px;
+  pointer-events: none;
+}

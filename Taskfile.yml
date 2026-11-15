@@ -1,0 +1,244 @@
+version: '3'
+
+vars:
+  APP_NAME:
+    sh: python3 scripts/sync-build-metadata.py --print-field productName
+  MACOS_MIN_VERSION:
+    sh: python3 scripts/sync-build-metadata.py --print-field macOSMinimumVersion
+  DARWIN_LINK_FLAGS: '-extldflags=-mmacosx-version-min={{.MACOS_MIN_VERSION}}'
+  FRONTEND_DIR: frontend
+  DIST_DIR: '{{.FRONTEND_DIR}}/dist'
+  BIN_DIR: build/bin
+  APP_BUNDLE: '{{.BIN_DIR}}/{{.APP_NAME}}.app'
+  MAS_PKG: '{{.BIN_DIR}}/{{.APP_NAME}}.pkg'
+  MAS_ENTITLEMENTS: build/darwin/entitlements.appstore.plist
+  PLISTBUDDY: /usr/libexec/PlistBuddy
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  EXTRA_TAGS: '{{.EXTRA_TAGS | default ""}}'
+  DEV: '{{.DEV | default "false"}}'
+  FRONTEND_DEPS_INSTALLED: '{{.FRONTEND_DEPS_INSTALLED | default "false"}}'
+  TAGS: '{{if eq .DEV "true"}}{{.EXTRA_TAGS}}{{else}}production{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}}{{end}}'
+  BUILD_FLAGS: '{{if .TAGS}}-tags {{.TAGS}} {{end}}{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l" -ldflags="{{.DARWIN_LINK_FLAGS}}"{{else}}-trimpath -buildvcs=false -ldflags="-w -s {{.DARWIN_LINK_FLAGS}}"{{end}}'
+
+tasks:
+  default:
+    desc: Lists available project tasks.
+    cmds:
+      - wails3 task --list-all
+
+  doctor:
+    desc: Checks required local tools.
+    cmds:
+      - |
+        command -v go >/dev/null || { echo "Missing Go"; exit 1; }
+        command -v npm >/dev/null || { echo "Missing npm"; exit 1; }
+        command -v wails3 >/dev/null || { echo "Missing Wails CLI: wails3"; exit 1; }
+      - go version
+      - npm --version
+      - wails3 version
+
+  deps:
+    desc: Installs Go and frontend dependencies.
+    deps:
+      - frontend:install
+    cmds:
+      - go mod download
+
+  fmt:
+    desc: Formats Go code.
+    cmds:
+      - go fmt ./...
+
+  go:test:
+    desc: Runs Go tests.
+    cmds:
+      - '{{if eq OS "darwin"}}python3 scripts/go-macos.py{{else}}go{{end}} test ./...'
+
+  test:
+    desc: Runs backend and frontend checks.
+    cmds:
+      - wails3 task go:test
+      - wails3 task frontend:test
+      - wails3 task frontend:typecheck
+      - wails3 task frontend:boundaries
+      - wails3 task frontend:build
+
+  dev:
+    desc: Runs the application in development mode.
+    deps:
+      - doctor
+    cmds:
+      - EXTRA_TAGS="{{.EXTRA_TAGS}}" wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  dev:mas:
+    desc: Runs the application in development mode with Mac App Store feature flags.
+    deps:
+      - doctor
+    cmds:
+      - wails3 task dev EXTRA_TAGS=dev,mas
+
+  build:
+    desc: Builds the macOS application bundle.
+    deps:
+      - generate:bindings
+      - frontend:build
+      - generate:icons
+    cmds:
+      - scripts/sync-build-metadata.py --plist build/darwin/Info.plist --runtime-json internal/desktop/product/info.json
+      - rm -rf "{{.APP_BUNDLE}}" "{{.BIN_DIR}}/{{.APP_NAME}}"
+      - mkdir -p "{{.APP_BUNDLE}}/Contents/MacOS"
+      - mkdir -p "{{.APP_BUNDLE}}/Contents/Resources"
+      - python3 scripts/go-macos.py build {{.BUILD_FLAGS}} -o "{{.BIN_DIR}}/{{.APP_NAME}}"
+      - cp "{{.BIN_DIR}}/{{.APP_NAME}}" "{{.APP_BUNDLE}}/Contents/MacOS/{{.APP_NAME}}"
+      - cp build/darwin/Info.plist "{{.APP_BUNDLE}}/Contents/Info.plist"
+      - cp build/darwin/iconfile.icns "{{.APP_BUNDLE}}/Contents/Resources/iconfile.icns"
+      - '{{if eq OS "darwin"}}codesign --force --deep --sign - "{{.APP_BUNDLE}}"{{else}}true{{end}}'
+      - python3 scripts/check-macos-build.py "{{.APP_BUNDLE}}"
+
+  debug:
+    desc: Builds a debug macOS application bundle.
+    cmds:
+      - wails3 task build DEV=true EXTRA_TAGS=dev
+
+  package:
+    desc: Alias for production application bundle build.
+    deps:
+      - build
+
+  run:
+    desc: Runs the built macOS application bundle.
+    cmds:
+      - '"{{.APP_BUNDLE}}/Contents/MacOS/{{.APP_NAME}}"'
+
+  generate:bindings:
+    desc: Generates Wails v3 TypeScript bindings.
+    run: once
+    cmds:
+      - |
+        {{if eq OS "darwin"}}python3 scripts/go-macos.py --exec {{end}}wails3 generate bindings -f '{{.BUILD_FLAGS}}' -clean=true -ts -i
+
+  frontend:install:
+    desc: Installs frontend dependencies.
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm ci
+
+  frontend:dev:
+    desc: Starts the Vite dev server only.
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run dev
+
+  frontend:test:
+    desc: Runs frontend unit tests.
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run test
+
+  frontend:typecheck:
+    desc: Runs strict TypeScript unused-code checks.
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run typecheck
+
+  frontend:boundaries:
+    desc: Verifies frontend module dependency boundaries.
+    cmds:
+      - scripts/check-frontend-boundaries.sh
+
+  frontend:build:
+    desc: Builds the React frontend.
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      # dev_mode installs dependencies before starting Vite. Reinstalling here
+      # would remove node_modules while the running dev server is reading it.
+      - '{{if ne .FRONTEND_DEPS_INSTALLED "true"}}npm ci{{end}}'
+      - npm run build
+
+  generate:icons:
+    desc: Generates macOS icon assets.
+    status:
+      - test -f build/darwin/iconfile.icns
+    cmds:
+      - wails3 generate icons -input build/appicon.png -macfilename build/darwin/iconfile.icns
+
+  mas:build:
+    desc: Builds the Mac App Store app bundle.
+    cmds:
+      - wails3 task build EXTRA_TAGS=mas
+
+  mas:sign:
+    desc: Signs the Mac App Store app bundle. Requires APPSTORE_IDENTITY.
+    deps:
+      - mas:build
+    cmds:
+      - |
+        test -n "$APPSTORE_IDENTITY" || {
+          echo "APPSTORE_IDENTITY is required, for example: APPSTORE_IDENTITY='3rd Party Mac Developer Application: Your Team (...)'"
+          exit 1
+        }
+      - codesign --force --options runtime --timestamp --entitlements "{{.MAS_ENTITLEMENTS}}" --sign "$APPSTORE_IDENTITY" "{{.APP_BUNDLE}}"
+      - codesign --verify --deep --strict --verbose=4 "{{.APP_BUNDLE}}"
+      - codesign -d --entitlements :- "{{.APP_BUNDLE}}"
+
+  mas:pkg:
+    desc: Builds a Mac App Store installer package. Requires INSTALLER_IDENTITY.
+    deps:
+      - mas:sign
+    cmds:
+      - |
+        test -n "$INSTALLER_IDENTITY" || {
+          echo "INSTALLER_IDENTITY is required, for example: INSTALLER_IDENTITY='3rd Party Mac Developer Installer: Your Team (...)'"
+          exit 1
+        }
+      - productbuild --component "{{.APP_BUNDLE}}" /Applications --sign "$INSTALLER_IDENTITY" "{{.MAS_PKG}}"
+
+  mas:package:
+    desc: Increments version/build number, then builds, signs, and packages a Transporter-ready Mac App Store .pkg.
+    cmds:
+      - scripts/mas-package.sh
+
+  mas:upload:
+    desc: Increments version/build number, builds the Mac App Store .pkg, and opens it in Transporter.
+    cmds:
+      - scripts/mas-package.sh --open-transporter
+
+  mas:upload:cli:
+    desc: Increments version/build number, builds the Mac App Store .pkg, then uploads it with iTMSTransporter.
+    deps:
+      - mas:package
+    cmds:
+      - scripts/mas-transporter.sh --upload
+
+  mas:validate:
+    desc: Validates Mac App Store signing metadata before upload.
+    cmds:
+      - scripts/mas-validate.sh
+
+  mas:readiness:
+    desc: Prints a Mac App Store readiness report for the current package and submission assets.
+    cmds:
+      - scripts/mas-readiness-report.sh
+
+  mas:verify:
+    desc: Prints Mac App Store bundle metadata and signing state.
+    cmds:
+      - |
+        test -d "{{.APP_BUNDLE}}" || {
+          echo "{{.APP_BUNDLE}} does not exist. Run wails3 task mas:build first."
+          exit 1
+        }
+        echo "Bundle ID: $({{.PLISTBUDDY}} -c 'Print :CFBundleIdentifier' '{{.APP_BUNDLE}}/Contents/Info.plist')"
+        echo "Version: $({{.PLISTBUDDY}} -c 'Print :CFBundleShortVersionString' '{{.APP_BUNDLE}}/Contents/Info.plist')"
+      - codesign -dv --verbose=4 "{{.APP_BUNDLE}}" 2>&1 || true
+      - codesign -d --entitlements :- "{{.APP_BUNDLE}}" 2>&1 || true
+
+  uninstall:
+    desc: Removes the installed app and all app-owned test data.
+    cmds:
+      - scripts/uninstall.sh
+
+  clean:
+    desc: Removes generated build outputs.
+    cmds:
+      - rm -rf "{{.DIST_DIR}}" "{{.BIN_DIR}}"

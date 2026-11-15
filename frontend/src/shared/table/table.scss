@@ -1,0 +1,72 @@
+.app-table {
+    height: 100%;
+
+    .ant-spin-nested-loading,
+    .ant-spin-container,
+    .ant-table,
+    .ant-table-container {
+        min-height: 0;
+    }
+
+    .ant-table {
+        padding: 2px;
+        background: var(--hosts-background);
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .ant-table-container,
+    .ant-table-content,
+    .ant-table-sticky-holder,
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+        background: var(--hosts-background);
+    }
+
+    .ant-table,
+    .ant-table-container,
+    .ant-table-content,
+    .ant-table-sticky-holder,
+    .ant-table-sticky-scroll,
+    table,
+    .ant-table-thead > tr > th:first-child,
+    .ant-table-thead > tr > th:last-child {
+        border-radius: 0;
+        border-start-start-radius: 0;
+        border-start-end-radius: 0;
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    .ant-table-content {
+        overflow: auto hidden !important;
+    }
+
+    .ant-table-thead > tr > th {
+        position: relative;
+    }
+
+    .ant-table-tbody > tr {
+        cursor: default;
+
+        &.ant-table-row-selected {
+            > td {
+                background: rgba(22, 119, 255, 0.1);
+            }
+
+            &:hover > td {
+                background: rgba(22, 119, 255, 0.14);
+            }
+        }
+    }
+}
+
+.app-table--empty {
+    .ant-table-sticky-scroll {
+        display: none;
+    }
+}
+
+.app-table-scroll--empty {
+    overflow-x: hidden;
+}
