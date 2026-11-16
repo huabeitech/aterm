@@ -31,3 +31,29 @@ func TestPluginAssetsBypassWailsInjectionAndRestrictFrameNavigation(t *testing.T
 		t.Fatal("parent CSP permits navigating a plugin frame into a fresh app/external realm", policy)
 	}
 }
+
+func TestPluginAssetsAllowWebViewDevPort(t *testing.T) {
+	handler := (&App{}).desktopAssetMiddleware(http.NotFoundHandler())
+	for _, test := range []struct {
+		host, source string
+	}{
+		{"localhost:9245", "wails://localhost:9245/__plugin_view/"},
+		{"wails.localhost:9245", "http://wails.localhost:9245/__plugin_view/"},
+		{"example.test:9245", ""},
+	} {
+		t.Run(test.host, func(t *testing.T) {
+			// Match the request shape produced by Wails in the WebView.
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
+			request.Host = test.host
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			policy := response.Header().Get("Content-Security-Policy")
+			if test.source != "" && !strings.Contains(policy, test.source) {
+				t.Fatalf("missing plugin frame source %q in %q", test.source, policy)
+			}
+			if strings.Contains(policy, "example.test") || strings.Contains(policy, "http://localhost:9245") {
+				t.Fatalf("unexpected frame source in %q", policy)
+			}
+		})
+	}
+}

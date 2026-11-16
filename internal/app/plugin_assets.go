@@ -1,8 +1,10 @@
 package app
 
 import (
+	"net"
 	"net/http"
 	desktopplugins "ssh-connect/internal/desktop/plugins"
+	"strconv"
 	"strings"
 )
 
@@ -21,16 +23,15 @@ func (a *App) desktopAssetMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		origins := []string{"wails://localhost", "http://wails.localhost", "https://wails.localhost"}
-		if request.URL.Host != "" && (request.URL.Scheme == "http" || request.URL.Scheme == "https" || request.URL.Scheme == "wails") {
-			origin := request.URL.Scheme + "://" + request.URL.Host
-			found := false
-			for _, existing := range origins {
-				if existing == origin {
-					found = true
-				}
-			}
-			if !found {
-				origins = append(origins, origin)
+		// Wails clears URL.Scheme and URL.Host before dispatching WebView
+		// requests, but keeps the authority (including the dev port) in Host.
+		host, port, err := net.SplitHostPort(request.Host)
+		if number, parseErr := strconv.ParseUint(port, 10, 16); err == nil && parseErr == nil && number > 0 {
+			switch host {
+			case "localhost":
+				origins = append(origins, "wails://"+request.Host)
+			case "wails.localhost":
+				origins = append(origins, "http://"+request.Host, "https://"+request.Host)
 			}
 		}
 		sources := []string{}
