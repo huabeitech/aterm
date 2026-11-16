@@ -360,6 +360,12 @@ func (m *Manager) failSSHConnection(entry *Session, err error) {
 func (m *Manager) OpenLocalShell() (Session, error) {
 	return m.OpenLocalShellWithOptions(LaunchOptions{})
 }
+
+// OpenLocalProgram starts an already validated native executable in its own PTY.
+func (m *Manager) OpenLocalProgram(command *exec.Cmd, title string) (Session, error) {
+	return m.openWithOptions("local", title, "", command, LaunchOptions{Title: title})
+}
+
 func (m *Manager) OpenLocalShellWithOptions(options LaunchOptions) (Session, error) {
 	shell, err := localpty.DefaultShell()
 	if err != nil {

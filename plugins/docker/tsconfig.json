@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "react": ["../../frontend/node_modules/@types/react"],
+      "react/jsx-runtime": ["../../frontend/node_modules/@types/react/jsx-runtime"],
+      "react-dom/client": ["../../frontend/node_modules/@types/react-dom/client"],
+      "radix-ui": ["../../frontend/node_modules/radix-ui"],
+      "lucide-react": ["../../frontend/node_modules/lucide-react"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

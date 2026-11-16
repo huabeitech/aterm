@@ -20,17 +20,24 @@ import (
 type ProcessData func([]byte, bool)
 
 func ExecutionEnvironment(policy ExecutionPolicy, overrides map[string]*string) []string {
+	normalizeName := func(name string) string {
+		if runtime.GOOS == "windows" {
+			return strings.ToUpper(name)
+		}
+		return name
+	}
 	env := map[string]string{}
 	for _, entry := range os.Environ() {
 		name, value, ok := strings.Cut(entry, "=")
 		if ok {
-			env[name] = value
+			env[normalizeName(name)] = value
 		}
 	}
 	for _, name := range append([]string{"ELECTRON_RUN_AS_NODE", "NODE_OPTIONS", "NODE_CHANNEL_FD", "ATERM_USER_DATA_DIR", "ATERM_DATA_DIR"}, policy.UnsetEnv...) {
-		delete(env, name)
+		delete(env, normalizeName(name))
 	}
 	for name, value := range overrides {
+		name = normalizeName(name)
 		if value == nil {
 			delete(env, name)
 		} else {
@@ -132,14 +139,48 @@ func RunLocalProcess(ctx context.Context, request ProcessRequest, policy Executi
 	if err != nil {
 		return ProcessResult{}, err
 	}
+	return runLocalExecutable(ctx, executable, request, policy, onData)
+}
+
+// PrepareLocalTerminal checks the same executable and environment that will
+// start in the PTY. The terminal lease, rather than the request context,
+// owns the interactive process after launch.
+func PrepareLocalTerminal(ctx context.Context, executable string, request ProcessRequest, policy ExecutionPolicy) (*exec.Cmd, error) {
+	for _, check := range request.Checks {
+		result, err := runLocalExecutable(ctx, executable, ProcessRequest{
+			Args: check.Args, Env: request.Env, TimeoutMS: 5000, MaxOutputBytes: 8192,
+		}, policy, nil)
+		if err != nil {
+			return nil, err
+		}
+		if result.ExitCode == nil || *result.ExitCode != 0 || (result.Truncated != nil && *result.Truncated) ||
+			strings.TrimRight(result.Stdout, "\r\n") != check.Stdout {
+			return nil, errors.New("Plugin terminal precondition failed. Reconnect the tool before retrying.")
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	command := exec.Command(executable, request.Args...)
+	command.Env = ExecutionEnvironment(policy, request.Env)
+	command.Dir = localProcessDirectory()
+	return command, nil
+}
+
+func localProcessDirectory() string {
+	if runtime.GOOS == "windows" {
+		home, _ := os.UserHomeDir()
+		return home
+	}
+	return "/"
+}
+
+func runLocalExecutable(ctx context.Context, executable string, request ProcessRequest, policy ExecutionPolicy, onData ProcessData) (ProcessResult, error) {
 	childCtx, cancel := processContext(ctx, request, onData != nil)
 	defer cancel()
 	command := exec.CommandContext(childCtx, executable, request.Args...)
 	command.Env = ExecutionEnvironment(policy, request.Env)
-	command.Dir = "/"
-	if runtime.GOOS == "windows" {
-		command.Dir, _ = os.UserHomeDir()
-	}
+	command.Dir = localProcessDirectory()
 	cleanupProcess := configureProcess(command)
 	defer cleanupProcess()
 	limit := request.MaxOutputBytes
@@ -151,7 +192,7 @@ func RunLocalProcess(ctx context.Context, request ProcessRequest, policy Executi
 	var outputErr error
 	command.Stdout = collectWriter{output: output, cancel: cancel, onData: onData, mu: &mu, fault: &outputErr}
 	command.Stderr = collectWriter{output: output, stderr: true, cancel: cancel, onData: onData, mu: &mu, fault: &outputErr}
-	err = command.Run()
+	err := command.Run()
 	if outputErr != nil {
 		return ProcessResult{}, outputErr
 	}

@@ -33,6 +33,15 @@ func TestMain(m *testing.M) {
 		return
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--run-plugin-acceptance" {
+		if path := os.Getenv("ATERM_FIXTURE_LOG"); path != "" {
+			log, err := os.Create(path)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			os.Stdout, os.Stderr = log, log
+			defer log.Close()
+		}
 		if err := checkAcceptanceEnvironment(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -43,26 +52,34 @@ func TestMain(m *testing.M) {
 }
 
 type acceptanceNotice struct {
-	Type          string
-	State         string
-	Metric        string
-	Title         string
-	Value         string
-	OpaqueOrigin  bool
-	ParentBlocked bool
-	RuntimeAbsent bool
-	Items         int
-	History       int
-	CPUValid      bool
-	Network       string
-	Selected      string
-	Sections      int
-	Trends        int
+	Type            string
+	State           string
+	Metric          string
+	Title           string
+	Value           string
+	OpaqueOrigin    bool
+	ParentBlocked   bool
+	RuntimeAbsent   bool
+	Items           int
+	History         int
+	CPUValid        bool
+	Network         string
+	Selected        string
+	Sections        int
+	Trends          int
+	DockerAvailable bool
+	DockerLog       bool
 }
 
 // Run with an isolated ATERM_DATA_DIR, a fixture SSH identity and the
 // two packages produced by scripts/plugin-prototype/build.mjs --ssh.
 func checkAcceptanceEnvironment() error {
+	if os.Getenv("ATERM_FIXTURE_DOCKER_PACKAGE") != "" && os.Getenv("ATERM_FIXTURE_HOST") == "" {
+		if !filepath.IsAbs(os.Getenv("ATERM_DATA_DIR")) || !filepath.IsAbs(os.Getenv("ATERM_FIXTURE_ASSETS")) {
+			return fmt.Errorf("set absolute fixture profile and assets paths")
+		}
+		return runDesktopPluginAcceptance(0)
+	}
 	for _, name := range []string{"ATERM_DATA_DIR", "ATERM_FIXTURE_KEY", "ATERM_FIXTURE_PACKAGES", "ATERM_FIXTURE_ASSETS"} {
 		if !filepath.IsAbs(os.Getenv(name)) {
 			return fmt.Errorf("set %s to an absolute path", name)
@@ -89,7 +106,8 @@ func runDesktopPluginAcceptance(port int) error {
 		Assets: application.AssetOptions{Handler: assets, Middleware: func(next http.Handler) http.Handler {
 			desktop := a.desktopAssetMiddleware(next)
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if verifyFullView.Load() && strings.HasPrefix(r.URL.Path, plugins.ViewPath) {
+				dockerView := os.Getenv("ATERM_FIXTURE_DOCKER_PACKAGE") != ""
+				if (verifyFullView.Load() || dockerView) && strings.HasPrefix(r.URL.Path, plugins.ViewPath) {
 					record := httptest.NewRecorder()
 					desktop.ServeHTTP(record, r)
 					for key, values := range record.Header() {
@@ -98,7 +116,11 @@ func runDesktopPluginAcceptance(port int) error {
 					w.WriteHeader(record.Code)
 					_, _ = w.Write(record.Body.Bytes())
 					if record.Code == http.StatusOK {
-						_, _ = fmt.Fprint(w, fullResourceViewObserver)
+						observer := fullResourceViewObserver
+						if dockerView {
+							observer = dockerViewObserver
+						}
+						_, _ = fmt.Fprint(w, observer)
 					}
 					return
 				}
@@ -132,7 +154,11 @@ func runDesktopPluginAcceptance(port int) error {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-			fmt.Println("PASS same desktop host, Linux SSH, revoke and two package versions")
+			if os.Getenv("ATERM_FIXTURE_DOCKER_PACKAGE") != "" {
+				fmt.Println("PASS Docker desktop acceptance")
+			} else {
+				fmt.Println("PASS same desktop host, Linux SSH, revoke and two package versions")
+			}
 			result <- nil
 			app.Quit()
 		}()
@@ -166,16 +192,7 @@ func verifyDesktopPluginAcceptance(a *App, window application.Window, notices <-
 			return false
 		}
 	})
-	alias := fmt.Sprintf("linux-plugin-fixture-%d", time.Now().UnixNano())
-	host, err := a.CreateHost(service.HostInput{Alias: alias, HostName: os.Getenv("ATERM_FIXTURE_HOST"), User: "probe", Port: port, IdentityFile: os.Getenv("ATERM_FIXTURE_KEY")})
-	if err != nil {
-		return err
-	}
-	entry, err := a.terminal.OpenSSH(alias, terminal.LaunchOptions{}, func(ctx context.Context, _ string) (*service.NativeSSHClient, service.Host, error) {
-		return a.svc.OpenNativeSSHWithHostKeyConfirmer(ctx, host.Alias, func(_ context.Context, key service.HostKeyInfo) (bool, error) {
-			return slices.Contains(strings.Split(os.Getenv("ATERM_FIXTURE_FINGERPRINT"), ","), key.Fingerprint), nil
-		})
-	})
+	entry, err := openAcceptanceSession(ctx, a, port)
 	if err != nil {
 		return err
 	}
@@ -210,6 +227,8 @@ func verifyDesktopPluginAcceptance(a *App, window application.Window, notices <-
 		      type: 'status', state: status.state, value: status.items?.[0]?.value, title: status.items?.[0]?.label,
 		      items: status.items?.length, history: history?.length, cpuValid: typeof resources?.cpu?.usage === 'number',
 		      network: resources?.network?.[0]?.name, selected: preference?.network,
+		      dockerAvailable: status.views?.['docker.containers']?.available,
+		      dockerLog: status.data?.dockerLogs?.text.includes("aterm-docker-migration-log"),
 		    })
 		  })
 		  await emit({type: 'listening'})
@@ -235,6 +254,9 @@ func verifyDesktopPluginAcceptance(a *App, window application.Window, notices <-
 		return err
 	}
 
+	if os.Getenv("ATERM_FIXTURE_DOCKER_PACKAGE") != "" {
+		return verifyDockerAcceptance(ctx, a, window, entry.ID, approvals, await)
+	}
 	consumer := "acceptance"
 	for i, version := range []string{"0.0.1", "0.0.2"} {
 		pkg, err := plugins.InspectArchive(filepath.Join(os.Getenv("ATERM_FIXTURE_PACKAGES"), "resource-monitor-"+version+".aterm-plugin"))
@@ -419,3 +441,19 @@ const fullResourceViewObserver = `<script>
   observer.observe(document.documentElement, {childList: true, subtree: true})
 }
 </script>`
+
+func openAcceptanceSession(ctx context.Context, a *App, port int) (terminal.Session, error) {
+	if port == 0 {
+		return a.OpenLocalTerminal()
+	}
+	alias := fmt.Sprintf("linux-plugin-fixture-%d", time.Now().UnixNano())
+	host, err := a.CreateHost(service.HostInput{Alias: alias, HostName: os.Getenv("ATERM_FIXTURE_HOST"), User: "probe", Port: port, IdentityFile: os.Getenv("ATERM_FIXTURE_KEY")})
+	if err != nil {
+		return terminal.Session{}, err
+	}
+	return a.terminal.OpenSSH(alias, terminal.LaunchOptions{}, func(ctx context.Context, _ string) (*service.NativeSSHClient, service.Host, error) {
+		return a.svc.OpenNativeSSHWithHostKeyConfirmer(ctx, host.Alias, func(_ context.Context, key service.HostKeyInfo) (bool, error) {
+			return slices.Contains(strings.Split(os.Getenv("ATERM_FIXTURE_FINGERPRINT"), ","), key.Fingerprint), nil
+		})
+	})
+}

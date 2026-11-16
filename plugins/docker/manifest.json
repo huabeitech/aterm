@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "huabei.docker",
+  "name": "Docker",
+  "version": "1.7.0",
+  "runtime": "sandbox",
+  "entry": "plugin.js",
+  "engines": {
+    "hostApi": 1
+  },
+  "permissions": ["process.execute", "terminal.create"],
+  "contributes": {
+    "commands": [
+      {
+        "id": "docker.request",
+        "title": "Docker"
+      },
+      {
+        "id": "docker.logs",
+        "title": "Docker logs"
+      }
+    ],
+    "views": [
+      {
+        "id": "docker.containers",
+        "title": "Docker",
+        "entry": "ui/containers.html",
+        "placement": "terminal.workspace",
+        "availability": "dynamic"
+      }
+    ]
+  },
+  "execution": {
+    "programs": ["docker"],
+    "env": ["DOCKER_API_VERSION"],
+    "targets": ["local", "ssh"],
+    "unsetEnv": ["DOCKER_HOST", "DOCKER_CONTEXT"]
+  },
+  "i18n": {
+    "defaultLocale": "en",
+    "locales": {
+      "en": "locales/en.json",
+      "zh-CN": "locales/zh-CN.json",
+      "zh-TW": "locales/zh-TW.json"
+    }
+  }
+}

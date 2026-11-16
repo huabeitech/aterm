@@ -19,64 +19,69 @@ func (a *App) openPluginTerminal(ctx context.Context, owner uint, source desktop
 	if err = ctx.Err(); err != nil {
 		return "", err
 	}
-	executable := request.Executable
-	if source.Kind == "local" {
-		if !service.LocalTerminalAvailable() {
-			return "", errors.New("local terminals are unavailable in this edition")
-		}
-		executable, err = desktopplugins.ResolveExecutable(request.Executable)
-		if err != nil {
-			return "", err
-		}
-	}
-	command, err := desktopplugins.TerminalCommand(request, policy, executable)
-	if err != nil {
-		return "", err
-	}
 	title := request.Title
 	if title == "" {
 		title = request.Executable
 	}
-	options := terminal.LaunchOptions{Title: title, InitialCommand: command}
-	var session terminal.Session
 	if source.Kind == "local" {
-		if err = ctx.Err(); err != nil {
+		if !service.LocalTerminalAvailable() {
+			return "", errors.New("local terminals are unavailable in this edition")
+		}
+		executable, err := desktopplugins.ResolveExecutable(request.Executable)
+		if err != nil {
 			return "", err
 		}
-		session, err = a.terminal.OpenLocalShellWithOptions(options)
-	} else {
-		hosts, readErr := a.ListHosts()
-		if readErr != nil {
-			return "", readErr
-		}
-		var selected *service.Host
-		for _, host := range hosts {
-			if host.ID == source.Target.ID {
-				target := pluginHostTarget(host)
-				if target != source.Target {
-					return "", errors.New("connection settings changed; reconnect before opening a plugin terminal")
-				}
-				copy := host
-				selected = &copy
-				break
-			}
-		}
-		if selected == nil {
-			return "", errors.New("connection settings changed; reconnect before opening a plugin terminal")
-		}
-		options.HostID = selected.ID
-		if err = ctx.Err(); err != nil {
+		command, err := desktopplugins.PrepareLocalTerminal(ctx, executable, request, policy)
+		if err != nil {
 			return "", err
 		}
-		alias := selected.Alias
-		session, err = a.terminal.OpenSSH(alias, options, func(connectCtx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
-			return a.svc.OpenNativeSSHHostWithInteraction(connectCtx, *selected, a.hostKeyConfirmer(id), a.credentialPrompter(id))
-		})
+		session, err := a.terminal.OpenLocalProgram(command, title)
+		if err != nil {
+			return "", err
+		}
+		if err := ctx.Err(); err != nil {
+			_ = a.CloseTerminal(session.ID)
+			return "", err
+		}
+		a.terminal.Present(session.ID, "", true)
+		return session.ID, nil
 	}
+	command, err := desktopplugins.TerminalCommand(request, policy, request.Executable)
 	if err != nil {
 		return "", err
 	}
-	a.terminal.Present(session.ID, options.HostID, source.Kind == "local")
+	options := terminal.LaunchOptions{Title: title, InitialCommand: command}
+	hosts, readErr := a.ListHosts()
+	if readErr != nil {
+		return "", readErr
+	}
+	var selected *service.Host
+	for _, host := range hosts {
+		if host.ID == source.Target.ID {
+			target := pluginHostTarget(host)
+			if target != source.Target {
+				return "", errors.New("connection settings changed; reconnect before opening a plugin terminal")
+			}
+			copy := host
+			selected = &copy
+			break
+		}
+	}
+	if selected == nil {
+		return "", errors.New("connection settings changed; reconnect before opening a plugin terminal")
+	}
+	options.HostID = selected.ID
+	if err = ctx.Err(); err != nil {
+		return "", err
+	}
+	alias := selected.Alias
+	session, err := a.terminal.OpenSSH(alias, options, func(connectCtx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
+		return a.svc.OpenNativeSSHHostWithInteraction(connectCtx, *selected, a.hostKeyConfirmer(id), a.credentialPrompter(id))
+	})
+	if err != nil {
+		return "", err
+	}
+	a.terminal.Present(session.ID, options.HostID, false)
 	if err = ctx.Err(); err != nil {
 		_ = a.CloseTerminal(session.ID)
 		return "", err
