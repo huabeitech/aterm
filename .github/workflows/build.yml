@@ -18,8 +18,18 @@ concurrency:
 
 jobs:
   macos:
-    name: macOS Apple Silicon
-    runs-on: macos-15
+    name: macOS ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Apple Silicon
+            runner: macos-15
+            arch: arm64
+          - platform: Intel
+            runner: macos-15-intel
+            arch: x86_64
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -27,7 +37,9 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Verify build architecture
-        run: test "$(uname -m)" = arm64
+        env:
+          BUILD_ARCH: ${{ matrix.arch }}
+        run: test "$(uname -m)" = "$BUILD_ARCH"
       - name: Build and verify application
         env:
           NODE_OPTIONS: --max-old-space-size=4096
@@ -35,14 +47,18 @@ jobs:
       - name: Package test application
         id: package
         shell: bash
+        env:
+          BUILD_ARCH: ${{ matrix.arch }}
         run: |
           app_name="$(python3 scripts/sync-build-metadata.py --print-field productName)"
-          archive="${app_name}-macos-arm64-${GITHUB_SHA:0:12}.zip"
+          app="build/bin/${app_name}.app"
+          test "$(lipo -archs "$app/Contents/MacOS/$app_name")" = "$BUILD_ARCH"
+          archive="${app_name}-macos-${BUILD_ARCH}-${GITHUB_SHA:0:12}.zip"
           mkdir -p build/artifacts
-          ditto -c -k --sequesterRsrc --keepParent "build/bin/${app_name}.app" "build/artifacts/${archive}"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "build/artifacts/${archive}"
           (cd build/artifacts && shasum -a 256 "$archive" > "$archive.sha256")
           echo "name=${archive%.zip}" >> "$GITHUB_OUTPUT"
-          echo "### macOS test build" >> "$GITHUB_STEP_SUMMARY"
+          echo "### macOS test build ($BUILD_ARCH)" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo 'Download the artifact below. This ad-hoc signed test build is not notarized and may be blocked by Gatekeeper.' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload test application
