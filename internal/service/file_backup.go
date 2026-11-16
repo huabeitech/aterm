@@ -222,6 +222,7 @@ func (s *SyncService) installIncomingWorkspace(ctx context.Context, data []byte,
 	if err = fsutil.AtomicWriteFile(s.localVaultPath, data, 0600); err != nil {
 		return installedWorkspace{}, err
 	}
+	s.TunnelService.manager.StopAll()
 	err = ctx.Err()
 	if err == nil {
 		err = s.importVaultPayloadWithMetadata(data, opened.Payload, key, opened.VaultID, opened.Revision, metadata)
@@ -235,6 +236,7 @@ func (s *SyncService) installIncomingWorkspace(ctx context.Context, data []byte,
 		}
 		return installedWorkspace{}, errors.Join(err, rollback)
 	}
+	s.TunnelService.changed()
 	s.repairAfterUnlock(key, data)
 	completed := time.Now().UTC().Format(time.RFC3339Nano)
 	s.setVaultSessionLastDownload(completed)

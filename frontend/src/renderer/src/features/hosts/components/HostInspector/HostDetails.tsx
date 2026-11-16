@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { t, i18n } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -12,10 +13,12 @@ import { DetailSection } from './DetailSection'
 export function HostDetails({
   host,
   directoryName,
+  onOpenTunnels,
   onGetHostPassword
 }: {
   host: domain.Host
   directoryName: string
+  onOpenTunnels: () => void
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
@@ -41,6 +44,9 @@ export function HostDetails({
             {host.proxyJump || t('hosts:directConnection')}
           </DetailRow>
         </dl>
+      </DetailSection>
+      <DetailSection title="SSH tunnels">
+        <Button variant="outline" size="sm" onClick={onOpenTunnels}>Manage tunnels</Button>
       </DetailSection>
       <DetailSection title={t('hosts:authentication')}>
         <dl className="host-details-table overflow-hidden rounded-md border border-border">

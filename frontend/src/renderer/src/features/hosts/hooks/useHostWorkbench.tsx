@@ -52,7 +52,8 @@ const emptyForm: FormState = {
 }
 export function useHostWorkbench(
   connectHost: (id: string) => void,
-  openFiles: (id: string) => void
+  openFiles: (id: string) => void,
+  openTunnels: (id: string) => void
 ) {
   useTranslation()
   const { modal, message, notification } = useAppUI()
@@ -310,6 +311,7 @@ export function useHostWorkbench(
         onCopySSHCommand={() => host && void copySSHCommand(host.id)}
         onToggleFavorite={() => host && void editor.toggleFavoriteHost(host.id)}
         onStartCreate={editor.startCreate}
+        onOpenTunnels={() => { if (host) { setInspectorOpen(false); openTunnels(host.id) } }}
         onGetHostPassword={getPassword}
       />
     )

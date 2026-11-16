@@ -104,6 +104,14 @@ async function invokeFileEditor(operation: string, ...args: unknown[]) {
 }
 const subscribeTerminal = terminalEvents((dispatch) => subscribe(channels.terminalEvent, dispatch))
 const desktop: DesktopApi = {
+  tunnels: {
+    list: () => invokeRequest(channels.tunnels, 'list'),
+    save: (id, input) => invokeRequest(channels.tunnels, 'save', id, input),
+    start: (id) => invokeRequest(channels.tunnels, 'start', id),
+    stop: (id) => invokeRequest(channels.tunnels, 'stop', id),
+    delete: (id) => invokeRequest(channels.tunnels, 'delete', id),
+    onChanged: (callback) => subscribe(channels.tunnelsChanged, callback)
+  },
   confirmations: {
     onEvent: (callback) => subscribe(channels.confirmationEvent, callback),
     answer: (id, choice) => invokeRequest(channels.confirmationAnswer, id, choice)

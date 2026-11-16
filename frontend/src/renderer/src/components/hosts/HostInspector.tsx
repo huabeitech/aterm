@@ -28,6 +28,7 @@ type HostInspectorPanelProps = {
   onSave: () => void
   onStartEdit: () => void
   onConnect: () => void
+  onOpenTunnels: () => void
   onOpenFiles: () => void
   onCopySSHCommand: () => void
   onToggleFavorite: () => void
@@ -53,6 +54,7 @@ export function HostInspectorPanel({
   onSave,
   onStartEdit,
   onConnect,
+  onOpenTunnels,
   onOpenFiles,
   onCopySSHCommand,
   onToggleFavorite,
@@ -122,6 +124,7 @@ export function HostInspectorPanel({
         ) : host ? (
           <HostDetails
             host={host}
+            onOpenTunnels={onOpenTunnels}
             directoryName={directoryName}
             onGetHostPassword={onGetHostPassword}
           />

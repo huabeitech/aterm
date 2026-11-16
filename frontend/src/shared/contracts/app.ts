@@ -7,6 +7,8 @@ import type { LibraryApi } from './library'
 import type { Preferences } from './preferences'
 import type { Command } from './commands'
 export const channels = {
+  tunnels: 'tunnels:request',
+  tunnelsChanged: 'tunnels:changed',
   plugins: 'plugins:manage',
   pluginsChanged: 'plugins:changed',
   pluginStatus: 'plugins:status',
@@ -53,6 +55,7 @@ export interface Bootstrap {
   recoveryNotice: string | null
 }
 export interface DesktopApi {
+  tunnels: import('./tunnels').TunnelsApi
   plugins: import('./plugins').PluginsApi
   themes: import('./themePackages').ThemesApi
   onLocaleChanged: (callback: (state: import('./locale').LocaleState) => void) => () => void

@@ -117,6 +117,7 @@ func TestOpenAppliesSecondMigrationToVersionOneDatabase(t *testing.T) {
 	_, err = raw.Exec(`
 CREATE TABLE migrations (version INTEGER PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP);
 INSERT INTO migrations (version) VALUES (1);
+CREATE TABLE hosts (id TEXT PRIMARY KEY);
 CREATE TABLE app_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   theme TEXT NOT NULL DEFAULT 'system'

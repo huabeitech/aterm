@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'
-import { LoaderCircle } from 'lucide-react'
+import { Cable, LoaderCircle } from 'lucide-react'
 import { SidebarUtilityIcon } from './SidebarUtilityIcon'
 import { ConnectionTree, type ConnectionTreeProps } from './ConnectionTree'
 import { DIRECTORY_NAME_MAX_LENGTH, validateDirectoryName } from '../common/directoryValidation'
@@ -28,6 +28,9 @@ type SourceSidebarProps = ConnectionTreeProps & {
   onCancelDirectoryEditor: () => void
   syncStatus: domain.EncryptedSyncStatus | null
   quickBackupPhase: 'authorizing' | 'uploading' | null
+  onOpenTunnels: () => void
+  runningTunnels: number
+  failedTunnels: number
   onOpenSettings: () => void
   onBackUpToICloud: () => void
   onExportOpenSSHConfig: () => void
@@ -69,6 +72,11 @@ export function SourceSidebar(props: SourceSidebarProps) {
     <>
       <ConnectionTree {...props} />
       <nav className="sidebar-utilities" aria-label={t('hosts:application')}>
+        <button type="button" className="sidebar-utility-button sidebar-utility-tunnels" onClick={props.onOpenTunnels} aria-label={`SSH tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`}>
+          <Cable size={16} aria-hidden="true" /><span>SSH tunnels</span>
+          {props.runningTunnels > 0 && <span className="ml-auto text-xs text-muted-foreground">{props.runningTunnels} active</span>}
+          {props.failedTunnels > 0 && <span className="text-xs text-destructive">{props.failedTunnels} failed</span>}
+        </button>
         <div className="sidebar-utilities-toolbar">
           <button
             type="button"

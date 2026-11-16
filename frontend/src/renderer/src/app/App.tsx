@@ -1,3 +1,5 @@
+import { TunnelsDialog } from '../features/tunnels/TunnelsDialog'
+import { useTunnels } from '../features/tunnels/useTunnels'
 import type { FileTarget } from '../../../shared/contracts/files'
 import { hasRemoteConnection, remoteFileTarget } from '../../../shared/contracts/terminal'
 import { useThemeRevision, themePreferences, effectiveAppTheme } from './themeRegistry'
@@ -123,6 +125,8 @@ function Workbench({
   )
   const sidebar = useConnectionSidebar()
   const [searchOpen, setSearchOpen] = useState(false)
+  const [tunnelsHostID, setTunnelsHostID] = useState<string | null>(null)
+  const tunnels = useTunnels()
   const [searchRequest, setSearchRequest] = useState({ query: '', serial: 0 })
   const searchOpenRef = useRef(false)
   const searchOrigin = useRef<HTMLElement | null>(null)
@@ -142,7 +146,8 @@ function Workbench({
   )
   const library = useHostWorkbench(
     (id) => void terminal.open({ kind: 'ssh', hostID: id }),
-    (id) => void openFiles(id)
+    (id) => void openFiles(id),
+    (id) => setTunnelsHostID(id)
   )
   const files = useFilesWorkbench(
     library.unlockForConnection,
@@ -406,6 +411,7 @@ function Workbench({
   const activeIndex = tabs.workspaceTabs.findIndex((tab) => tab.id === tabs.activeWorkspaceTab)
   const features = platformFeatures(bootstrap.info.platform)
   const paletteCommands: PaletteCommand[] = [
+    { id: 'ssh-tunnels', label: 'SSH tunnels', keywords: 'tunnel forwarding port 隧道 转发', run: () => setTunnelsHostID('') },
     {
       id: 'connect-ssh',
       label: t('commands:connectSsh'),
@@ -680,6 +686,9 @@ function Workbench({
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}
+            onOpenTunnels={() => setTunnelsHostID('')}
+            runningTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'running' || tunnel.state === 'starting').length}
+            failedTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'failed').length}
             onOpenSettings={openSettings}
             onBackUpToICloud={() => integration.backup()}
             onExportOpenSSHConfig={integration.exportSSH}
@@ -738,6 +747,7 @@ function Workbench({
           </>
         }
       />
+      {tunnelsHostID !== null && <TunnelsDialog {...tunnels} hosts={library.hosts} initialHostID={tunnelsHostID} unlock={library.unlockForConnection} onClose={() => setTunnelsHostID(null)} />}
       {library.overlays}
       {terminal.dialogs}
       {searchOpen && (

@@ -139,6 +139,7 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 
 	a.svc = service.NewAppService(service.AppServiceOptions{
 		Store:               store,
+		TunnelChanged:       func() { a.emitEvent("tunnels:changed", nil) },
 		HostKeyStorePath:    filepath.Join(paths.appSupportDir, "ssh-host-keys.json"),
 		PasswordStore:       secretStore,
 		IdentityReader:      func(identity string) ([]byte, error) { return a.desktopKeys.ReadIdentity(identity) },
@@ -211,6 +212,9 @@ func (a *App) ServiceShutdown() error {
 	}
 	if a.desktopPluginRuntime != nil {
 		a.desktopPluginRuntime.Close()
+	}
+	if a.svc != nil {
+		a.svc.CloseTunnels()
 	}
 	if a.desktopPrompts != nil {
 		a.desktopPrompts.Close()

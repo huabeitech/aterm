@@ -8,6 +8,7 @@ aTerm is a terminal application built for server management, with a focus on SSH
 
 - **Host management** — organize connections in directories, search hosts, and import SSH connection settings.
 - **SSH terminals** — work with tabbed connections, split terminal layouts, managed SSH keys, and jump hosts.
+- **SSH tunnels** — save and control local port forwarding for private services, reuse jump hosts, and keep tunnels running independently of terminal tabs.
 - **Remote files** — browse files over SFTP, upload and download files, track transfers, and edit remote text files with Monaco Editor.
 - **Local terminals** — open a local shell alongside remote connections.
 - **Workspace extensions** — install and manage plugins with permission controls.
@@ -24,6 +25,10 @@ Open local shells and SSH sessions side by side. Use tabs to switch between conn
 ## Keep servers organized
 
 Group connections into directories and find hosts with search. Import SSH connection settings, manage SSH keys, and connect through jump hosts.
+
+## Access private services
+
+Open **SSH tunnels** in the sidebar or **Manage tunnels** in a host’s details. Save a local address and port, select an SSH host, and enter the target address as reached from that host. Start the tunnel and connect your browser or database tool to the local address. Tunnels stop when aTerm quits; saved configurations are included in encrypted backups. See [SSH tunnel management](docs/ssh-tunnels.md) for lifecycle and troubleshooting details.
 
 ## Work with remote files
 

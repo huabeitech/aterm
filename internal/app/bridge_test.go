@@ -9,8 +9,10 @@ import (
 	"ssh-connect/internal/desktop"
 	desktopkeys "ssh-connect/internal/desktop/keys"
 	desktopplugins "ssh-connect/internal/desktop/plugins"
+	"ssh-connect/internal/domain"
 	"ssh-connect/internal/service"
 	"ssh-connect/internal/terminal"
+	"ssh-connect/internal/tunnel"
 	"testing"
 	"time"
 )
@@ -333,5 +335,43 @@ func TestDesktopLanguagePersistsAndBootstraps(t *testing.T) {
 	saved, err := app.desktopPreferences()
 	if err != nil || saved["language"] != "en" {
 		t.Fatalf("invalid save changed preferences: %v %v", saved, err)
+	}
+}
+
+func TestDesktopTunnelRoutesValidatePersistAndProtectHosts(t *testing.T) {
+	app := bridgeFixture(t)
+	defer app.svc.CloseTunnels()
+	host, err := app.store.CreateHost(service.HostInput{Alias: "tunnel-host", HostName: "127.0.0.1", Port: 22})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := domain.TunnelInput{Name: "Database", HostID: host.ID, LocalAddress: "127.0.0.1", LocalPort: 13306, TargetAddress: "db.internal", TargetPort: 3306}
+	raw, err := app.DesktopRequest(app.ctx, "tunnels:request", bridgeArguments(t, "save", "", input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := raw.(domain.Tunnel)
+	raw, err = app.DesktopRequest(app.ctx, "tunnels:request", bridgeArguments(t, "list"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	statuses := raw.([]tunnel.Status)
+	if len(statuses) != 1 || statuses[0].ID != config.ID || statuses[0].State != "stopped" {
+		t.Fatalf("statuses = %+v", statuses)
+	}
+	if _, err := app.DesktopRequest(app.ctx, "library:request", bridgeArguments(t, "deleteHosts", []string{host.ID})); err == nil {
+		t.Fatal("deleted host referenced by tunnel")
+	}
+	if _, err := app.DesktopRequest(app.ctx, "tunnels:request", bridgeArguments(t, "save", config.ID)); err == nil {
+		t.Fatal("accepted missing input")
+	}
+	if _, err := app.DesktopRequest(app.ctx, "tunnels:request", bridgeArguments(t, "unexpected", config.ID)); err == nil {
+		t.Fatal("accepted unknown operation")
+	}
+	if _, err := app.DesktopRequest(app.ctx, "tunnels:request", bridgeArguments(t, "delete", config.ID)); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.DeleteHosts([]string{host.ID}); err != nil {
+		t.Fatal(err)
 	}
 }

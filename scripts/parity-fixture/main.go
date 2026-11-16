@@ -14,20 +14,25 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"context"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"ssh-connect/internal/db"
 	"ssh-connect/internal/desktop/terminalmeta"
 	"ssh-connect/internal/domain"
+	"ssh-connect/internal/service"
 )
 
 func main() {
+	tunnels := flag.Bool("tunnels", false, "seed a disposable HTTP target and a tunnel reached through a jump host")
 	profile := flag.String("profile", "", "new disposable profile under the system temporary directory")
 	remoteCwd := flag.String("cwd", "", "fixture remote cwd reported to metadata probes")
 	trustMode := flag.String("trust", "known", "fixture host trust: known, unknown or changed")
@@ -132,8 +137,41 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if _, err := store.CreateHost(domain.HostInput{Alias: "parity-sftp", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity}); err != nil {
+	host, err := store.CreateHost(domain.HostInput{Alias: "parity-sftp", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity})
+	if err != nil {
 		log.Fatal(err)
+	}
+	if *tunnels {
+		jumpHost, err := store.CreateHost(domain.HostInput{Alias: "parity-jump", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity, JumpHostID: host.ID})
+		if err != nil {
+			log.Fatal(err)
+		}
+		target, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatal(err)
+		}
+		go http.Serve(target, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, "aTerm tunnel fixture reached through SSH")
+		}))
+		local, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatal(err)
+		}
+		localPort := local.Addr().(*net.TCPAddr).Port
+		local.Close()
+		tunnel, err := store.CreateTunnel(domain.TunnelInput{Name: "Fixture web service", HostID: jumpHost.ID, LocalAddress: "127.0.0.1", LocalPort: localPort, TargetAddress: "127.0.0.1", TargetPort: target.Addr().(*net.TCPAddr).Port})
+		if err != nil {
+			log.Fatal(err)
+		}
+		data, _ := json.MarshalIndent(tunnel, "", "  ")
+		if err := os.WriteFile(filepath.Join(*profile, "tunnel-fixture.json"), data, 0600); err != nil {
+			log.Fatal(err)
+		}
+		vault := service.NewAppService(service.AppServiceOptions{Store: store, PasswordStore: fixtureSecrets{}, DatabasePath: database, LocalVaultPath: filepath.Join(*profile, "vault.enc")})
+		if _, err := vault.SetUpSecureData(context.Background(), "fixture-vault-password"); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Tunnel fixture: local=http://127.0.0.1:%d target=%s via=%s\n", localPort, target.Addr(), jumpHost.Alias)
 	}
 	store.Close()
 	handlers := sftp.InMemHandler()
@@ -181,6 +219,10 @@ func serve(connection net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers
 	defer server.Close()
 	go ssh.DiscardRequests(requests)
 	for request := range channels {
+		if request.ChannelType() == "direct-tcpip" {
+			go forwardFixtureTCP(request)
+			continue
+		}
 		if request.ChannelType() != "session" {
 			request.Reject(ssh.UnknownChannelType, "fixture accepts session channels only")
 			continue
@@ -228,3 +270,47 @@ func serve(connection net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers
 		}()
 	}
 }
+
+// This fixture only permits loopback targets and never connects to external hosts.
+func forwardFixtureTCP(request ssh.NewChannel) {
+	var destination struct {
+		Host       string
+		Port       uint32
+		Origin     string
+		OriginPort uint32
+	}
+	if err := ssh.Unmarshal(request.ExtraData(), &destination); err != nil || !net.ParseIP(destination.Host).IsLoopback() || destination.Port == 0 || destination.Port > 65535 {
+		request.Reject(ssh.Prohibited, "only loopback TCP targets are allowed")
+		return
+	}
+	remote, err := net.DialTimeout("tcp", net.JoinHostPort(destination.Host, strconv.Itoa(int(destination.Port))), 5*time.Second)
+	if err != nil {
+		request.Reject(ssh.ConnectionFailed, err.Error())
+		return
+	}
+	channel, requests, err := request.Accept()
+	if err != nil {
+		remote.Close()
+		return
+	}
+	defer channel.Close()
+	defer remote.Close()
+	go ssh.DiscardRequests(requests)
+	done := make(chan struct{})
+	go func() { io.Copy(remote, channel); remote.(*net.TCPConn).CloseWrite(); close(done) }()
+	io.Copy(channel, remote)
+	channel.CloseWrite()
+	<-done
+}
+
+// Disposable credentials stay in memory and never touch the system Keychain.
+type fixtureSecrets map[string]string
+
+func (s fixtureSecrets) Get(id string) (string, error) {
+	if value, ok := s[id]; ok {
+		return value, nil
+	}
+	return "", service.ErrPasswordNotFound
+}
+func (s fixtureSecrets) Set(id, value string) error { s[id] = value; return nil }
+func (s fixtureSecrets) Delete(id string) error     { delete(s, id); return nil }

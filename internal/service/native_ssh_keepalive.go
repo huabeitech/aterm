@@ -201,3 +201,16 @@ func preferNativeSSHCause(client *NativeSSHClient, err error) error {
 	}
 	return err
 }
+
+// DialContext and Wait allow non-terminal capabilities to own an SSH transport.
+func (c *NativeSSHClient) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return c.client.DialContext(ctx, network, address)
+}
+
+func (c *NativeSSHClient) Wait() error {
+	err := c.client.Wait()
+	if cause := c.Cause(); cause != nil {
+		return cause
+	}
+	return err
+}

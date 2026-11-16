@@ -128,7 +128,7 @@ func (a *App) confirmBackupRestore(metadata service.SyncMetadata) bool {
 	if date == "" {
 		date = "Unknown date"
 	}
-	return a.confirmBackupAction("Restore Encrypted Backup", fmt.Sprintf("Replace saved connections and protected data with this backup?\n\nSource: %s\nDate: %s\nHosts: %d\nFolders: %d", source, date, metadata.HostCount, metadata.DirectoryCount), "Restore")
+	return a.confirmBackupAction("Restore Encrypted Backup", fmt.Sprintf("Replace saved connections, tunnels, and protected data with this backup? Running tunnels will be stopped.\n\nSource: %s\nDate: %s\nHosts: %d\nFolders: %d", source, date, metadata.HostCount, metadata.DirectoryCount), "Restore")
 }
 func (a *App) confirmBackupAction(title, message, action string) bool {
 	return a.confirmAction(a.ctx, windowConfirmation{

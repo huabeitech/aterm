@@ -47,15 +47,19 @@ func (s *Store) ExportHostConfigSnapshot(path string) (domain.SyncSnapshotInfo, 
 	if err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
-	return writeHostConfigSnapshot(path, hosts, directories, sortOrders)
+	tunnels, err := s.ListTunnels()
+	if err != nil {
+		return domain.SyncSnapshotInfo{}, err
+	}
+	return writeHostConfigSnapshot(path, hosts, directories, sortOrders, tunnels)
 }
 
 // BuildHostConfigSnapshot writes an isolated, existing-schema snapshot without
 // modifying the live library or stripping legacy device-local identity paths.
 func (s *Store) BuildHostConfigSnapshot(path string, hosts []domain.Host, directories []domain.Directory, sortOrders []domain.HostSortOrder) (domain.SyncSnapshotInfo, error) {
-	return writeHostConfigSnapshot(path, hosts, directories, sortOrders)
+	return writeHostConfigSnapshot(path, hosts, directories, sortOrders, nil)
 }
-func writeHostConfigSnapshot(path string, hosts []domain.Host, directories []domain.Directory, sortOrders []domain.HostSortOrder) (domain.SyncSnapshotInfo, error) {
+func writeHostConfigSnapshot(path string, hosts []domain.Host, directories []domain.Directory, sortOrders []domain.HostSortOrder, tunnels []domain.Tunnel) (domain.SyncSnapshotInfo, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
@@ -103,6 +107,11 @@ func writeHostConfigSnapshot(path string, hosts []domain.Host, directories []dom
 		_ = raw.Close()
 		return domain.SyncSnapshotInfo{}, err
 	}
+	if err := insertTunnels(tx, tunnels); err != nil {
+		_ = tx.Rollback()
+		_ = raw.Close()
+		return domain.SyncSnapshotInfo{}, err
+	}
 	if err := tx.Commit(); err != nil {
 		_ = raw.Close()
 		return domain.SyncSnapshotInfo{}, err
@@ -117,7 +126,7 @@ func writeHostConfigSnapshot(path string, hosts []domain.Host, directories []dom
 	return domain.SyncSnapshotInfo{
 		HostCount:      len(hosts),
 		DirectoryCount: len(directories),
-		UpdatedAt:      latestHostConfigUpdatedAt(hosts, directories, sortOrders),
+		UpdatedAt:      latestHostConfigUpdatedAt(hosts, directories, sortOrders, tunnels),
 	}, nil
 }
 
@@ -125,6 +134,7 @@ type hostConfigSnapshot struct {
 	hosts       []domain.Host
 	directories []domain.Directory
 	sortOrders  []domain.HostSortOrder
+	tunnels     []domain.Tunnel
 }
 
 func readHostConfigSnapshot(path string) (hostConfigSnapshot, error) {
@@ -149,7 +159,25 @@ func readHostConfigSnapshot(path string) (hostConfigSnapshot, error) {
 		return hostConfigSnapshot{}, err
 	}
 
-	return hostConfigSnapshot{hosts: hosts, directories: directories, sortOrders: sortOrders}, nil
+	tunnels := []domain.Tunnel{}
+	if exists, err := tableExists(raw, "tunnels"); err != nil {
+		return hostConfigSnapshot{}, err
+	} else if exists {
+		tunnels, err = readTunnels(raw)
+		if err != nil {
+			return hostConfigSnapshot{}, err
+		}
+	}
+	byID := make(map[string]bool)
+	for _, host := range hosts {
+		byID[host.ID] = true
+	}
+	for _, t := range tunnels {
+		if t.ID == "" || !byID[t.HostID] {
+			return hostConfigSnapshot{}, fmt.Errorf("tunnel %q references an invalid SSH host", t.Name)
+		}
+	}
+	return hostConfigSnapshot{hosts: hosts, directories: directories, sortOrders: sortOrders, tunnels: tunnels}, nil
 }
 
 // ValidateHostConfigSnapshot parses and validates without mutating live tables.
@@ -158,7 +186,7 @@ func (s *Store) ValidateHostConfigSnapshot(path string) (domain.SyncSnapshotInfo
 	if err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
-	return domain.SyncSnapshotInfo{HostCount: len(snapshot.hosts), DirectoryCount: len(snapshot.directories), UpdatedAt: latestHostConfigUpdatedAt(snapshot.hosts, snapshot.directories, snapshot.sortOrders)}, nil
+	return domain.SyncSnapshotInfo{HostCount: len(snapshot.hosts), DirectoryCount: len(snapshot.directories), UpdatedAt: latestHostConfigUpdatedAt(snapshot.hosts, snapshot.directories, snapshot.sortOrders, snapshot.tunnels)}, nil
 }
 func (s *Store) ImportHostConfigSnapshot(path string) (domain.SyncSnapshotInfo, error) {
 	return s.ImportHostConfigSnapshotWithMetadata(path, nil)
@@ -171,7 +199,7 @@ func (s *Store) ImportHostConfigSnapshotWithMetadata(path string, metadata map[s
 	if err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
-	hosts, directories, sortOrders := snapshot.hosts, snapshot.directories, snapshot.sortOrders
+	hosts, directories, sortOrders, tunnels := snapshot.hosts, snapshot.directories, snapshot.sortOrders, snapshot.tunnels
 	tx, err := s.db.Begin()
 	if err != nil {
 		return domain.SyncSnapshotInfo{}, err
@@ -181,7 +209,7 @@ func (s *Store) ImportHostConfigSnapshotWithMetadata(path string, metadata map[s
 			_ = tx.Rollback()
 		}
 	}()
-	if _, err = tx.Exec(`DELETE FROM host_sort_orders; DELETE FROM hosts; DELETE FROM directories;`); err != nil {
+	if _, err = tx.Exec(`DELETE FROM tunnels; DELETE FROM host_sort_orders; DELETE FROM hosts; DELETE FROM directories;`); err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
 	if err = insertDirectories(tx, directories); err != nil {
@@ -191,6 +219,9 @@ func (s *Store) ImportHostConfigSnapshotWithMetadata(path string, metadata map[s
 		return domain.SyncSnapshotInfo{}, err
 	}
 	if err = insertHostSortOrders(tx, sortOrders); err != nil {
+		return domain.SyncSnapshotInfo{}, err
+	}
+	if err = insertTunnels(tx, tunnels); err != nil {
 		return domain.SyncSnapshotInfo{}, err
 	}
 	for key, value := range metadata {
@@ -204,7 +235,7 @@ func (s *Store) ImportHostConfigSnapshotWithMetadata(path string, metadata map[s
 	return domain.SyncSnapshotInfo{
 		HostCount:      len(hosts),
 		DirectoryCount: len(directories),
-		UpdatedAt:      latestHostConfigUpdatedAt(hosts, directories, sortOrders),
+		UpdatedAt:      latestHostConfigUpdatedAt(hosts, directories, sortOrders, tunnels),
 	}, nil
 }
 
@@ -263,7 +294,7 @@ CREATE TABLE host_sort_orders (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (scope_type, scope_id, host_id)
 );
-`)
+` + tunnelSchema)
 	return err
 }
 
@@ -427,7 +458,7 @@ VALUES (?, ?, ?, ?, ?, ?);
 	return nil
 }
 
-func latestHostConfigUpdatedAt(hosts []domain.Host, directories []domain.Directory, sortOrders []domain.HostSortOrder) string {
+func latestHostConfigUpdatedAt(hosts []domain.Host, directories []domain.Directory, sortOrders []domain.HostSortOrder, tunnelSets ...[]domain.Tunnel) string {
 	latest := ""
 	for _, host := range hosts {
 		if host.UpdatedAt > latest {
@@ -442,6 +473,13 @@ func latestHostConfigUpdatedAt(hosts []domain.Host, directories []domain.Directo
 	for _, sortOrder := range sortOrders {
 		if sortOrder.UpdatedAt > latest {
 			latest = sortOrder.UpdatedAt
+		}
+	}
+	for _, tunnels := range tunnelSets {
+		for _, t := range tunnels {
+			if t.UpdatedAt > latest {
+				latest = t.UpdatedAt
+			}
 		}
 	}
 	return latest

@@ -310,8 +310,7 @@ func (s *Store) MarkHostUsed(id string, usedAt string) (domain.Host, error) {
 }
 
 func (s *Store) DeleteHost(id string) error {
-	_, err := s.db.Exec(`DELETE FROM host_sort_orders WHERE host_id = ?; DELETE FROM hosts WHERE id = ?;`, id, id)
-	return err
+	return s.DeleteHosts([]string{id})
 }
 
 func (s *Store) DeleteHosts(ids []string) error {
@@ -323,8 +322,16 @@ func (s *Store) DeleteHosts(ids []string) error {
 	for _, id := range ids {
 		args = append(args, id)
 	}
-	_, err := s.db.Exec(fmt.Sprintf(`DELETE FROM host_sort_orders WHERE host_id IN (%s); DELETE FROM hosts WHERE id IN (%s);`, placeholders(len(ids)), placeholders(len(ids))), append(args, args...)...)
-	return err
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	_, err = tx.Exec(fmt.Sprintf(`DELETE FROM host_sort_orders WHERE host_id IN (%s); DELETE FROM hosts WHERE id IN (%s);`, placeholders(len(ids)), placeholders(len(ids))), append(args, args...)...)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func hostFromInput(id string, input domain.HostInput, createdAt, updatedAt string) domain.Host {
