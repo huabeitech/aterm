@@ -47,6 +47,5 @@
   "exportCommand": "SSH: OpenSSH로 내보내기…",
   "themeCommand": "설정: 테마 변경…",
   "terminalThemeCommand": "터미널: 터미널 테마 변경…",
-  "shortcutsCommand": "설정: 단축키 열기",
-  "toggleTerminalFiles": "터미널 / SFTP 전환"
+  "shortcutsCommand": "설정: 단축키 열기"
 }

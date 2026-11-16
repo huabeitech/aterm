@@ -4,19 +4,17 @@ import { PluginWorkspace } from '../plugins/PluginWorkspace'
 import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
 import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box } from 'lucide-react'
-import { Tip } from '@/components/ui/desktop'
 import { SplitLayout } from '@/components/ui/split-layout'
 import { ActionButton } from '@/components/ui/workbench-controls'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
 import type { FileSession, FileTransfer } from '../../../../shared/contracts/files'
-import { formatCommandPaletteShortcut } from '../../components/common/commandPaletteShortcut'
 import './connection.css'
 
 export type ConnectionView = 'terminal' | 'files' | 'split' | `plugin:${string}:${string}`
 type Props = {
-  toggleShortcut: string
+  cycleViewRef: Ref<() => void>
   active: boolean
   view: ConnectionView
   session: TerminalSession
@@ -30,7 +28,7 @@ type Props = {
 }
 
 export function ConnectionWorkspace({
-  toggleShortcut,
+  cycleViewRef,
   active,
   view,
   session,
@@ -66,6 +64,15 @@ export function ConnectionWorkspace({
   const openedPlugins = useRef(new Set<string>())
   if (selectedPlugin) openedPlugins.current.add(selectedPlugin.key)
   const remote = hasRemoteConnection(session)
+  useImperativeHandle(active ? cycleViewRef : null, () => () => {
+    const order: ConnectionView[] = ['terminal']
+    if (remote) order.push('files')
+    for (const item of views) order.push(item.key)
+    if (order.length < 2) return
+    // Split is a separate control; start the tab cycle from Terminal in split mode.
+    const current = order.indexOf(view === 'split' ? 'terminal' : view)
+    onViewChange(order[(current + 1) % order.length])
+  })
   useEffect(() => {
     if (pluginSelected && !selectedPlugin) onViewChange('terminal')
   }, [pluginSelected, !!selectedPlugin])
@@ -84,7 +91,6 @@ export function ConnectionWorkspace({
     })
     return () => cancelAnimationFrame(frame)
   }, [active, view, fileSession?.state])
-  const shortcutHint = `${t('commands:toggleTerminalFiles')} · ${formatCommandPaletteShortcut(toggleShortcut)}`
   const terminalOpened = useRef(view !== 'files')
   if (view !== 'files') terminalOpened.current = true
   const [statusTarget, setStatusTarget] = useState<HTMLDivElement | null>(null)
@@ -187,27 +193,23 @@ export function ConnectionWorkspace({
         aria-label={t('terminal:connectionStatusAndViews')}
       >
         <div className="connection-views" role="group" aria-label={t('terminal:connectionView')}>
-          <Tip title={`${t('terminal:runCommandsOnThisServerOverSsh')} · ${shortcutHint}`}>
+          <button
+            type="button"
+            aria-pressed={view === 'terminal' || view === 'split'}
+            onClick={() => onViewChange('terminal')}
+          >
+            <Terminal size={14} aria-hidden="true" />
+            <span>{t(remote ? 'terminal:sshTerminal' : 'terminal:terminal')}</span>
+          </button>
+          {remote && (
             <button
               type="button"
-              aria-pressed={view === 'terminal' || view === 'split'}
-              onClick={() => onViewChange('terminal')}
+              aria-pressed={fileVisible}
+              onClick={() => onViewChange('files')}
             >
-              <Terminal size={14} aria-hidden="true" />
-              <span>{t(remote ? 'terminal:sshTerminal' : 'terminal:terminal')}</span>
+              <FolderOpen size={14} aria-hidden="true" />
+              <span>{t('terminal:sftpFiles')}</span>
             </button>
-          </Tip>
-          {remote && (
-            <Tip title={`${t('terminal:browseUploadAndDownloadFilesOverSftp')} · ${shortcutHint}`}>
-              <button
-                type="button"
-                aria-pressed={fileVisible}
-                onClick={() => onViewChange('files')}
-              >
-                <FolderOpen size={14} aria-hidden="true" />
-                <span>{t('terminal:sftpFiles')}</span>
-              </button>
-            </Tip>
           )}
           {views.map((item) => (
             <button

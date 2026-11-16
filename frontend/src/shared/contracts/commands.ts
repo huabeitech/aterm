@@ -11,7 +11,7 @@ export type Command =
   | 'move-left'
   | 'move-right'
   | 'toggle-sidebar'
-  | 'toggle-terminal-files'
+  | 'next-connection-view'
   | 'hosts'
   | 'settings'
   | 'split-vertical'
@@ -67,8 +67,8 @@ export function getCommandDefinitions(settings: Preferences, platform: string) {
       shortcut: settings.toggleSidebarShortcut
     },
     {
-      id: 'toggle-terminal-files',
-      labelKey: 'commands:toggleTerminalFiles' as const,
+      id: 'next-connection-view',
+      labelKey: 'commands:nextConnectionView' as const,
       shortcut: settings.toggleTerminalFilesShortcut
     },
     { id: 'hosts', labelKey: 'hosts:connections' as const, shortcut: `${mod}+shift+h` },

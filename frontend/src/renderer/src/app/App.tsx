@@ -129,6 +129,7 @@ function Workbench({
   const [settingsSectionRequest, setSettingsSectionRequest] = useState(0)
   const tabs = useWorkspaceTabs()
   const [connectionViews, setConnectionViews] = useState<Record<string, ConnectionView>>({})
+  const cycleConnectionView = useRef<(() => void) | null>(null)
   const openingFiles = useRef(new Set<string>())
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
@@ -164,7 +165,7 @@ function Workbench({
       return (
         <ConnectionWorkspace
           key={id}
-          toggleShortcut={settings.toggleTerminalFilesShortcut}
+          cycleViewRef={cycleConnectionView}
           active={tabs.activeWorkspaceTab === `terminal:${id}`}
           view={connectionViews[id] ?? 'terminal'}
           session={session}
@@ -178,8 +179,10 @@ function Workbench({
           renderFiles={(target, request) => files.renderPage(id, target, request)}
           onViewChange={(view) => {
             setConnectionViews((previous) => ({ ...previous, [id]: view }))
-            if ((view === 'files' || view === 'split') && remoteFileTarget(session))
-              void files.open(remoteFileTarget(session)!, id)
+            if (view === 'files' || view === 'split') {
+              const target = remoteFileTarget(session)
+              if (target) void files.open(target, id)
+            }
           }}
         />
       )
@@ -330,29 +333,9 @@ function Workbench({
       case 'settings':
         openSettings()
         break
-      case 'toggle-terminal-files': {
+      case 'next-connection-view': {
         if (library.overlayOpen || library.busy || document.querySelector('[role="dialog"]')) break
-        const activeSession = activeConnectionID
-          ? terminal.sessionForGroup(activeConnectionID)
-          : undefined
-        if (!activeConnectionID || !activeSession || !hasRemoteConnection(activeSession)) break
-        const workspace = document.querySelector<HTMLElement>(
-          '.connection-workspace[data-active="true"]'
-        )
-        if (connectionViews[activeConnectionID] === 'split') {
-          const fromFiles = document.activeElement?.closest('.file-workspace-container')
-          workspace
-            ?.querySelector<HTMLElement>(
-              fromFiles ? '.terminal-pane.is-focused .xterm-helper-textarea' : '.files-table-scroll'
-            )
-            ?.focus({ preventScroll: true })
-        } else {
-          const view = isFiles ? 'terminal' : 'files'
-          setConnectionViews((previous) => ({ ...previous, [activeConnectionID]: view }))
-          const session = terminal.sessionForGroup(activeConnectionID)
-          if (view === 'files' && session && remoteFileTarget(session))
-            void files.open(remoteFileTarget(session)!, activeConnectionID)
-        }
+        cycleConnectionView.current?.()
         break
       }
       case 'toggle-sidebar':
@@ -476,10 +459,7 @@ function Workbench({
     ...getCommands(settings, bootstrap.info.platform)
       .filter(({ id }) => {
         if (id === 'search' || id === 'command-palette' || id.startsWith('tab-')) return false
-        if (id === 'toggle-terminal-files')
-          return (
-            !!activeConnectionID && terminal.sessionForGroup(activeConnectionID)?.kind === 'ssh'
-          )
+        if (id === 'next-connection-view') return !!activeConnectionID
         if (id === 'new-terminal') return bootstrap.info.localTerminalAvailable
         if (id === 'split-vertical' || id === 'split-horizontal') return isTerminal
         if (id === 'close-tab') return tabs.activeWorkspaceTab !== 'home'

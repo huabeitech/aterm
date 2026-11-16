@@ -47,6 +47,5 @@
   "exportCommand": "SSH：匯出到 OpenSSH…",
   "themeCommand": "設定：更改主題…",
   "terminalThemeCommand": "終端機：更改終端機主題…",
-  "shortcutsCommand": "設定：開啟快捷鍵設定",
-  "toggleTerminalFiles": "切換終端 / SFTP"
+  "shortcutsCommand": "設定：開啟快捷鍵設定"
 }

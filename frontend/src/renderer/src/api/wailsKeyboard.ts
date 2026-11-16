@@ -3,7 +3,7 @@ import type {Bootstrap} from '../../../shared/contracts/app'
 import type {Preferences} from '../../../shared/contracts/preferences'
 
 export type InputMode = 'normal' | 'editable' | 'recorder' | 'terminal'
-const globalCommands = new Set<Command>(['search', 'command-palette', 'toggle-sidebar', 'toggle-terminal-files'])
+const globalCommands = new Set<Command>(['search', 'command-palette', 'toggle-sidebar', 'next-connection-view'])
 type Key = Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey' | 'isComposing'>
 export function workspaceKeyCommand(event: Key, mode: InputMode, preferences: Preferences, platform: string, editor = false): Command | undefined {
   if (event.isComposing || event.key === 'Process' || mode === 'recorder') return

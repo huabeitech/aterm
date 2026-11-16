@@ -47,6 +47,5 @@
   "exportCommand": "SSH: Exportar a OpenSSH…",
   "themeCommand": "Preferencias: Cambiar tema…",
   "terminalThemeCommand": "Terminal: Cambiar tema del terminal…",
-  "shortcutsCommand": "Preferencias: Abrir atajos de teclado",
-  "toggleTerminalFiles": "Alternar terminal / SFTP"
+  "shortcutsCommand": "Preferencias: Abrir atajos de teclado"
 }

@@ -47,6 +47,5 @@
   "exportCommand": "SSH：导出到 OpenSSH…",
   "themeCommand": "设置：更改主题…",
   "terminalThemeCommand": "终端：更改终端主题…",
-  "shortcutsCommand": "设置：打开快捷键设置",
-  "toggleTerminalFiles": "切换终端 / SFTP"
+  "shortcutsCommand": "设置：打开快捷键设置"
 }

@@ -47,6 +47,5 @@
   "exportCommand": "SSH: Nach OpenSSH exportieren…",
   "themeCommand": "Einstellungen: Design ändern…",
   "terminalThemeCommand": "Terminal: Terminal-Design ändern…",
-  "shortcutsCommand": "Einstellungen: Tastenkürzel öffnen",
-  "toggleTerminalFiles": "Terminal / SFTP wechseln"
+  "shortcutsCommand": "Einstellungen: Tastenkürzel öffnen"
 }

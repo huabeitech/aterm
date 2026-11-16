@@ -48,5 +48,5 @@
   "themeCommand": "Preferences: Change Theme…",
   "terminalThemeCommand": "Terminal: Change Terminal Theme…",
   "shortcutsCommand": "Preferences: Open Keyboard Shortcuts",
-  "toggleTerminalFiles": "Switch Terminal / SFTP"
+  "nextConnectionView": "Next Connection View"
 }

@@ -47,6 +47,5 @@
   "exportCommand": "SSH: OpenSSH にエクスポート…",
   "themeCommand": "設定: テーマを変更…",
   "terminalThemeCommand": "ターミナル: テーマを変更…",
-  "shortcutsCommand": "設定: キーボードショートカットを開く",
-  "toggleTerminalFiles": "ターミナル / SFTP を切り替え"
+  "shortcutsCommand": "設定: キーボードショートカットを開く"
 }

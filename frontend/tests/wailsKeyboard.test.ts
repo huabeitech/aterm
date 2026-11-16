@@ -9,11 +9,13 @@ test('terminal and normal modes route numbered tabs and configurable commands', 
  for (const mode of ['normal','terminal'] as const) {
   assert.equal(workspaceKeyCommand(key('9'),mode,preferences,'darwin'),'tab-9');
   assert.equal(workspaceKeyCommand(key('t'),mode,preferences,'darwin'),'new-terminal');
+  assert.equal(workspaceKeyCommand(key('E',{shiftKey:true}),mode,preferences,'darwin'),'next-connection-view');
   assert.equal(workspaceKeyCommand(key('t',{altKey:true}),mode,preferences,'darwin'),undefined);
  }
 });
 test('editable fields retain native edits and only permit global workspace commands', () => {
  assert.equal(workspaceKeyCommand(key('p'),'editable',preferences,'darwin'),'search');
+ assert.equal(workspaceKeyCommand(key('E',{shiftKey:true}),'editable',preferences,'darwin'),'next-connection-view');
  assert.equal(workspaceKeyCommand(key('t'),'editable',preferences,'darwin'),undefined);
  assert.equal(workspaceKeyCommand(key('c'),'editable',{...preferences,commandPaletteShortcut:'meta+c'},'darwin'),undefined);
  assert.equal(workspaceKeyCommand(key('z',{shiftKey:true}),'editable',{...preferences,commandPaletteShortcut:'meta+shift+z'},'darwin'),undefined);

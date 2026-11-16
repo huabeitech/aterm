@@ -64,7 +64,7 @@ func (a *App) applyDesktopMenu(preferences desktop.Preferences) {
 	menu.AddRole(application.EditMenu)
 	view := menu.AddSubmenu("View")
 	for _, command := range []struct{ id, label, field string }{
-		{"search", "Search Hosts…", "commandPaletteShortcut"}, {"command-palette", "Command Palette…", "commandSearchShortcut"}, {"toggle-sidebar", "Toggle Sidebar", "toggleSidebarShortcut"}, {"toggle-terminal-files", "Switch Terminal and SFTP", "toggleTerminalFilesShortcut"},
+		{"search", "Search Hosts…", "commandPaletteShortcut"}, {"command-palette", "Command Palette…", "commandSearchShortcut"}, {"toggle-sidebar", "Toggle Sidebar", "toggleSidebarShortcut"}, {"next-connection-view", "Next Connection View", "toggleTerminalFilesShortcut"},
 	} {
 		add(view, command.id, command.label, shortcut(command.field))
 	}
