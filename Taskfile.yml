@@ -55,13 +55,18 @@ tasks:
       - '{{if eq OS "darwin"}}python3 scripts/go-macos.py{{else}}go{{end}} test ./...'
 
   test:
+    desc: Runs backend and frontend checks and builds the frontend.
+    cmds:
+      - task: test:checks
+      - wails3 task frontend:build
+
+  test:checks:
     desc: Runs backend and frontend checks.
     cmds:
       - wails3 task go:test
       - wails3 task frontend:test
       - wails3 task frontend:typecheck
       - wails3 task frontend:boundaries
-      - wails3 task frontend:build
 
   dev:
     desc: Runs the application in development mode.
