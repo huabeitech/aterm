@@ -479,10 +479,7 @@ export function SettingsPage({
                           {syncStatusMessage(syncStatus, macAppStoreBuild)}
                         </p>
                       )}
-                    <SettingsGroup
-                      title={t('settings:restore')}
-                      footer={t('settings:restoreDescription')}
-                    >
+                    <SettingsGroup title={t('settings:restore')}>
                       <SettingRow label={t('settings:restoreFromIcloud')}>
                         <ActionButton
                           disabled={busy || authorizationRequired || !syncStatus?.vaultAvailable}

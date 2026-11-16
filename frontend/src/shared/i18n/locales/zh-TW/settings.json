@@ -126,7 +126,6 @@
   "backUpCurrentData": "備份目前資料",
   "backUpNow": "立即備份",
   "restore": "還原",
-  "restoreDescription": "從加密備份中還原主機和已儲存的密碼。替換現有資料前會請你確認。",
   "restoreFromIcloud": "從 iCloud 還原",
   "restore2": "還原…",
   "manageBackup": "管理備份",

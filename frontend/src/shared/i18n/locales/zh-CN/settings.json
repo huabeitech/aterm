@@ -126,7 +126,6 @@
   "backUpCurrentData": "备份当前数据",
   "backUpNow": "立即备份",
   "restore": "恢复",
-  "restoreDescription": "从加密备份中恢复主机和已保存的密码。替换现有数据前会请你确认。",
   "restoreFromIcloud": "从 iCloud 恢复",
   "restore2": "恢复…",
   "manageBackup": "管理备份",

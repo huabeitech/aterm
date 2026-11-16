@@ -126,7 +126,6 @@
   "backUpCurrentData": "Back up current data",
   "backUpNow": "Back Up Now",
   "restore": "Restore",
-  "restoreDescription": "Restore hosts and saved passwords from an encrypted backup. You’ll be asked to confirm before existing data is replaced.",
   "restoreFromIcloud": "Restore from iCloud",
   "restore2": "Restore…",
   "manageBackup": "Manage Backup",

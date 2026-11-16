@@ -126,7 +126,6 @@
   "backUpCurrentData": "Crear copia de los datos actuales",
   "backUpNow": "Crear copia ahora",
   "restore": "Restaurar",
-  "restoreDescription": "Restaura los hosts y las contraseñas guardadas desde una copia de seguridad cifrada. Se te pedirá confirmación antes de reemplazar los datos existentes.",
   "restoreFromIcloud": "Restaurar desde iCloud",
   "restore2": "Restaurar…",
   "manageBackup": "Gestionar copia de seguridad",

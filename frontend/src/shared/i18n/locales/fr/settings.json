@@ -126,7 +126,6 @@
   "backUpCurrentData": "Sauvegarder les données actuelles",
   "backUpNow": "Sauvegarder maintenant",
   "restore": "Restaurer",
-  "restoreDescription": "Restaurez les hôtes et les mots de passe enregistrés depuis une sauvegarde chiffrée. Une confirmation sera demandée avant de remplacer les données existantes.",
   "restoreFromIcloud": "Restaurer depuis iCloud",
   "restore2": "Restaurer…",
   "manageBackup": "Gérer la sauvegarde",

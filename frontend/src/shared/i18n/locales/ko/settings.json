@@ -126,7 +126,6 @@
   "backUpCurrentData": "현재 데이터 백업",
   "backUpNow": "지금 백업",
   "restore": "복원",
-  "restoreDescription": "암호화된 백업에서 호스트와 저장된 비밀번호를 복원합니다. 기존 데이터를 교체하기 전에 확인을 요청합니다.",
   "restoreFromIcloud": "iCloud에서 복원",
   "restore2": "복원…",
   "manageBackup": "백업 관리",

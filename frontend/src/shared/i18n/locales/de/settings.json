@@ -126,7 +126,6 @@
   "backUpCurrentData": "Aktuelle Daten sichern",
   "backUpNow": "Jetzt sichern",
   "restore": "Wiederherstellen",
-  "restoreDescription": "Stellen Sie Hosts und gespeicherte Passwörter aus einer verschlüsselten Sicherung wieder her. Vor dem Ersetzen vorhandener Daten werden Sie um Bestätigung gebeten.",
   "restoreFromIcloud": "Aus iCloud wiederherstellen",
   "restore2": "Wiederherstellen…",
   "manageBackup": "Sicherung verwalten",

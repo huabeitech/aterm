@@ -126,7 +126,6 @@
   "backUpCurrentData": "現在のデータをバックアップ",
   "backUpNow": "今すぐバックアップ",
   "restore": "復元",
-  "restoreDescription": "暗号化されたバックアップからホストと保存済みパスワードを復元します。既存のデータを置き換える前に確認画面が表示されます。",
   "restoreFromIcloud": "iCloud から復元",
   "restore2": "復元…",
   "manageBackup": "バックアップを管理",
