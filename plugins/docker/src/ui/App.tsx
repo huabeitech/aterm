@@ -630,7 +630,7 @@ export function App() {
         <StatusFilter
           value={resource === 'containers' ? filter : imageFilter}
           onChange={resource === 'containers' ? setFilter : setImageFilter}
-          label={t(resource === 'containers' ? 'status' : 'imageTags')}
+          label={t(resource === 'containers' ? 'status' : 'imageFilter')}
           options={
             resource === 'containers'
               ? (['all', 'running', 'stopped', 'abnormal'] as const).map((key) => ({
@@ -639,6 +639,7 @@ export function App() {
                 }))
               : [
                   { value: 'all', label: t('imagesAll') },
+                  { value: 'unused', label: t('imageUnused') },
                   { value: 'untagged', label: t('imagesDangling') }
                 ]
           }

@@ -128,5 +128,11 @@
   "imageUsage": "Usage",
   "imageInUse": "In use · {{count}}",
   "imageUnused": "Unused",
+  "imageFilter": "Filter images",
+  "imageSelectVisible": "Select all visible images",
+  "imageSelect": "Select {{name}}",
+  "imageDeleteSelected": "Delete {{count}} selected",
+  "imageRemoveBatchText": "Delete these images on {{host}}? Docker may reject images in use or referenced by multiple tags. This cannot be undone.",
+  "imageRemovalResult": "Deleted {{deleted}} · Failed {{failed}}",
   "imageUsageHelp": "Referenced by {{count}} containers, including stopped containers."
 }

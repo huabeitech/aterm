@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "huabei.docker",
   "name": "Docker",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "runtime": "sandbox",
   "entry": "plugin.js",
   "engines": {

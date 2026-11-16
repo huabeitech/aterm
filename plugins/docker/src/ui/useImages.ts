@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { useDocker } from './useDocker'
+import { removeSelectedImages } from './imageRemoval'
 export interface DockerImage {
   ID: string
   RepoTags: string[]
@@ -36,6 +37,8 @@ export function useImages(connection: ReturnType<typeof useDocker>, visible: boo
   const engineKey = connection.engine
     ? `${connection.engine.context}:${connection.engine.engine}`
     : ''
+  const scope = useRef({ active, engineKey })
+  scope.current = { active, engineKey }
   const previousEngine = useRef(engineKey)
   const { request } = connection
   const refresh = useCallback(async () => {
@@ -123,28 +126,36 @@ export function useImages(connection: ReturnType<typeof useDocker>, visible: boo
     },
     [active, request]
   )
-  const remove = useCallback(async () => {
-    const id = selection.current
-    if (!id || !active || manual.current) return
+  const remove = useCallback(async (ids: string[]) => {
+    if (!ids.length || !active || manual.current) return
     const epoch = version.current
+    const isCurrent = () =>
+      epoch === version.current && scope.current.active && scope.current.engineKey === engineKey
+    if (!isCurrent()) return
     manual.current = true
     setBusy(true)
     setError('')
     try {
-      await request('images.remove', id)
-      if (epoch !== version.current) return
-      choose(null)
-      const data = await request<DockerImage[]>('images.list')
-      if (epoch === version.current) setImages(data)
-    } catch (e) {
-      if (epoch === version.current) setError((e as Error).message)
+      const result = await removeSelectedImages(ids, id => request('images.remove', id), isCurrent)
+      if (!result) return
+      const deleted = new Set(result.deleted)
+      setImages(current => current.filter(image => !deleted.has(image.ID)))
+      if (selection.current && deleted.has(selection.current)) choose(null)
+
+      try {
+        const data = await request<DockerImage[]>('images.list')
+        if (isCurrent()) setImages(data)
+      } catch (error) {
+        if (isCurrent()) setError((error as Error).message)
+      }
+      if (isCurrent()) return result
     } finally {
-      if (epoch === version.current) {
+      if (isCurrent()) {
         manual.current = false
         setBusy(false)
       }
     }
-  }, [active, choose, request])
+  }, [active, choose, engineKey, request])
   return {
     images,
     selected: images.find((i) => i.ID === selected) ?? null,

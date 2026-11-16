@@ -1174,8 +1174,8 @@ td {
 .image-detail-actions .button {
   color: var(--destructive);
 }
-.image-table th:first-child {
-  width: 42%;
+.image-table th.image-name {
+  width: auto;
 }
 .image-table th.image-usage {
   width: 20%;
@@ -1193,9 +1193,6 @@ td {
 }
 #app[data-detail='true'] .image-created {
   display: none;
-}
-#app[data-detail='true'] .image-table th:first-child {
-  width: 50%;
 }
 #app[data-detail='true'] .image-table th.image-usage {
   width: 30%;
@@ -1241,4 +1238,27 @@ td {
   .image-created {
     display: none;
   }
+}
+
+
+.image-table .image-checkbox {
+  width: 32px;
+  padding-inline: 8px;
+  text-align: center;
+}
+.image-checkbox input {
+  accent-color: var(--primary);
+  vertical-align: middle;
+}
+.image-removal-result {
+  max-height: 120px;
+  overflow: auto;
+  padding: 8px 16px;
+  box-shadow: inset 0 1px var(--line);
+}
+.image-removal-preview {
+  max-height: 120px;
+  margin-block: 8px;
+  overflow: auto;
+  overflow-wrap: anywhere;
 }
