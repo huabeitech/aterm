@@ -18,6 +18,9 @@ jobs:
     name: Code checks
     runs-on: macos-15
     timeout-minutes: 30
+    env:
+      # Both the embedded frontend build and the test task run Vite.
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -34,8 +37,6 @@ jobs:
       - name: Install frontend dependencies
         run: wails3 task frontend:install
       - name: Generate bindings and embedded frontend
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
         run: |
           wails3 task generate:bindings
           wails3 task frontend:build FRONTEND_DEPS_INSTALLED=true
