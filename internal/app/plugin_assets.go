@@ -20,19 +20,6 @@ func (a *App) desktopAssetMiddleware(next http.Handler) http.Handler {
 			a.desktopPluginViews.ServeHTTP(writer, request)
 			return
 		}
-		if strings.HasPrefix(path, desktopplugins.RuntimePath) {
-			if a.desktopPluginRuntime == nil || request.URL.RawQuery != "" {
-				http.NotFound(writer, request)
-				return
-			}
-			html, ok := a.desktopPluginRuntime.Document(strings.TrimPrefix(path, desktopplugins.RuntimePath))
-			if !ok {
-				http.NotFound(writer, request)
-				return
-			}
-			desktopplugins.ServePluginDocument(writer, request, html, desktopplugins.RuntimeCSP)
-			return
-		}
 		origins := []string{"wails://localhost", "http://wails.localhost", "https://wails.localhost"}
 		if request.URL.Host != "" && (request.URL.Scheme == "http" || request.URL.Scheme == "https" || request.URL.Scheme == "wails") {
 			origin := request.URL.Scheme + "://" + request.URL.Host
@@ -48,7 +35,7 @@ func (a *App) desktopAssetMiddleware(next http.Handler) http.Handler {
 		}
 		sources := []string{}
 		for _, origin := range origins {
-			sources = append(sources, origin+desktopplugins.ViewPath, origin+desktopplugins.RuntimePath)
+			sources = append(sources, origin+desktopplugins.ViewPath)
 		}
 		writer.Header().Set("Content-Security-Policy", "frame-src "+strings.Join(sources, " ")+"; object-src 'none'")
 		next.ServeHTTP(writer, request)

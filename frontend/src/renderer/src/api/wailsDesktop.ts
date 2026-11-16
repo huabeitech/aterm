@@ -8,7 +8,6 @@ import {createWailsKeyboard, type InputMode} from './wailsKeyboard'
 import type {Command} from '../../../shared/contracts/commands'
 import {channels, type DesktopApi} from '../../../shared/contracts/app'
 import {terminalEvents} from './terminalEvents'
-import {createPluginRuntime} from './wailsPluginRuntime'
 import {installNativeFileDrop} from './wailsFileDrop'
 import {subscribeTerminalOutput, beginTerminalOutputAttachment, releaseTerminalOutput} from './wailsTerminalOutput'
 const keyboardCommands = new Set<(command: Command) => void>()
@@ -247,10 +246,3 @@ const desktop: DesktopApi = {
 }
 window.desktop = desktop
 installNativeFileDrop()
-
-if (location.hash !== '#file-editor') {
- const pluginRuntime = createPluginRuntime(invokeRequest)
- subscribe<Parameters<typeof pluginRuntime.control>[0]>('plugins:runtime', event => pluginRuntime.control(event))
- void invokeRequest('plugins:runtime:reset').catch(error => console.error('Unable to reset plugin runtimes', error))
- window.addEventListener('beforeunload', () => pluginRuntime.dispose())
-}

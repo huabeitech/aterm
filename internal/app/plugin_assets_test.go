@@ -27,12 +27,7 @@ func TestPluginAssetsBypassWailsInjectionAndRestrictFrameNavigation(t *testing.T
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "wails://localhost/", nil))
 	policy := response.Header().Get("Content-Security-Policy")
-	if !downstream || !strings.Contains(policy, "wails://localhost/__plugin_view/") || !strings.Contains(policy, "wails://localhost/__plugin_runtime/") || strings.Contains(policy, "'self'") || strings.Contains(policy, "data:") {
+	if !downstream || !strings.Contains(policy, "wails://localhost/__plugin_view/") || strings.Contains(policy, "'self'") || strings.Contains(policy, "data:") {
 		t.Fatal("parent CSP permits navigating a plugin frame into a fresh app/external realm", policy)
-	}
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "wails://localhost/__plugin_runtime/missing", nil))
-	if response.Code != 404 {
-		t.Fatal("unknown runtime document reached app assets")
 	}
 }

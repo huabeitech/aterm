@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "id": "huabei.resource-monitor",
+  "name": "Server resources",
+  "version": "2.1.0",
+  "runtime": "sandbox",
+  "entry": "plugin.js",
+  "permissions": ["process.execute"],
+  "contributes": {
+    "terminalStatusBar": {
+      "id": "huabei.resource-monitor.status"
+    },
+    "views": [
+      {
+        "id": "monitor.details",
+        "title": "Resource details",
+        "entry": "ui/details.html",
+        "placement": "terminal.sidePanel"
+      }
+    ],
+    "commands": [
+      {
+        "id": "monitor.system",
+        "title": "System",
+        "action": {
+          "type": "view.toggle",
+          "view": "monitor.details",
+          "context": {
+            "section": "system"
+          }
+        }
+      },
+      {
+        "id": "monitor.cpu",
+        "title": "Cpu",
+        "action": {
+          "type": "view.open",
+          "view": "monitor.details",
+          "context": {
+            "section": "cpu"
+          }
+        }
+      },
+      {
+        "id": "monitor.memory",
+        "title": "Memory",
+        "action": {
+          "type": "view.open",
+          "view": "monitor.details",
+          "context": {
+            "section": "memory"
+          }
+        }
+      },
+      {
+        "id": "monitor.disk",
+        "title": "Disk",
+        "action": {
+          "type": "view.open",
+          "view": "monitor.details",
+          "context": {
+            "section": "disk"
+          }
+        }
+      },
+      {
+        "id": "monitor.network",
+        "title": "Network",
+        "action": {
+          "type": "view.open",
+          "view": "monitor.details",
+          "context": {
+            "section": "network"
+          }
+        }
+      },
+      {
+        "id": "monitor.select",
+        "title": "Select overview metrics"
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "en",
+    "locales": {
+      "de": "locales/de.json",
+      "en": "locales/en.json",
+      "es": "locales/es.json",
+      "fr": "locales/fr.json",
+      "ja": "locales/ja.json",
+      "ko": "locales/ko.json",
+      "pt-BR": "locales/pt-BR.json",
+      "zh-CN": "locales/zh-CN.json",
+      "zh-TW": "locales/zh-TW.json"
+    }
+  },
+  "engines": {
+    "hostApi": 1
+  },
+  "execution": {
+    "programs": ["sh"],
+    "targets": ["ssh"]
+  }
+}

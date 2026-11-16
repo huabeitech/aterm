@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"sync"
 	"time"
@@ -34,7 +33,6 @@ type runtimeEntry struct {
 	calls    int
 	active   int
 	fault    func(string)
-	document string
 }
 
 // RuntimeHost brokers a sandbox transport. It never evaluates plugin code or
@@ -45,12 +43,13 @@ type RuntimeHost struct {
 	send              func(RuntimeControl)
 	request           RuntimeRequest
 	closed            bool
+	locale            string
 	activationTimeout time.Duration
 	commandTimeout    time.Duration
 }
 
 func NewRuntimeHost(send func(RuntimeControl), request RuntimeRequest) *RuntimeHost {
-	return &RuntimeHost{entries: map[string]*runtimeEntry{}, send: send, request: request, activationTimeout: 5 * time.Second, commandTimeout: 45 * time.Second}
+	return &RuntimeHost{entries: map[string]*runtimeEntry{}, send: send, request: request, locale: "en", activationTimeout: 5 * time.Second, commandTimeout: 45 * time.Second}
 }
 func (r *RuntimeHost) Start(ctx context.Context, pluginID string, plugin Package, fault func(string)) (string, error) {
 	instanceID := uuid.NewString()
@@ -61,8 +60,19 @@ func (r *RuntimeHost) Start(ctx context.Context, pluginID string, plugin Package
 		return "", errors.New("plugin runtime is closed")
 	}
 	r.entries[instanceID] = entry
+	locale := r.locale
 	r.mu.Unlock()
-	r.send(RuntimeControl{Kind: "start", InstanceID: instanceID, Source: plugin.Source, Localizations: clone(plugin.Localizations), Locale: "en"})
+	r.send(RuntimeControl{Kind: "start", InstanceID: instanceID, Source: plugin.Source, Localizations: clone(plugin.Localizations), Locale: locale})
+	r.mu.Lock()
+	current := r.entries[instanceID] == entry
+	if current && locale != r.locale {
+		r.send(RuntimeControl{Kind: "locale", InstanceID: instanceID, Locale: r.locale})
+	}
+	r.mu.Unlock()
+	if !current {
+		r.send(RuntimeControl{Kind: "stop", InstanceID: instanceID})
+		return "", errors.New("plugin stopped during activation")
+	}
 	timer := time.NewTimer(r.activationTimeout)
 	defer timer.Stop()
 	var err error
@@ -78,7 +88,7 @@ func (r *RuntimeHost) Start(ctx context.Context, pluginID string, plugin Package
 		return "", err
 	}
 	r.mu.Lock()
-	current := r.entries[instanceID] == entry
+	current = r.entries[instanceID] == entry
 	r.mu.Unlock()
 	if !current {
 		return "", errors.New("plugin stopped during activation")
@@ -94,6 +104,15 @@ func (r *RuntimeHost) Handle(ctx context.Context, instanceID, method string, par
 	if entry == nil {
 		r.mu.Unlock()
 		return nil, errors.New("plugin unavailable")
+	}
+	if method == "runtime.fault" {
+		fault := entry.fault
+		r.mu.Unlock()
+		r.Stop(instanceID)
+		if fault != nil {
+			fault("Plugin worker failed or stopped responding")
+		}
+		return nil, nil
 	}
 	second := time.Now().Unix()
 	if entry.second != second {
@@ -111,15 +130,6 @@ func (r *RuntimeHost) Handle(ctx context.Context, instanceID, method string, par
 			entry.started <- nil
 		}
 		r.mu.Unlock()
-		return nil, nil
-	}
-	if method == "runtime.fault" {
-		fault := entry.fault
-		r.mu.Unlock()
-		r.Stop(instanceID)
-		if fault != nil {
-			fault("Plugin worker failed or stopped responding")
-		}
 		return nil, nil
 	}
 	if !entry.ready {
@@ -251,6 +261,21 @@ func (r *RuntimeHost) Stop(instanceID string) {
 		r.send(RuntimeControl{Kind: "stop", InstanceID: instanceID})
 	}
 }
+func (r *RuntimeHost) SetLocale(locale string) {
+	if !canonicalLocale(locale) {
+		locale = "en"
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.locale == locale {
+		return
+	}
+	r.locale = locale
+	for id := range r.entries {
+		r.send(RuntimeControl{Kind: "locale", InstanceID: id, Locale: locale})
+	}
+}
+
 func (r *RuntimeHost) Reset() {
 	r.mu.Lock()
 	ids := make([]string, 0, len(r.entries))
@@ -263,35 +288,3 @@ func (r *RuntimeHost) Reset() {
 	}
 }
 func (r *RuntimeHost) Close() { r.mu.Lock(); r.closed = true; r.mu.Unlock(); r.Reset() }
-func (r *RuntimeHost) Validate(ctx context.Context, plugin Package) error {
-	instanceID, err := r.Start(ctx, fmt.Sprintf("validate:%s:%s", plugin.Manifest.ID, uuid.NewString()), plugin, nil)
-	if err == nil {
-		r.Stop(instanceID)
-	}
-	return err
-}
-
-// Runtime documents are produced by the trusted application transport, never by
-// worker RPC. Their route bypasses Wails' runtime injection middleware.
-func (r *RuntimeHost) SetDocument(instanceID, html string) (string, error) {
-	if len(html) > 3*1024*1024 {
-		return "", errors.New("plugin runtime document limit")
-	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	entry := r.entries[instanceID]
-	if entry == nil {
-		return "", errors.New("plugin runtime unavailable")
-	}
-	entry.document = html
-	return RuntimePath + instanceID, nil
-}
-func (r *RuntimeHost) Document(instanceID string) (string, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	entry := r.entries[instanceID]
-	if entry == nil || entry.document == "" {
-		return "", false
-	}
-	return entry.document, true
-}

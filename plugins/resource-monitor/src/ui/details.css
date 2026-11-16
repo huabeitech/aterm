@@ -1,0 +1,274 @@
+* {
+  box-sizing: border-box;
+}
+:root {
+  --muted: color-mix(in srgb, var(--card-foreground) 8%, var(--card));
+  --accent: var(--muted);
+  --accent-foreground: var(--card-foreground);
+  --ring: var(--primary, currentColor);
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--font-sans, system-ui), sans-serif;
+  background: var(--card);
+  color: var(--card-foreground);
+}
+h2,
+h3,
+h4,
+p,
+dl,
+dd {
+  margin: 0;
+}
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+select {
+  background: var(--card);
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.resource-details > header {
+  padding-right: 40px;
+}
+.resource-ui-error {
+  padding: 8px;
+}
+.resource-details {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.resource-details > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+}
+.resource-details h2 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+.resource-details header p {
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.resource-details nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+.resource-details nav button {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.resource-details nav button:hover,
+.resource-details nav button[aria-current='true'] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.resource-details button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.resource-details-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 12px 16px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.resource-details section {
+  padding: 12px 0;
+  scroll-margin: 8px;
+}
+.resource-details h3 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.resource-details h4 {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.resource-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+}
+.resource-detail-row dt {
+  flex: none;
+  color: var(--muted-foreground);
+}
+.resource-detail-row dd {
+  min-width: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.resource-help {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+}
+.resource-warning {
+  padding: 8px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--color-warning, #a96508);
+}
+.resource-device {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.resource-device .resource-detail-row {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.resource-cores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 4px;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.resource-cores span {
+  padding: 4px;
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.resource-trend {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 4px;
+  margin: 8px 0 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.resource-trend-axis {
+  height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+  color: var(--muted-foreground);
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+.resource-trend-plot {
+  position: relative;
+  min-width: 0;
+  height: 96px;
+  color: var(--primary);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--card));
+}
+.resource-trend-plot:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.resource-trend svg {
+  display: block;
+  width: 100%;
+  height: 96px;
+  overflow: visible;
+}
+.resource-trend-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+.resource-trend-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.resource-trend-area {
+  fill: currentColor;
+  opacity: 0.08;
+}
+.resource-trend-point {
+  fill: currentColor;
+}
+.resource-trend-end {
+  fill: var(--card);
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.resource-trend-cursor {
+  stroke: currentColor;
+  stroke-opacity: 0.35;
+  stroke-dasharray: 2 4;
+}
+.resource-trend-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted-foreground);
+}
+.resource-trend figcaption {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+.resource-trend-tooltip {
+  position: absolute;
+  top: 8px;
+  width: 104px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--card-foreground);
+  box-shadow: 0 2px 8px #0001;
+  pointer-events: none;
+}
+.resource-trend-tooltip span {
+  color: var(--muted-foreground);
+}

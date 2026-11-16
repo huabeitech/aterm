@@ -11,9 +11,7 @@ import (
 )
 
 const ViewPath = "/__plugin_view/"
-const RuntimePath = "/__plugin_runtime/"
 const ViewCSP = "default-src 'none'; script-src 'unsafe-inline' data:; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; sandbox allow-scripts"
-const RuntimeCSP = "default-src 'none'; script-src data:; connect-src 'none'; frame-src 'none'; worker-src data:; form-action 'none'; base-uri 'none'; object-src 'none'; sandbox allow-scripts"
 const PluginPermissionsPolicy = "camera=(), microphone=(), geolocation=(), clipboard-read=(), clipboard-write=(), display-capture=()"
 
 //go:embed view_bootstrap.js

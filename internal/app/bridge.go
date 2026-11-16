@@ -28,8 +28,6 @@ func (a *App) DesktopRequest(ctx context.Context, channel string, args []json.Ra
 		return a.desktopFiles(args)
 	case "themes:request":
 		return a.desktopThemes(args)
-	case "plugins:runtime:rpc", "plugins:runtime:reset", "plugins:runtime:document":
-		return a.desktopPluginRuntimeRequest(ctx, channel, args)
 	case "plugins:manage":
 		return a.desktopPlugins(ctx, args)
 	case "window:action":

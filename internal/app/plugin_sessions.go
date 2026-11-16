@@ -109,7 +109,11 @@ func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {
 	}
 	a.desktopPluginRegistry = registry
 	a.desktopPluginViews = desktopplugins.NewViewHost()
-	a.desktopPluginRuntime = desktopplugins.NewRuntimeHost(a.sendPluginRuntime, a.requestPluginCapability)
+	a.desktopPluginRuntime = desktopplugins.NewNativeRuntime(a.requestPluginCapability)
+	if preferences, err := a.desktopPreferences(); err == nil {
+		locale, _ := preferences["language"].(string)
+		a.desktopPluginRuntime.SetLocale(locale)
+	}
 	a.desktopPluginExecutor = desktopplugins.NewExecutor(desktopplugins.ExecutionOptions{
 		Audit: desktopplugins.NewAudit(filepath.Join(root, "execution-audit.json")),
 		Run:   a.runPluginProcess,
@@ -124,21 +128,20 @@ func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {
 			}
 		},
 	})
-	a.desktopPluginManager = desktopplugins.NewManager(desktopplugins.ManagerOptions{
-		Context: ctx, Registry: registry, Runtime: a.desktopPluginRuntime,
+	a.desktopPluginManager = a.newDesktopPluginManager(ctx, root, a.confirmPluginExecution)
+	return nil
+}
+
+func (a *App) newDesktopPluginManager(ctx context.Context, root string, authorize func(context.Context, desktopplugins.PermissionRequest) bool) *desktopplugins.Manager {
+	return desktopplugins.NewManager(desktopplugins.ManagerOptions{
+		Context: ctx, Registry: a.desktopPluginRegistry, Runtime: a.desktopPluginRuntime,
 		Storage:        desktopplugins.NewStorage(filepath.Join(root, "data")),
 		Views:          a.desktopPluginViews,
-		ResolveSession: a.resolvePluginSession, Authorize: a.confirmPluginExecution,
+		ResolveSession: a.resolvePluginSession, Authorize: authorize,
 		SendStatus:   a.sendPluginStatus,
 		Changed:      func() { a.emitEvent("plugins:changed", nil) },
 		Capabilities: a.desktopPluginExecutor,
 	})
-	return nil
-}
-func (a *App) sendPluginRuntime(control desktopplugins.RuntimeControl) {
-	if window := a.mainWindow(); window != nil {
-		window.EmitEvent("plugins:runtime", control)
-	}
 }
 func (a *App) sendPluginStatus(owner uint, status desktopplugins.Status) {
 	if window := a.mainWindow(); window != nil && window.ID() == owner {

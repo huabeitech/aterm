@@ -190,7 +190,7 @@ func (r *Registry) Install(plugin Package, expectedEpoch uint64) error {
 		if _, err = r.packages.Load(existing.config.Key); err == nil {
 			config.PreviousKey = existing.config.Key
 		}
-		if PolicyDigest(existing.plugin.Manifest) == PolicyDigest(normalized.Manifest) {
+		if sameExecutionAuthority(existing.plugin, normalized) {
 			config.Grants = existing.config.Grants
 		}
 	}
@@ -249,7 +249,7 @@ func (r *Registry) Rollback(id string) error {
 	}
 	config := clone(old.config)
 	config.Key, config.PreviousKey = config.PreviousKey, config.Key
-	if PolicyDigest(plugin.Manifest) != PolicyDigest(old.plugin.Manifest) {
+	if !sameExecutionAuthority(plugin, old.plugin) {
 		config.Grants = []Grant{}
 	}
 	r.entries[id] = &registryEntry{plugin: plugin, config: config, state: "inactive", generation: old.generation + 1}
@@ -347,6 +347,14 @@ func (r *Registry) SetRuntimeState(id string, generation uint64, state, message 
 	e.error = message
 	return true
 }
+
+// UI and localization updates can retain grants. A new executable body
+// must earn permission even when it declares identical programs and targets.
+func sameExecutionAuthority(previous, next Package) bool {
+	return PolicyDigest(previous.Manifest) == PolicyDigest(next.Manifest) &&
+		(len(next.Manifest.Permissions) == 0 || previous.Source == next.Source)
+}
+
 func PolicyDigest(manifest Manifest) string {
 	permissions := append([]string{}, manifest.Permissions...)
 	sort.Strings(permissions)

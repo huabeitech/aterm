@@ -17,49 +17,6 @@ func (a *App) requirePluginOwner(ctx context.Context) (application.Window, error
 	}
 	return window, nil
 }
-func (a *App) desktopPluginRuntimeRequest(ctx context.Context, channel string, args []json.RawMessage) (any, error) {
-	window, err := a.requirePluginOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if a.desktopPluginRuntime == nil {
-		return nil, errors.New("plugin runtime is not initialized")
-	}
-	if channel == "plugins:runtime:reset" {
-		if a.desktopPluginManager != nil {
-			a.desktopPluginManager.Reset()
-		}
-		a.desktopPluginRuntime.Reset()
-		return nil, nil
-	}
-	if channel == "plugins:runtime:document" {
-		if !a.securePluginFrames(window) {
-			return nil, errors.New("native plugin frame isolation is unavailable")
-		}
-		id, err := argument[string](args, 0)
-		if err != nil {
-			return nil, err
-		}
-		html, err := argument[string](args, 1)
-		if err != nil {
-			return nil, err
-		}
-		return a.desktopPluginRuntime.SetDocument(id, html)
-	}
-	instanceID, err := argument[string](args, 0)
-	if err != nil {
-		return nil, err
-	}
-	method, err := argument[string](args, 1)
-	if err != nil {
-		return nil, err
-	}
-	params, err := argument[json.RawMessage](args, 2)
-	if err != nil {
-		return nil, err
-	}
-	return a.desktopPluginRuntime.Handle(ctx, instanceID, method, params)
-}
 func (a *App) desktopPlugins(ctx context.Context, raw []json.RawMessage) (any, error) {
 	op, args, err := operation(raw)
 	if err != nil {
@@ -97,9 +54,6 @@ func (a *App) desktopPlugins(ctx context.Context, raw []json.RawMessage) (any, e
 		epoch := registry.Revision()
 		if !a.confirmPluginInstall(plugin) {
 			return nil, nil
-		}
-		if err = a.desktopPluginRuntime.Validate(ctx, plugin); err != nil {
-			return nil, err
 		}
 		if err = registry.Install(plugin, epoch); err != nil {
 			return nil, err

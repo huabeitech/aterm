@@ -161,6 +161,7 @@ export function PluginView({
       const data = event.data
       if (
         event.source !== frame.current?.contentWindow ||
+        event.origin !== 'null' ||
         data?.channel !== 'aterm-view' ||
         data.instanceId !== document.instanceId ||
         !Number.isSafeInteger(data.requestId)
