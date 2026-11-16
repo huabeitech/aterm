@@ -105,6 +105,27 @@ tasks:
     deps:
       - build
 
+  plugins:package:
+    desc: Packages every plugin in plugins/ into build/bin/plugins.
+    cmds:
+      - |
+        set -- plugins/*/manifest.json
+        if [ ! -f "$1" ]; then
+          echo "No plugin manifests found in plugins/." >&2
+          exit 1
+        fi
+        if [ ! -f "{{.FRONTEND_DIR}}/node_modules/esbuild/lib/main.js" ]; then
+          npm ci --prefix "{{.FRONTEND_DIR}}" || exit 1
+        fi
+        for manifest in "$@"; do
+          plugin_dir="${manifest%/manifest.json}"
+          if [ ! -f "$plugin_dir/build.mjs" ]; then
+            echo "Missing build entry: $plugin_dir/build.mjs" >&2
+            exit 1
+          fi
+          node "$plugin_dir/build.mjs" "{{.BIN_DIR}}/plugins" || exit 1
+        done
+
   run:
     desc: Runs the built macOS application bundle.
     cmds:
