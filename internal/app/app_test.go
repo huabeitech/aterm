@@ -34,7 +34,7 @@ func TestDefaultAppPathsUseRealHomeForSSHDirectoryWhenSandboxed(t *testing.T) {
 	if paths.syncRootPath != expectedSyncRoot {
 		t.Fatalf("syncRootPath = %q, want %q", paths.syncRootPath, expectedSyncRoot)
 	}
-	expectedSyncSnapshot := filepath.Join(expectedSyncRoot, service.DataDirectoryName(), "sync", "app.db")
+	expectedSyncSnapshot := filepath.Join(expectedSyncRoot, "aTerm", "sync", "app.db")
 	if paths.syncSnapshotPath != expectedSyncSnapshot {
 		t.Fatalf("syncSnapshotPath = %q, want %q", paths.syncSnapshotPath, expectedSyncSnapshot)
 	}

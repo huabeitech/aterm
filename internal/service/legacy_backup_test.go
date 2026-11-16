@@ -202,83 +202,93 @@ func TestLegacyRestorePreferencesFailureRollsBackLibraryAndVault(t *testing.T) {
 	}
 }
 
-func TestLegacyCloudFallbackRestoreAndModernPrecedence(t *testing.T) {
+func TestCloudRestoreUsesOnlyConfiguredPath(t *testing.T) {
 	destination, _, store := managedBackupService(t)
+	ctx := context.Background()
 	root := t.TempDir()
-	modern := filepath.Join(root, "aTerm", "sync", "vault.enc")
-	legacy := filepath.Join(root, "aterm-backup.enc")
+	current := filepath.Join(root, "aTerm", "sync", "vault.enc")
 	destination.syncRootPath = root
-	destination.syncSnapshotPath = filepath.Join(filepath.Dir(modern), "app.db")
-	destination.syncVaultPath = modern
-	original, err := os.ReadFile(legacyFixturePath(t))
+	destination.syncSnapshotPath = filepath.Join(filepath.Dir(current), "app.db")
+	destination.syncVaultPath = current
+	backup, err := os.ReadFile(legacyFixturePath(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(legacy, original, 0600); err != nil {
+	for _, path := range []string{
+		filepath.Join(root, "TermSSH", "sync", "vault.enc"),
+		filepath.Join(root, "TermSSH-dev", "sync", "vault.enc"),
+		filepath.Join(root, "aterm-backup.enc"),
+	} {
+		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, backup, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	status, err := destination.GetEncryptedSyncStatus(ctx)
+	if err != nil || status.VaultAvailable || status.VaultPath != current {
+		t.Fatal("backup outside the configured path was discovered", err, status)
+	}
+	if _, err := destination.RestoreCloudEncryptedBackup(ctx, legacyFixturePassword, func(SyncMetadata) bool {
+		t.Fatal("backup outside the configured path reached confirmation")
+		return false
+	}); err == nil {
+		t.Fatal("restore succeeded without a backup at the configured path")
+	}
+	if err := os.MkdirAll(filepath.Dir(current), 0700); err != nil {
 		t.Fatal(err)
 	}
-	status, err := destination.GetEncryptedSyncStatus(context.Background())
-	if err != nil || !status.VaultAvailable || status.VaultPath != legacy {
-		t.Fatal("legacy cloud backup not discoverable", err, status)
+	if err := os.WriteFile(current, backup, 0600); err != nil {
+		t.Fatal(err)
 	}
-	result, err := destination.RestoreCloudEncryptedBackup(context.Background(), legacyFixturePassword, func(meta SyncMetadata) bool { return meta.HostCount == 2 })
+	result, err := destination.RestoreCloudEncryptedBackup(ctx, legacyFixturePassword, func(meta SyncMetadata) bool { return meta.HostCount == 2 })
 	if err != nil || result.LastDownload == "" {
-		t.Fatal("legacy cloud restore failed", err, result)
+		t.Fatal("cloud restore failed", err, result)
 	}
 	hosts, _ := store.ListHosts()
 	if len(hosts) != 2 {
-		t.Fatal("legacy cloud restore missing hosts")
-	}
-	after, _ := os.ReadFile(legacy)
-	if !bytes.Equal(after, original) {
-		t.Fatal("restore overwrote old cloud backup")
-	}
-	if err = os.MkdirAll(filepath.Dir(modern), 0700); err != nil {
-		t.Fatal(err)
-	}
-	if err = os.WriteFile(modern, []byte("damaged modern vault"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	confirmed := false
-	if _, err = destination.RestoreCloudEncryptedBackup(context.Background(), legacyFixturePassword, func(SyncMetadata) bool { confirmed = true; return true }); err == nil || confirmed {
-		t.Fatal("unreadable modern backup silently fell back to old backup", err, confirmed)
+		t.Fatal("cloud restore missing hosts")
 	}
 }
 
-func TestLegacyCloudDeletionConfirmsSelectedPathAndKeepsLocalData(t *testing.T) {
+func TestCloudDeletionConfirmsSelectedPathAndKeepsLocalData(t *testing.T) {
 	app, _, _ := managedBackupService(t)
 	ctx := context.Background()
 	root := t.TempDir()
 	app.syncRootPath = root
 	app.syncSnapshotPath = filepath.Join(root, "aTerm", "sync", "app.db")
-	legacy := filepath.Join(root, "aterm-backup.enc")
+	path := filepath.Join(root, "aTerm", "sync", "vault.enc")
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		t.Fatal(err)
+	}
 	source, err := os.ReadFile(legacyFixturePath(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(legacy, source, 0600); err != nil {
+	if err = os.WriteFile(path, source, 0600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = app.SetUpSecureData(ctx, "local-fixture-password"); err != nil {
 		t.Fatal(err)
 	}
 	local, _ := os.ReadFile(app.localVaultPath)
-	if err = app.DeleteICloudBackupWithConfirmation(ctx, func(path string) bool {
-		if path != legacy {
-			t.Fatal("confirmed wrong path", path)
+	if err = app.DeleteICloudBackupWithConfirmation(ctx, func(selected string) bool {
+		if selected != path {
+			t.Fatal("confirmed wrong path", selected)
 		}
 		return false
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = os.Stat(legacy); err != nil {
+	if _, err = os.Stat(path); err != nil {
 		t.Fatal("cancel deleted backup", err)
 	}
-	if err = app.DeleteICloudBackupWithConfirmation(ctx, func(path string) bool { return path == legacy }); err != nil {
+	if err = app.DeleteICloudBackupWithConfirmation(ctx, func(selected string) bool { return selected == path }); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = os.Stat(legacy); !os.IsNotExist(err) {
-		t.Fatal("legacy backup remains", err)
+	if _, err = os.Stat(path); !os.IsNotExist(err) {
+		t.Fatal("cloud backup remains", err)
 	}
 	after, _ := os.ReadFile(app.localVaultPath)
 	if !bytes.Equal(local, after) {

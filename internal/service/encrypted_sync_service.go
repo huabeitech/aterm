@@ -88,10 +88,7 @@ func (s *SyncService) GetEncryptedSyncStatus(ctx context.Context) (EncryptedSync
 			status.CloudAvailable = false
 			status.Message = "iCloud backup storage is unavailable."
 		}
-		incomingPath, cloudData, statErr := readIncomingCloudBackup(paths)
-		if statErr == nil {
-			status.VaultPath = incomingPath
-		}
+		cloudData, statErr := readEncryptedBackup(paths.syncVaultPath)
 		if statErr == nil {
 			status.VaultAvailable = true
 			if len(localData) > 0 {
@@ -328,8 +325,7 @@ func (s *SyncService) DeleteICloudBackup(ctx context.Context) error {
 	return s.DeleteICloudBackupWithConfirmation(ctx, func(string) bool { return true })
 }
 
-// Capture the selected modern/legacy path before confirmation, as Electron
-// does. Deleting an older backup must never silently remove the local vault.
+// Confirm the cloud backup path before removing it.
 func (s *SyncService) DeleteICloudBackupWithConfirmation(ctx context.Context, confirm func(string) bool) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -341,10 +337,6 @@ func (s *SyncService) DeleteICloudBackupWithConfirmation(ctx context.Context, co
 	defer done()
 	path := paths.syncVaultPath
 	info, err := os.Lstat(path)
-	if errors.Is(err, os.ErrNotExist) && paths.syncRootPath != "" {
-		path = filepath.Join(paths.syncRootPath, "aterm-backup.enc")
-		info, err = os.Lstat(path)
-	}
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
@@ -589,8 +581,7 @@ func (s *SyncService) readCloudVault(ctx context.Context) ([]byte, func(), Encry
 	if err != nil {
 		return nil, nil, status, err
 	}
-	incomingPath, data, err := readIncomingCloudBackup(paths)
-	status.VaultPath = incomingPath
+	data, err := readEncryptedBackup(paths.syncVaultPath)
 	if err != nil {
 		done()
 		return nil, nil, status, err
@@ -765,7 +756,7 @@ func (s *SyncService) readBestVault(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	defer done()
-	return os.ReadFile(paths.syncVaultPath)
+	return readEncryptedBackup(paths.syncVaultPath)
 }
 
 func (s *SyncService) openIncomingVault(data []byte, password string) (OpenedVault, []byte, error) {

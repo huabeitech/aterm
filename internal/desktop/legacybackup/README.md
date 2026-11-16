@@ -27,10 +27,9 @@ The legacy format has no authenticated backup creation time, so it is not assign
 a fabricated source date. Actual restore completion has its own timestamp, which
 the existing React integration uses to refresh hosts and settings.
 
-Cloud restore prefers `aTerm/sync/vault.enc`. Only its absence allows fallback to
-`aterm-backup.enc` at the authorized sync root. An unreadable/damaged modern file
-does not silently fall back. The native cloud-delete adapter now confirms the
-selected modern/legacy path, defaults to Cancel and keeps local protected data.
+Cloud restore and deletion use `aTerm/sync/vault.enc` under the authorized sync
+root. The native cloud-delete dialog defaults to Cancel and keeps local
+protected data.
 
 ## Evidence
 
@@ -39,7 +38,7 @@ selected modern/legacy path, defaults to Cancel and keeps local protected data.
 Its public test password is `legacy-fixture-password`. Tests assert recovered
 passwords/options/order/preferences, wrong-password and authenticated malformed
 library rejection, cancellation, database failure rollback, restart unlock,
-cloud fallback/precedence, confirmed deletion and renderer refresh signalling.
+cloud path selection, confirmed deletion and renderer refresh signalling.
 
 Regenerate explicitly with the reference checkout's installed tsx:
 

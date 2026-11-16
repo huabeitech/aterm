@@ -807,14 +807,14 @@ func (s *failingPasswordStore) Delete(hostID string) error {
 func TestAppServiceGetSyncStatusUsesDefaultSyncDirectoryWithoutAuthorization(t *testing.T) {
 	tmp := t.TempDir()
 	syncRoot := filepath.Join(tmp, "iCloud")
-	if err := os.MkdirAll(filepath.Join(syncRoot, "TermSSH", "sync"), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Join(syncRoot, "aTerm", "sync"), 0o700); err != nil {
 		t.Fatalf("MkdirAll() sync dir error = %v", err)
 	}
 	app := NewAppService(AppServiceOptions{
 		Store:            newMemoryHostStore(),
 		SyncRootPath:     syncRoot,
-		SyncSnapshotPath: filepath.Join(syncRoot, "TermSSH", "sync", "app.db"),
-		SyncMetadataPath: filepath.Join(syncRoot, "TermSSH", "sync", "metadata.json"),
+		SyncSnapshotPath: filepath.Join(syncRoot, "aTerm", "sync", "app.db"),
+		SyncMetadataPath: filepath.Join(syncRoot, "aTerm", "sync", "metadata.json"),
 	})
 
 	status, err := app.GetSyncStatus(context.Background())
@@ -849,7 +849,7 @@ func TestAppServiceGetSyncStatusUsesDefaultSyncDirectoryWithoutAuthorization(t *
 func TestAppServiceAuthorizeSyncDirectoryAllowsStatusRead(t *testing.T) {
 	tmp := t.TempDir()
 	syncRoot := filepath.Join(tmp, "iCloud")
-	syncDir := filepath.Join(syncRoot, "TermSSH", "sync")
+	syncDir := filepath.Join(syncRoot, "aTerm", "sync")
 	if err := os.MkdirAll(syncDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll() sync dir error = %v", err)
 	}

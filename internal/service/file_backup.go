@@ -240,16 +240,3 @@ func (s *SyncService) installIncomingWorkspace(ctx context.Context, data []byte,
 	s.setVaultSessionLastDownload(completed)
 	return installedWorkspace{BackupPath: backup, LastDownload: completed}, nil
 }
-
-// Earlier Electron releases stored their AES backup directly under the
-// authorized sync root. Prefer the modern file even when it is unreadable;
-// only its absence permits legacy fallback, matching Electron's incomingPath.
-func readIncomingCloudBackup(paths syncPaths) (string, []byte, error) {
-	data, err := readEncryptedBackup(paths.syncVaultPath)
-	if !errors.Is(err, os.ErrNotExist) || paths.syncRootPath == "" {
-		return paths.syncVaultPath, data, err
-	}
-	legacy := filepath.Join(paths.syncRootPath, "aterm-backup.enc")
-	data, err = readEncryptedBackup(legacy)
-	return legacy, data, err
-}

@@ -288,7 +288,6 @@ func defaultAppPaths() (appPaths, error) {
 	realUserHome := realUserHomeForExternalUserFiles(home)
 	appSupportDir := filepath.Join(home, "Library", "Application Support", service.DataDirectoryName())
 	syncRootDir := filepath.Join(realUserHome, "Library", "Mobile Documents", "com~apple~CloudDocs")
-	syncDir := filepath.Join(syncRootDir, service.DataDirectoryName(), "sync")
 	sshDir := defaultSSHDirectory(realUserHome)
 	// An explicit profile isolates development/testing from production databases,
 	// vaults, cloud backups and SSH trust files without changing HOME.
@@ -298,9 +297,9 @@ func defaultAppPaths() (appPaths, error) {
 		}
 		appSupportDir = filepath.Clean(profile)
 		syncRootDir = filepath.Join(appSupportDir, "cloud")
-		syncDir = filepath.Join(syncRootDir, "aTerm", "sync")
 		sshDir = filepath.Join(appSupportDir, "ssh")
 	}
+	syncDir := filepath.Join(syncRootDir, service.CloudBackupDirectoryName, "sync")
 	return appPaths{
 		appSupportDir:       appSupportDir,
 		databasePath:        filepath.Join(appSupportDir, "app.db"),

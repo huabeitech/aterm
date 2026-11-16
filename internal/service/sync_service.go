@@ -279,7 +279,7 @@ func (s *SyncService) authorizedSyncPaths(ctx context.Context) (syncPaths, func(
 		done()
 		return syncPaths{}, nil, ErrSyncDirectoryAuthorizationRequired
 	}
-	syncDir := filepath.Join(resolvedPath, "TermSSH", "sync")
+	syncDir := filepath.Join(resolvedPath, CloudBackupDirectoryName, "sync")
 	return syncPaths{
 		syncRootPath:     resolvedPath,
 		syncSnapshotPath: filepath.Join(syncDir, "app.db"),
