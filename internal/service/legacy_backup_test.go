@@ -215,8 +215,8 @@ func TestCloudRestoreUsesOnlyConfiguredPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, path := range []string{
-		filepath.Join(root, "TermSSH", "sync", "vault.enc"),
-		filepath.Join(root, "TermSSH-dev", "sync", "vault.enc"),
+		filepath.Join(root, "other-app", "sync", "vault.enc"),
+		filepath.Join(root, "aTerm-dev", "sync", "vault.enc"),
 		filepath.Join(root, "aterm-backup.enc"),
 	} {
 		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {

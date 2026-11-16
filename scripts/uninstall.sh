@@ -5,7 +5,6 @@
 set -euo pipefail
 
 readonly APP_NAME="aTerm"
-readonly STORAGE_NAME="TermSSH"
 readonly BUNDLE_ID="pro.huabei.sshconfig"
 readonly MANAGED_INCLUDE_COMMENT="# Added by aTerm"
 readonly MANAGED_INCLUDE_LINE="Include ~/.ssh/config.d/*.conf"
@@ -80,7 +79,7 @@ remove_managed_include_block() {
     }
     {
       current = trimmed($0)
-      if (current == comment || current == "# Added by TermSSH") {
+      if (current == comment) {
         if (pending != "") print pending
         pending = $0
         next
@@ -127,12 +126,12 @@ for backup in "${SSH_DIR}"/config.ssh-connect.*.bak; do
 done
 
 remove_installed_app
-remove_path "${HOME_DIR}/Library/Application Support/${STORAGE_NAME}"
+remove_path "${HOME_DIR}/Library/Application Support/${APP_NAME}"
 # Do not remove the container root: macOS owns its
 # .com.apple.containermanagerd.metadata.plist and rejects direct removal from
 # a normal terminal. Removing these payload paths resets every application
 # setting and data item while leaving only that OS-managed metadata behind.
-remove_path "${SANDBOX_DATA_DIR}/Library/Application Support/${STORAGE_NAME}"
+remove_path "${SANDBOX_DATA_DIR}/Library/Application Support/${APP_NAME}"
 remove_path "${SANDBOX_DATA_DIR}/Library/Caches/${BUNDLE_ID}"
 remove_path "${SANDBOX_DATA_DIR}/Library/Preferences/${BUNDLE_ID}.plist"
 remove_path "${SANDBOX_DATA_DIR}/Library/Saved Application State/${BUNDLE_ID}.savedState"

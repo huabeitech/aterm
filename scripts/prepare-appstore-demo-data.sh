@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEMO_HOME="${1:-${REPO_ROOT}/build/appstore-demo-home}"
-APP_SUPPORT_DIR="${DEMO_HOME}/Library/Application Support/TermSSH"
+APP_SUPPORT_DIR="${DEMO_HOME}/Library/Application Support/aTerm"
 DB_PATH="${APP_SUPPORT_DIR}/app.db"
 SSH_DIR="${DEMO_HOME}/.ssh"
 NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"

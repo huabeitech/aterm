@@ -1,13 +1,16 @@
 package service
 
-const CloudBackupDirectoryName = "aTerm"
+const appName = "aTerm"
+
+// CloudBackupDirectoryName is shared by all distributions.
+const CloudBackupDirectoryName = appName
 
 func IsMacAppStoreBuild() bool { return macAppStoreBuild }
 
-// DataDirectoryName keeps development files and credentials in the same scope.
+// DataDirectoryName separates local development files from production files.
 func DataDirectoryName() string {
 	if developmentBuild {
-		return "TermSSH-dev"
+		return appName + "-dev"
 	}
-	return "TermSSH"
+	return appName
 }

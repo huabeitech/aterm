@@ -858,7 +858,7 @@ func TestAppServiceAuthorizeSyncDirectoryAllowsStatusRead(t *testing.T) {
 	}
 	if err := writeSyncMetadata(filepath.Join(syncDir, "metadata.json"), SyncMetadata{
 		SchemaVersion:     syncSchemaVersion,
-		AppName:           "TermSSH",
+		AppName:           "aTerm",
 		SnapshotCreatedAt: "2026-07-08T00:00:00Z",
 		SourceDeviceName:  "Test Mac",
 		HostCount:         2,

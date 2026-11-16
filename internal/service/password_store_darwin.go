@@ -150,13 +150,13 @@ func keychainServiceName() string {
 		suffix = "-dev"
 	}
 	if macAppStoreBuild {
-		return "TermSSH(MAS)" + suffix
+		return appName + "(MAS)" + suffix
 	}
-	return "TermSSH" + suffix
+	return appName + suffix
 }
 
 func (store keychainPasswordStore) traceKeychain(operation, account string, status int) {
-	slog.InfoContext(store.wailsContext, "termssh-keychain", "operation", operation, "account", account, "status", status)
+	slog.InfoContext(store.wailsContext, "aTerm-keychain", "operation", operation, "account", account, "status", status)
 }
 
 func classifyKeychainStatus(operation string, status int) error {

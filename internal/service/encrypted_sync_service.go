@@ -20,7 +20,7 @@ import (
 var ErrCloudVaultConflict = errors.New("the iCloud backup belongs to different or unreadable protected data")
 
 const (
-	VaultUnlockAccount = "termssh-vault-key"
+	VaultUnlockAccount = appName + "-vault-key"
 
 	AutoUnlockSkippedNoVault      = "skipped_no_vault"
 	AutoUnlockSkippedNoKey        = "skipped_no_key"
@@ -427,7 +427,7 @@ func (s *SyncService) setAutoUnlockResult(result AutoUnlockResult) AutoUnlockRes
 	s.encryptedSyncMu.Lock()
 	defer s.encryptedSyncMu.Unlock()
 	s.autoUnlockResult = result
-	slog.InfoContext(s.wailsContext, "termssh-auto-unlock", "status", result.Status)
+	slog.InfoContext(s.wailsContext, "aTerm-auto-unlock", "status", result.Status)
 	return result
 }
 
@@ -738,7 +738,7 @@ func (s *SyncService) activateVaultSession(opened OpenedVault, key, encoded []by
 func syncMetadataFromVaultPayload(payload VaultPayload) SyncMetadata {
 	return SyncMetadata{
 		SchemaVersion:     syncSchemaVersion,
-		AppName:           "TermSSH",
+		AppName:           appName,
 		SnapshotCreatedAt: payload.SyncedAt,
 		SourceDeviceName:  payload.SourceDevice,
 		HostCount:         payload.HostCount,
@@ -826,7 +826,7 @@ func (s *SyncService) vaultTempDir() string {
 	if strings.TrimSpace(s.backupDir) != "" {
 		return filepath.Join(s.backupDir, "tmp")
 	}
-	return filepath.Join(os.TempDir(), "TermSSH")
+	return filepath.Join(os.TempDir(), appName)
 }
 
 func (s *SyncService) backupLocalVault() (string, error) {

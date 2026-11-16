@@ -107,7 +107,7 @@ func (s *SyncService) UploadSyncSnapshot(ctx context.Context) (SyncResult, error
 	now := formatSyncTime(time.Now())
 	metadata := SyncMetadata{
 		SchemaVersion:     syncSchemaVersion,
-		AppName:           "TermSSH",
+		AppName:           appName,
 		SnapshotCreatedAt: now,
 		SourceDeviceName:  s.resolvedDeviceName(),
 		HostCount:         info.HostCount,

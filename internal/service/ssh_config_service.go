@@ -304,7 +304,7 @@ func normalizeIncludeLine(config string) string {
 		if trimmed == IncludeLine {
 			continue
 		}
-		if trimmed == "# Added by TermSSH" || trimmed == "# Added by aTerm" {
+		if trimmed == "# Added by aTerm" {
 			continue
 		}
 		if insertAt == -1 && (strings.HasPrefix(trimmed, "Host ") || strings.HasPrefix(trimmed, "Match ")) {

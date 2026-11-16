@@ -606,7 +606,7 @@ func TestAppServiceManualExportMovesIncludeBeforeFirstHost(t *testing.T) {
 	if err := os.MkdirAll(sshDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
-	initialConfig := "Host github2.com\n\tHostName github.com\n\n# Added by TermSSH\n" + IncludeLine + "\n"
+	initialConfig := "Host github2.com\n\tHostName github.com\n\n# Added by aTerm\n" + IncludeLine + "\n"
 	if err := os.WriteFile(configPath, []byte(initialConfig), 0o600); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
