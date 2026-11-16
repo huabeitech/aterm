@@ -88,15 +88,18 @@ func TestMultiplexedSFTPLifetimeAndHandshakeCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	integration.update(nil)
-	result := make(chan error, 1)
-	go func() { _, err := client.Getwd(); result <- err }()
+	disconnected := make(chan struct{})
+	go func() {
+		_ = client.Wait()
+		close(disconnected)
+	}()
 	select {
-	case err = <-result:
-		if err == nil {
-			t.Fatal("expired SSH context remained usable")
-		}
+	case <-disconnected:
 	case <-ctx.Done():
 		t.Fatal("expired file channel did not close")
+	}
+	if _, err = client.Getwd(); err == nil {
+		t.Fatal("expired SSH context remained usable")
 	}
 	if err = manager.Close(info.ID); err != nil {
 		t.Fatal("expired workspace close reported a cleanup error", err)
