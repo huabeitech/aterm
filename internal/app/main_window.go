@@ -37,7 +37,10 @@ func (a *App) createMainWindow() (application.Window, error) {
 		placement.capture()
 		placement.close()
 	})
-	window.OnWindowEvent(events.Common.WindowClosing, func(*application.WindowEvent) { a.clearMainWindow(window.ID()) })
+	window.OnWindowEvent(events.Common.WindowClosing, func(*application.WindowEvent) {
+		a.clearMainWindow(window.ID())
+		a.cancelWindowConfirmations(window.ID())
+	})
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		a.emitEvent("files-dropped", map[string]any{"files": event.Context().DroppedFiles(), "details": event.Context().DropTargetDetails()})
 	})

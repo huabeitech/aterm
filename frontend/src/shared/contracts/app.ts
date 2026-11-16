@@ -1,3 +1,4 @@
+import type { ConfirmationChoice, ConfirmationEvent } from './confirmation'
 import type { FileEditorApi } from './fileEditor'
 import type { IntegrationApi } from './integration'
 import type { FilesApi } from './files'
@@ -14,6 +15,8 @@ export const channels = {
   themesChanged: 'themes:changed',
   locale: 'locale:changed',
   integration: 'integration:request',
+  confirmationEvent: 'confirmation:event',
+  confirmationAnswer: 'confirmation:answer',
   fileEditor: 'file-editor:request',
   fileEditorState: 'file-editor:state',
   fileEditorClose: 'file-editor:close-requested',
@@ -54,6 +57,10 @@ export interface DesktopApi {
   themes: import('./themePackages').ThemesApi
   onLocaleChanged: (callback: (state: import('./locale').LocaleState) => void) => () => void
   integration: IntegrationApi
+  confirmations: {
+    onEvent: (callback: (event: ConfirmationEvent) => void) => () => void
+    answer: (id: string, choice: ConfirmationChoice) => Promise<void>
+  }
   fileEditor: FileEditorApi
   files: FilesApi
   terminal: TerminalApi

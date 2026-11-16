@@ -6,6 +6,8 @@ import { desktop } from '../../api/app'
 import type { domain } from '../../api/types'
 import { ActionButton, TextField } from '../ui/workbench-controls'
 import { Button } from '../ui/button'
+import { ConfirmationDialog } from '../ui/confirmation-dialog'
+import { useAppUI } from '../ui/confirm-provider'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { toast } from '../ui/toast'
 import { Tip } from '../ui/desktop'
@@ -25,6 +27,7 @@ export function ManagedKeysSection({
   unlocked: boolean
 }) {
   useTranslation()
+  const { modal } = useAppUI()
   const [keys, setKeys] = useState<domain.ManagedKey[]>([]),
     [busy, setBusy] = useState(false)
   const [createOpen, setCreateOpen] = useState(false),
@@ -51,12 +54,16 @@ export function ManagedKeysSection({
     if (unlocked) void load()
     else setKeys([])
   }, [unlocked])
-  const run = async (action: () => Promise<unknown>, close: () => void, success: string) => {
+  const run = async (
+    action: () => Promise<unknown>,
+    close: (() => void) | undefined,
+    success: string
+  ) => {
     try {
       setBusy(true)
       await action()
       await load()
-      close()
+      close?.()
       toast.add({ title: success, type: 'success' })
     } catch (value) {
       toast.add({
@@ -134,10 +141,17 @@ export function ManagedKeysSection({
         setBlockedReferences(references)
         return
       }
-      if (!confirm(t('settings:deleteKeyConfirm', { name: key.name }))) return
-      await desktop.library.deleteManagedKey(key.id)
-      await load()
-      toast.add({ title: t('settings:sshKeyDeleted'), type: 'success' })
+      modal.confirm({
+        title: t('settings:deleteKeyConfirm', { name: key.name }),
+        okText: t('settings:deleteSshKey'),
+        okButtonProps: { danger: true },
+        onOk: () =>
+          run(
+            () => desktop.library.deleteManagedKey(key.id),
+            undefined,
+            t('settings:sshKeyDeleted')
+          )
+      })
     } catch (value) {
       toast.add({
         title: t('settings:unableToCheckSshKeyUsage'),
@@ -336,64 +350,55 @@ export function ManagedKeysSection({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!exportKey} onOpenChange={(open) => !open && setExportKey(null)}>
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>{t('settings:exportPrivateKey')}</DialogTitle>
-          </DialogHeader>
-          <p className="text-[length:var(--app-text-13)] leading-relaxed text-muted-foreground">
-            {t('settings:exportKeyWarning', { name: exportKey?.name ?? '' })}
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExportKey(null)}>
-              {t('settings:cancel')}
-            </Button>
-            <Button disabled={busy || !unlocked} onClick={() => void exportPrivateKey()}>
-              {t('settings:exportPrivateKey2')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={!macAppStoreBuild && !!agentKey}
-        onOpenChange={(open) => {
-          if (!open) {
+      {exportKey && (
+        <ConfirmationDialog
+          title={t('settings:exportPrivateKey')}
+          content={
+            <p className="text-muted-foreground">
+              {t('settings:exportKeyWarning', { name: exportKey.name })}
+            </p>
+          }
+          okText={t('settings:exportPrivateKey2')}
+          cancelText={t('settings:cancel')}
+          pending={busy}
+          confirmDisabled={!unlocked}
+          onCancel={() => setExportKey(null)}
+          onConfirm={() => void exportPrivateKey()}
+        />
+      )}
+      {!macAppStoreBuild && agentKey && (
+        <ConfirmationDialog
+          title={t('settings:addKeyToSshAgent')}
+          content={
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                {t('settings:agentKeyWarning', { name: agentKey.name })}
+              </p>
+              {agentKey.passphraseProtected && (
+                <label className="grid gap-1 text-sm font-medium">
+                  {t('settings:privateKeyPassphrase')}
+                  <TextField
+                    aria-label={t('settings:sshAgentPrivateKeyPassphrase')}
+                    type="password"
+                    autoFocus
+                    value={agentPassphrase}
+                    onChange={(event) => setAgentPassphrase(event.target.value)}
+                  />
+                </label>
+              )}
+            </div>
+          }
+          okText={t('settings:addToSshAgent')}
+          cancelText={t('settings:cancel')}
+          pending={busy}
+          confirmDisabled={agentKey.passphraseProtected && !agentPassphrase}
+          onConfirm={addToAgent}
+          onCancel={() => {
             setAgentKey(null)
             setAgentPassphrase('')
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>{t('settings:addKeyToSshAgent')}</DialogTitle>
-          </DialogHeader>
-          <p className="text-[length:var(--app-text-13)] leading-relaxed text-muted-foreground">
-            {t('settings:agentKeyWarning', { name: agentKey?.name ?? '' })}
-          </p>
-          {agentKey?.passphraseProtected && (
-            <label className="grid gap-1 text-sm font-medium">
-              {t('settings:privateKeyPassphrase')}
-              <TextField
-                aria-label={t('settings:sshAgentPrivateKeyPassphrase')}
-                type="password"
-                value={agentPassphrase}
-                onChange={(event) => setAgentPassphrase(event.target.value)}
-              />
-            </label>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAgentKey(null)}>
-              {t('settings:cancel')}
-            </Button>
-            <Button
-              disabled={busy || !!(agentKey?.passphraseProtected && !agentPassphrase)}
-              onClick={addToAgent}
-            >
-              {t('settings:addToSshAgent')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          }}
+        />
+      )}
       <Dialog
         open={!!blockedReferences}
         onOpenChange={(open) => {

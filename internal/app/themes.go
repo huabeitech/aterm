@@ -102,37 +102,11 @@ func (a *App) desktopThemes(raw []json.RawMessage) (any, error) {
 }
 
 func (a *App) confirmThemeUpdate(previous, incoming desktopthemes.Package) bool {
-	if a.wailsApp == nil {
-		return false
-	}
-	answer := make(chan bool, 1)
-	dialog := a.wailsApp.Dialog.Question().SetTitle("Update Theme").SetMessage(fmt.Sprintf("%s: %s → %s", previous.Name, previous.Version, incoming.Version))
-	cancel := dialog.AddButton("Cancel")
-	update := dialog.AddButton("Update Theme")
-	cancel.OnClick(func() {
-		select {
-		case answer <- false:
-		default:
-		}
+	return a.confirmAction(a.ctx, windowConfirmation{
+		Title:        "Update Theme",
+		Message:      fmt.Sprintf("%s: %s → %s", previous.Name, previous.Version, incoming.Version),
+		ConfirmLabel: "Update Theme",
 	})
-	update.OnClick(func() {
-		select {
-		case answer <- true:
-		default:
-		}
-	})
-	dialog.SetDefaultButton(update)
-	dialog.SetCancelButton(cancel)
-	if window := a.mainWindow(); window != nil {
-		dialog.AttachToWindow(window)
-	}
-	dialog.Show()
-	select {
-	case result := <-answer:
-		return result
-	case <-a.ctx.Done():
-		return false
-	}
 }
 func (a *App) resetRemovedThemePreferences(reference string) error {
 	preferences, err := a.desktopPreferences()

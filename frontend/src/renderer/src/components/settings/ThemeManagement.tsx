@@ -9,7 +9,8 @@ import {
   useThemeRevision,
   effectiveAppTheme
 } from '../../app/themeRegistry'
-import { ActionButton, SelectField, WorkbenchDialog } from '../ui/workbench-controls'
+import { ActionButton, SelectField } from '../ui/workbench-controls'
+import { ConfirmationDialog } from '../ui/confirmation-dialog'
 
 export function ThemeManagement({
   settings,
@@ -187,29 +188,25 @@ export function ThemeManagement({
         </p>
       ))}
       {error && <p role="alert">{error}</p>}
-      <WorkbenchDialog
-        open={!!removing}
-        title={t('settings:removeTheme')}
-        onClose={() => setRemoving(undefined)}
-        busy={busy}
-        submitLabel={t('settings:removeTheme')}
-        onSubmit={() =>
-          void run(async () => {
-            if (!removing) return
-            await desktop.themes.remove(removing.reference)
-            setRemoving(undefined)
-          })
-        }
-      >
-        <p>
-          {t(
-            referenced
-              ? 'settings:removeActiveThemeDescription'
-              : 'settings:removeThemeDescription',
-            { name: removing?.name ?? '' }
+      {removing && (
+        <ConfirmationDialog
+          title={t('settings:removeTheme')}
+          content={t(
+            referenced ? 'settings:removeActiveThemeDescription' : 'settings:removeThemeDescription',
+            { name: removing.name }
           )}
-        </p>
-      </WorkbenchDialog>
+          okText={t('settings:removeTheme')}
+          pending={busy}
+          danger
+          onCancel={() => setRemoving(undefined)}
+          onConfirm={() =>
+            void run(async () => {
+              await desktop.themes.remove(removing.reference)
+              setRemoving(undefined)
+            })
+          }
+        />
+      )}
     </div>
   )
 }

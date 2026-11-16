@@ -61,43 +61,18 @@ func (a *App) runPluginProcess(ctx context.Context, session desktopplugins.Sessi
 	return desktopplugins.RunSSHProcess(ctx, client, request, policy, onData)
 }
 func (a *App) confirmPluginExecution(ctx context.Context, request desktopplugins.PermissionRequest) bool {
-	if a.wailsApp == nil {
-		return false
-	}
-	answer := make(chan bool, 1)
 	programs, targets := "", ""
 	if policy := request.Plugin.Manifest.Execution; policy != nil {
 		programs = strings.Join(policy.Programs, ", ")
 		targets = strings.Join(policy.Targets, ", ")
 	}
 	detail := fmt.Sprintf("%s\n\nDeclared programs: %s\nTargets: %s\n\nThis permission allows the declared programs to access this account’s files and network. Only allow plugins you trust.", request.Grant.Label, programs, targets)
-	dialog := a.wailsApp.Dialog.Question().SetTitle("Allow " + request.Plugin.Manifest.Name + " to execute programs?").SetMessage(detail)
-	cancel := dialog.AddButton("Not Now")
-	allow := dialog.AddButton("Allow for This Host")
-	cancel.OnClick(func() {
-		select {
-		case answer <- false:
-		default:
-		}
+	return a.confirmAction(ctx, windowConfirmation{
+		Title:        "Allow " + request.Plugin.Manifest.Name + " to execute programs?",
+		Message:      detail,
+		ConfirmLabel: "Allow for This Host",
+		CancelLabel:  "Not Now",
 	})
-	allow.OnClick(func() {
-		select {
-		case answer <- true:
-		default:
-		}
-	})
-	dialog.SetDefaultButton(cancel)
-	dialog.SetCancelButton(cancel)
-	if window := a.mainWindow(); window != nil {
-		dialog.AttachToWindow(window)
-	}
-	dialog.Show()
-	select {
-	case approved := <-answer:
-		return approved
-	case <-ctx.Done():
-		return false
-	}
 }
 
 func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {

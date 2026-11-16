@@ -1,26 +1,11 @@
-import { t } from '../../../../shared/i18n'
-import { useTranslation } from 'react-i18next'
 import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Loader2 } from 'lucide-react'
 import { toast } from './toast'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './dialog'
-import { Button } from './button'
-import { cn } from '@/lib/utils'
+import { ConfirmationDialog, type ConfirmationContent } from './confirmation-dialog'
 
-export type ConfirmationOptions = {
-  title: ReactNode
-  content?: ReactNode
-  okText?: string
-  cancelText?: string
-  className?: string
-  overlayClassName?: string
-  icon?: ReactNode
-  descriptionId?: string
-  submitOnEnter?: boolean
+export type ConfirmationOptions = ConfirmationContent & {
   okButtonProps?: { danger?: boolean; loading?: boolean; disabled?: boolean }
   onOk?: () => void | Promise<unknown>
   onCancel?: () => void
-  afterOpenChange?: (open: boolean) => void
 }
 type Entry = { id: number; options: ConfirmationOptions; pending: boolean }
 export type ConfirmationService = {
@@ -31,9 +16,9 @@ export type ConfirmationService = {
 }
 const ConfirmationContext = createContext<ConfirmationService | null>(null)
 export function ConfirmationProvider({ children }: { children: ReactNode }) {
-  useTranslation()
   const [entries, setEntries] = useState<Entry[]>([])
   const nextID = useRef(0)
+  const running = useRef(new Set<number>())
   const service = useMemo<ConfirmationService>(
     () => ({
       confirm(options) {
@@ -55,89 +40,44 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
   function remove(id: number) {
     setEntries((current) => current.filter((entry) => entry.id !== id))
   }
-  async function accept(entry: Entry) {
-    if (
-      entry.pending ||
-      entry.options.okButtonProps?.loading ||
-      entry.options.okButtonProps?.disabled
-    )
-      return
+  async function accept(entry: Entry, onOk: ConfirmationOptions['onOk']) {
+    if (running.current.has(entry.id) || entry.options.okButtonProps?.loading) return
+    running.current.add(entry.id)
     setEntries((current) =>
       current.map((item) => (item.id === entry.id ? { ...item, pending: true } : item))
     )
     try {
-      await entry.options.onOk?.()
+      await onOk?.()
       remove(entry.id)
     } catch {
       setEntries((current) =>
         current.map((item) => (item.id === entry.id ? { ...item, pending: false } : item))
       )
+    } finally {
+      running.current.delete(entry.id)
     }
   }
   return (
     <ConfirmationContext.Provider value={service}>
       {children}
       {entries.map((entry) => {
-        const { options } = entry
-        const pending = entry.pending || options.okButtonProps?.loading
+        const { onOk, onCancel, okButtonProps, ...dialogProps } = entry.options
+        const pending = entry.pending || okButtonProps?.loading
         function cancel() {
-          if (pending) return
-          options.onCancel?.()
+          if (pending || running.current.has(entry.id)) return
+          onCancel?.()
           remove(entry.id)
         }
         return (
-          <Dialog
+          <ConfirmationDialog
             key={entry.id}
-            open
-            onOpenChange={(open) => {
-              if (!open) cancel()
-            }}
-          >
-            <DialogContent
-              className={cn('gap-4 sm:max-w-[440px]', options.className)}
-              overlayClassName={options.overlayClassName}
-              showCloseButton={false}
-              aria-describedby={options.descriptionId}
-              onPointerDownOutside={(event) => event.preventDefault()}
-              onOpenAutoFocus={() => options.afterOpenChange?.(true)}
-              onEscapeKeyDown={(event) => {
-                if (pending) event.preventDefault()
-              }}
-              onKeyDown={(event) => {
-                if (
-                  options.submitOnEnter &&
-                  event.key === 'Enter' &&
-                  !event.nativeEvent.isComposing &&
-                  !event.repeat &&
-                  event.target instanceof HTMLInputElement
-                ) {
-                  event.preventDefault()
-                  void accept(entry)
-                }
-              }}
-            >
-              <DialogHeader>
-                {options.icon}
-                <DialogTitle>{options.title}</DialogTitle>
-              </DialogHeader>
-              <div className="text-[length:var(--app-text-13)] leading-relaxed">
-                {options.content}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" disabled={pending} onClick={cancel}>
-                  {options.cancelText ?? t('common:cancel')}
-                </Button>
-                <Button
-                  variant={options.okButtonProps?.danger ? 'destructive' : 'default'}
-                  disabled={pending || options.okButtonProps?.disabled}
-                  onClick={() => void accept(entry)}
-                >
-                  {pending && <Loader2 className="size-3.5 animate-spin" />}
-                  {options.okText ?? 'OK'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            {...dialogProps}
+            pending={pending}
+            confirmDisabled={okButtonProps?.disabled}
+            danger={okButtonProps?.danger}
+            onConfirm={() => void accept(entry, onOk)}
+            onCancel={cancel}
+          />
         )
       })}
     </ConfirmationContext.Provider>

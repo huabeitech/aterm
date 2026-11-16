@@ -173,35 +173,9 @@ func (a *App) desktopPlugins(ctx context.Context, raw []json.RawMessage) (any, e
 	return nil, err
 }
 func (a *App) confirmPluginInstall(plugin desktopplugins.Package) bool {
-	if a.wailsApp == nil {
-		return false
-	}
-	answer := make(chan bool, 1)
-	dialog := a.wailsApp.Dialog.Question().SetTitle(plugin.Manifest.Name).SetMessage("This local plugin has not been verified. Its code runs in an isolated sandbox, but execution and interactive terminal permissions can access the target account’s files and network. Only install plugins from sources you trust.")
-	cancel := dialog.AddButton("Cancel")
-	install := dialog.AddButton("Install")
-	cancel.OnClick(func() {
-		select {
-		case answer <- false:
-		default:
-		}
+	return a.confirmAction(a.ctx, windowConfirmation{
+		Title:        plugin.Manifest.Name,
+		Message:      "This local plugin has not been verified. Its code runs in an isolated sandbox, but execution and interactive terminal permissions can access the target account’s files and network. Only install plugins from sources you trust.",
+		ConfirmLabel: "Install",
 	})
-	install.OnClick(func() {
-		select {
-		case answer <- true:
-		default:
-		}
-	})
-	dialog.SetDefaultButton(cancel)
-	dialog.SetCancelButton(cancel)
-	if window := a.mainWindow(); window != nil {
-		dialog.AttachToWindow(window)
-	}
-	dialog.Show()
-	select {
-	case approved := <-answer:
-		return approved
-	case <-a.ctx.Done():
-		return false
-	}
 }

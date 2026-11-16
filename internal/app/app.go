@@ -46,6 +46,7 @@ type App struct {
 	desktopEditors              *editorWindows
 	desktopKeys                 *desktopkeys.Store
 	desktopPrompts              *prompts.Broker
+	desktopConfirmations        map[string]pendingConfirmation
 	desktopThemesStore          *desktopthemes.Store
 	desktopPluginRegistry       *desktopplugins.Registry
 	desktopPluginRuntime        *desktopplugins.RuntimeHost
@@ -174,38 +175,14 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 }
 
 func (a *App) confirmHostKey(ctx context.Context, key service.HostKeyInfo) bool {
-	if a.wailsApp == nil {
-		return false
-	}
-	answer := make(chan bool, 1)
-	title := "Verify SSH Host Key"
-	message := fmt.Sprintf("Host: %s\nPort: %s\nKey Type: %s\nFingerprint: %s\n\nTrust this host key and continue connecting?", key.Host, key.Port, key.KeyType, key.Fingerprint)
-	button := "Trust and Connect"
+	title, message := hostKeyPrompt(key)
+	label := "Trust and Connect"
 	if key.PreviousFingerprint != "" {
-		title, button = "SSH Host Key Changed", "Replace and Connect"
-		message = fmt.Sprintf("Host: %s\nPort: %s\nPrevious fingerprint: %s\nReceived fingerprint: %s\n\nThe server identity has changed. Verify the new fingerprint with the server administrator before replacing the trusted key.", key.Host, key.Port, key.PreviousFingerprint, key.Fingerprint)
+		label = "Replace and Connect"
 	}
-	dialog := a.wailsApp.Dialog.Question().SetTitle(title).SetMessage(message)
-	cancel := dialog.AddButton("Cancel")
-	trust := dialog.AddButton(button)
-	cancel.OnClick(func() { answer <- false })
-	trust.OnClick(func() { answer <- true })
-	if key.PreviousFingerprint != "" {
-		dialog.SetDefaultButton(cancel)
-	} else {
-		dialog.SetDefaultButton(trust)
-	}
-	dialog.SetCancelButton(cancel)
-	if window := a.mainWindow(); window != nil {
-		dialog.AttachToWindow(window)
-	}
-	dialog.Show()
-	select {
-	case allowed := <-answer:
-		return allowed
-	case <-ctx.Done():
-		return false
-	}
+	return a.confirmAction(ctx, windowConfirmation{
+		Title: title, Message: message, ConfirmLabel: label,
+	})
 }
 
 func (a *App) emitEvent(name string, payload any) {

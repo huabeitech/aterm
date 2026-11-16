@@ -6,7 +6,6 @@ import { hasRemoteConnection, remoteFileTarget } from '../../../../shared/contra
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { PasswordInput } from '@/components/ui/desktop'
 import { useAppUI } from '@/components/ui/confirm-provider'
 import { TextField, WorkbenchDialog, type MenuAction } from '@/components/ui/workbench-controls'
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
@@ -28,6 +27,7 @@ import type {
 } from '../../../../shared/contracts/terminal'
 import type { useWorkspaceTabs } from '../workspace/useWorkspaceTabs'
 import { TerminalPane } from './TerminalPane'
+import { TerminalPromptDialog } from './TerminalPromptDialog'
 import { terminalTheme } from './themes'
 import {
   leaf,
@@ -75,8 +75,6 @@ export function useTerminalWorkbench(
   const [findRequest, setFindRequest] = useState<{ id: string; sequence: number } | null>(null)
   const current = useRef({ sessions, groups, unlock, onConnected })
   current.current = { sessions, groups, unlock, onConnected }
-  const [answers, setAnswers] = useState<string[]>([]),
-    [answering, setAnswering] = useState(false)
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null)
   const groupNodes = useRef(new Map<string, HTMLDivElement>())
   function report(error: unknown) {
@@ -101,10 +99,6 @@ export function useTerminalWorkbench(
       }),
     []
   )
-  useEffect(() => {
-    setAnswers(prompts[0]?.fields.map(() => '') ?? [])
-    setAnswering(false)
-  }, [prompts[0]?.id])
   useEffect(() => {
     // React after both the session and its pane are registered, including fast-exiting shells.
     for (const session of Object.values(sessions)) {
@@ -370,17 +364,6 @@ export function useTerminalWorkbench(
       { type: 'divider' }
     ]
   }
-  async function answer(accepted: boolean) {
-    if (!prompts[0] || answering) return
-    setAnswering(true)
-    try {
-      await desktop.terminal.answer(prompts[0].id, accepted ? answers : null)
-    } catch (error) {
-      report(error)
-    } finally {
-      setAnswering(false)
-    }
-  }
   const tabSessions = groups.map((group) => {
     const session = sessions[group.focused] ?? sessions[paneIDs(group.root)[0]]
     return {
@@ -585,69 +568,7 @@ export function useTerminalWorkbench(
           onEnter={saveTabName}
         />
       </WorkbenchDialog>
-      <WorkbenchDialog
-        key={prompt?.id ?? 'no-prompt'}
-        title={prompt?.title}
-        open={!!prompt}
-        restoreFocus={false}
-        submitLabel={
-          prompt?.kind === 'host-key'
-            ? t('terminal:trustAndConnect')
-            : prompt?.kind === 'host-key-changed'
-              ? t('terminal:replaceKeyAndConnect')
-              : t('terminal:continue')
-        }
-        busy={answering}
-        onSubmit={() => void answer(true)}
-        onClose={() => void answer(false)}
-      >
-        <form
-          className="min-w-0 [&_[data-slot=input-group-addon]]:mr-0"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void answer(true)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && (event.nativeEvent.isComposing || event.repeat))
-              event.preventDefault()
-          }}
-        >
-          <p className="terminal-prompt-message whitespace-pre-wrap wrap-anywhere leading-[1.6]">
-            {prompt?.message}
-          </p>
-          {prompt?.fields.map((field, index) => (
-            <label
-              key={`${prompt.id}:${index}`}
-              className="terminal-prompt-field grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5 mt-3.5 p-1"
-            >
-              <span className="wrap-anywhere">{field.label}</span>
-              {field.secret ? (
-                <PasswordInput
-                  autoFocus={index === 0}
-                  value={answers[index] ?? ''}
-                  autoComplete="off"
-                  onChange={(event) =>
-                    setAnswers((current) =>
-                      current.map((value, i) => (i === index ? event.target.value : value))
-                    )
-                  }
-                />
-              ) : (
-                <TextField
-                  autoFocus={index === 0}
-                  value={answers[index] ?? ''}
-                  onChange={(event) =>
-                    setAnswers((current) =>
-                      current.map((value, i) => (i === index ? event.target.value : value))
-                    )
-                  }
-                />
-              )}
-            </label>
-          ))}
-          <button type="submit" hidden disabled={answering} />
-        </form>
-      </WorkbenchDialog>
+      {prompt && <TerminalPromptDialog key={prompt.id} prompt={prompt} />}
     </>
   )
   return {

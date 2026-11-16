@@ -97,6 +97,7 @@ func (a *App) openEditor(sessionID, name string) error {
 		a.requestEditorClose(entry)
 	})
 	window.OnWindowEvent(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		a.cancelWindowConfirmations(window.ID())
 		windows.mu.Lock()
 		delete(windows.windows, window.ID())
 		windows.mu.Unlock()
@@ -144,27 +145,17 @@ func (a *App) closeEditor(entry *editorWindow) error {
 		return errors.New("wait for the file to finish saving")
 	}
 	if state.Text != state.Document.Text {
-		choices := make(chan string, 1)
-		dialog := a.wailsApp.Dialog.Question().SetTitle("Save changes?").SetMessage(fmt.Sprintf("Save changes to %s before closing? Your changes will be lost if you close without saving.", path.Base(state.Document.Path))).AttachToWindow(entry.window)
-		save := dialog.AddButton("Save and Close")
-		save.OnClick(func() { choices <- "save" })
-		discard := dialog.AddButton("Don't Save")
-		discard.OnClick(func() { choices <- "discard" })
-		cancel := dialog.AddButton("Cancel")
-		cancel.OnClick(func() { choices <- "cancel" })
-		dialog.SetDefaultButton(save)
-		dialog.SetCancelButton(cancel)
-		dialog.Show()
-		choice := "cancel"
-		select {
-		case choice = <-choices:
-		case <-a.ctx.Done():
-			return a.ctx.Err()
-		}
-		if choice == "cancel" {
+		entry.window.Focus()
+		choice := a.askConfirmation(a.ctx, entry.window, windowConfirmation{
+			Title:        "Save changes?",
+			Message:      fmt.Sprintf("Save changes to %s before closing? Your changes will be lost if you close without saving.", path.Base(state.Document.Path)),
+			ConfirmLabel: "Save and Close",
+			ExtraLabel:   "Don't Save",
+		})
+		if choice == confirmationCancel {
 			return nil
 		}
-		if choice == "save" {
+		if choice == confirmationAccept {
 			if err := entry.editor.Save(func() { a.publishEditor(entry) }); err != nil {
 				return err
 			}
@@ -241,7 +232,7 @@ func (a *App) desktopFileEditor(ctx context.Context, raw []json.RawMessage) (any
 }
 
 // requestEditorClose asks React to drain its change queue before Go snapshots
-// the draft or asks the native unsaved-changes question. Completion is broadcast
+// the draft or asks the unsaved-changes question. Completion is broadcast
 // so owner close and application quit can share one in-flight request.
 func (a *App) requestEditorClose(entry *editorWindow) *editorCloseRequest {
 	entry.mu.Lock()

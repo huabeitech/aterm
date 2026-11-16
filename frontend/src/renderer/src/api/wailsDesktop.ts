@@ -104,6 +104,10 @@ async function invokeFileEditor(operation: string, ...args: unknown[]) {
 }
 const subscribeTerminal = terminalEvents((dispatch) => subscribe(channels.terminalEvent, dispatch))
 const desktop: DesktopApi = {
+  confirmations: {
+    onEvent: (callback) => subscribe(channels.confirmationEvent, callback),
+    answer: (id, choice) => invokeRequest(channels.confirmationAnswer, id, choice)
+  },
   plugins: {
     activity: (id) => invokeRequest(channels.plugins, 'activity', id),
     list: () => invokeRequest(channels.plugins, 'list'),

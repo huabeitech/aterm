@@ -18,6 +18,8 @@ func (a *App) DesktopRequest(ctx context.Context, channel string, args []json.Ra
 		return a.desktopSavePreferences(args)
 	case "library:request":
 		return a.desktopLibrary(args)
+	case "confirmation:answer":
+		return nil, a.answerConfirmation(ctx, args)
 	case "integration:request":
 		return a.desktopIntegration(args)
 	case "terminal:request", "terminal:input", "terminal:binary-input", "terminal:resize", "terminal:ack":

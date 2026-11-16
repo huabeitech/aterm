@@ -131,35 +131,7 @@ func (a *App) confirmBackupRestore(metadata service.SyncMetadata) bool {
 	return a.confirmBackupAction("Restore Encrypted Backup", fmt.Sprintf("Replace saved connections and protected data with this backup?\n\nSource: %s\nDate: %s\nHosts: %d\nFolders: %d", source, date, metadata.HostCount, metadata.DirectoryCount), "Restore")
 }
 func (a *App) confirmBackupAction(title, message, action string) bool {
-	if a.wailsApp == nil {
-		return false
-	}
-	answer := make(chan bool, 1)
-	dialog := a.wailsApp.Dialog.Question().SetTitle(title).SetMessage(message)
-	cancel := dialog.AddButton("Cancel")
-	accept := dialog.AddButton(action)
-	cancel.OnClick(func() {
-		select {
-		case answer <- false:
-		default:
-		}
+	return a.confirmAction(a.ctx, windowConfirmation{
+		Title: title, Message: message, ConfirmLabel: action, Danger: true,
 	})
-	accept.OnClick(func() {
-		select {
-		case answer <- true:
-		default:
-		}
-	})
-	dialog.SetDefaultButton(cancel)
-	dialog.SetCancelButton(cancel)
-	if window := a.mainWindow(); window != nil {
-		dialog.AttachToWindow(window)
-	}
-	dialog.Show()
-	select {
-	case result := <-answer:
-		return result
-	case <-a.ctx.Done():
-		return false
-	}
 }
