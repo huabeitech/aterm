@@ -71,8 +71,15 @@ export function TunnelsPanel({
           {tunnelErrorMessage(failure || error)}
         </p>
       )}
-      <div className="min-h-0 overflow-auto">
-        <table className="w-full text-left text-xs">
+      <div className="min-h-0 overflow-auto [scrollbar-gutter:stable]">
+        <table className="w-full min-w-[640px] table-fixed text-left text-xs">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col className="w-40" />
+          </colgroup>
           <thead className="bg-muted/40 text-muted-foreground">
             <tr>
               {[
@@ -98,7 +105,7 @@ export function TunnelsPanel({
               )
               return (
                 <tr key={row.id} className="border-b border-border">
-                  <td className="px-3 py-3">
+                  <td className="break-words px-3 py-3">
                     {row.name}
                     {!hostID && (
                       <div className="text-muted-foreground">
@@ -106,15 +113,15 @@ export function TunnelsPanel({
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="break-words px-3 py-3">
                     {tunnelAddress(active.localAddress, active.localPort)}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="break-words px-3 py-3">
                     {active.targetAddress === '127.0.0.1'
                       ? `${t('hosts:tunnels.same')}:${active.targetPort}`
                       : tunnelAddress(active.targetAddress, active.targetPort)}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="break-words px-3 py-3">
                     <TunnelStatusBadge state={row.state} />
                     {tunnelNeedsRestart(row) && <div>{t('hosts:tunnels.restartRequired')}</div>}
                     {(row.error || row.lastError) && (
@@ -123,7 +130,7 @@ export function TunnelsPanel({
                       </p>
                     )}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="break-words px-3 py-3">
                     <div className="flex gap-1">
                       <Tooltip>
                         <TooltipTrigger asChild>

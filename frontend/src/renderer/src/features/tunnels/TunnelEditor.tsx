@@ -239,27 +239,29 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               </Field>
             </details>
           </fieldset>
-          {error && (
-            <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
-              <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>{tunnelErrorMessage(error)}</span>
-            </p>
-          )}
-          {testMessage && (
-            <p
-              role="status"
-              className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400"
-            >
-              <CircleCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>
-                {t(
-                  testMessage === 'existingSuccess'
-                    ? 'hosts:tunnels.existingSuccess'
-                    : 'hosts:tunnels.success'
-                )}
-              </span>
-            </p>
-          )}
+          <div className="h-16 overflow-y-auto [scrollbar-gutter:stable]">
+            {error && (
+              <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
+                <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <span>{tunnelErrorMessage(error)}</span>
+              </p>
+            )}
+            {testMessage && (
+              <p
+                role="status"
+                className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400"
+              >
+                <CircleCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  {t(
+                    testMessage === 'existingSuccess'
+                      ? 'hosts:tunnels.existingSuccess'
+                      : 'hosts:tunnels.success'
+                  )}
+                </span>
+              </p>
+            )}
+          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -267,7 +269,22 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               disabled={busy}
               onClick={() => void testConnection()}
             >
-              {testing ? t('hosts:tunnels.testing') : t('hosts:tunnels.test')}
+              <span className="grid">
+                <span
+                  className={
+                    testing ? 'invisible col-start-1 row-start-1' : 'col-start-1 row-start-1'
+                  }
+                >
+                  {t('hosts:tunnels.test')}
+                </span>
+                <span
+                  className={
+                    testing ? 'col-start-1 row-start-1' : 'invisible col-start-1 row-start-1'
+                  }
+                >
+                  {t('hosts:tunnels.testing')}
+                </span>
+              </span>
             </Button>
             {!editing && (
               <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
