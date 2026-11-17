@@ -72,11 +72,6 @@ export function SourceSidebar(props: SourceSidebarProps) {
     <>
       <ConnectionTree {...props} />
       <nav className="sidebar-utilities" aria-label={t('hosts:application')}>
-        <button type="button" className="sidebar-utility-button sidebar-utility-tunnels" onClick={props.onOpenTunnels} aria-label={`SSH tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`}>
-          <Cable size={16} aria-hidden="true" /><span>SSH tunnels</span>
-          {props.runningTunnels > 0 && <span className="ml-auto text-xs text-muted-foreground">{props.runningTunnels} active</span>}
-          {props.failedTunnels > 0 && <span className="text-xs text-destructive">{props.failedTunnels} failed</span>}
-        </button>
         <div className="sidebar-utilities-toolbar">
           <button
             type="button"
@@ -92,6 +87,7 @@ export function SourceSidebar(props: SourceSidebarProps) {
             <SidebarUtilityIcon name="gear-six" />
             <span>{t('hosts:settings')}</span>
           </button>
+          <button type="button" className="sidebar-utility-button sidebar-utility-icon" onClick={props.onOpenTunnels} aria-label={`All tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`} title="All tunnels"><Cable size={16} aria-hidden="true" /></button>
           {platformFeatures(props.platform).cloudBackup && (
             <div className="sidebar-utility-actions">
               <Tooltip>

@@ -4,9 +4,9 @@ Local TCP forwarding connects an application on your computer to a service reach
 
 ## Configure and use
 
-1. Open **SSH tunnels** in the sidebar, or open a host’s details and select **Manage tunnels**.
-2. Choose **New tunnel**. Enter a name, SSH host, local listen address and port, and target address and port.
-3. Save the configuration and choose **Start**. Unlock protected data and complete any SSH authentication or host verification prompts.
+1. Select **Tunnels** in the bottom view bar of a saved SSH connection. Use **All tunnels** in the sidebar footer for the global workspace, or **Manage tunnels** in host details.
+2. Choose **New tunnel**. Enter a name and select a service preset. The selected SSH host is prefilled. Choose **This SSH host** for a local service, or **Another private host** to enter its address. Set the service and local ports; the listen address is under **Advanced**.
+3. Choose **Save** for later use, or **Save and start**. Unlock protected data and complete any SSH authentication or host verification prompts.
 4. Connect an external application to the displayed local address. **Copy local address** copies the address and port.
 5. Choose **Stop** when finished. This closes both the listener and existing forwarded connections.
 

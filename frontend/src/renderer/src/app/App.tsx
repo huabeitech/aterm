@@ -1,4 +1,4 @@
-import { TunnelsDialog } from '../features/tunnels/TunnelsDialog'
+import { TunnelsPanel } from '../features/tunnels/TunnelsPanel'
 import { useTunnels } from '../features/tunnels/useTunnels'
 import type { FileTarget } from '../../../shared/contracts/files'
 import { hasRemoteConnection, remoteFileTarget } from '../../../shared/contracts/terminal'
@@ -138,6 +138,8 @@ function Workbench({
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
+  const isTunnels = tabs.activeWorkspaceTab === 'tunnels'
+  function openTunnels(id: string) { setTunnelsHostID(id); tabs.openWorkspaceTab('tunnels'); tabs.setActiveWorkspaceTab('tunnels') }
   const notifyUnavailable = useCallback(
     (feature: string) => {
       void message.info(t('common:featureUnavailable', { feature }))
@@ -147,7 +149,7 @@ function Workbench({
   const library = useHostWorkbench(
     (id) => void terminal.open({ kind: 'ssh', hostID: id }),
     (id) => void openFiles(id),
-    (id) => setTunnelsHostID(id)
+    (id) => openTunnels(id)
   )
   const files = useFilesWorkbench(
     library.unlockForConnection,
@@ -177,6 +179,7 @@ function Workbench({
           fileSession={fileSession}
           transfers={files.transfers.filter((t) => t.sessionID === fileSession?.id)}
           terminal={content}
+          tunnels={<TunnelsPanel {...tunnels} hosts={library.hosts} hostID={session.hostID} unlock={library.unlockForConnection} />}
           onReconnectSSH={onReconnect}
           onReconnectSFTP={() => {
             if (fileSession) void files.reconnect(fileSession.id)
@@ -220,11 +223,12 @@ function Workbench({
     ? tabs.activeWorkspaceTab.slice(9)
     : null
   const isFiles = !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
+  const isConnectionTunnels = !!activeConnectionID && connectionViews[activeConnectionID] === 'tunnels'
   const isPluginView =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:') === true
   const isTerminal =
     tabs.activeWorkspaceTab.startsWith('terminal:') &&
-    !isFiles &&
+    !isFiles && !isConnectionTunnels &&
     !connectionViews[activeConnectionID ?? '']?.startsWith('plugin:')
   async function openFiles(hostID: FileTarget, groupID?: string) {
     if (typeof hostID !== 'string') {
@@ -380,6 +384,7 @@ function Workbench({
         )
           terminal.closeActive()
         else if (activeConnectionID) void closeConnection(activeConnectionID)
+        else if (isTunnels) tabs.removeTabs(['tunnels'])
         else if (isSettings) closeSettings()
         break
       case 'previous-tab':
@@ -411,7 +416,7 @@ function Workbench({
   const activeIndex = tabs.workspaceTabs.findIndex((tab) => tab.id === tabs.activeWorkspaceTab)
   const features = platformFeatures(bootstrap.info.platform)
   const paletteCommands: PaletteCommand[] = [
-    { id: 'ssh-tunnels', label: 'SSH tunnels', keywords: 'tunnel forwarding port 隧道 转发', run: () => setTunnelsHostID('') },
+    { id: 'ssh-tunnels', label: 'SSH tunnels', keywords: 'tunnel forwarding port 隧道 转发', run: () => openTunnels('') },
     {
       id: 'connect-ssh',
       label: t('commands:connectSsh'),
@@ -510,7 +515,7 @@ function Workbench({
   const paletteTabs: PaletteCommand[] = tabs.workspaceTabs.map((tab) => ({
     id: tab.id,
     label:
-      tab.id === 'settings'
+      tab.id === 'tunnels' ? 'Tunnels' : tab.id === 'settings'
         ? t('common:settings')
         : tab.kind === 'files'
           ? `${files.sessions.find((session) => session.hostID === tab.hostID)?.title ?? t('common:files')} · SFTP`
@@ -630,7 +635,7 @@ function Workbench({
             ? 'settings'
             : isFiles
               ? 'files'
-              : isTerminal || isPluginView
+              : isTerminal || isPluginView || isConnectionTunnels
                 ? 'terminal'
                 : 'home'
         }
@@ -686,7 +691,7 @@ function Workbench({
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}
-            onOpenTunnels={() => setTunnelsHostID('')}
+            onOpenTunnels={() => openTunnels('')}
             runningTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'running' || tunnel.state === 'starting').length}
             failedTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'failed').length}
             onOpenSettings={openSettings}
@@ -697,6 +702,7 @@ function Workbench({
         content={
           <>
             {terminal.pages}
+            {isTunnels && <TunnelsPanel {...tunnels} hosts={library.hosts} hostID={tunnelsHostID || undefined} unlock={library.unlockForConnection} />}
             {settingsOpen && (
               <div style={{ display: isSettings ? 'contents' : 'none' }}>
                 <SettingsPage
@@ -725,9 +731,9 @@ function Workbench({
             <div
               className="workspace-welcome-pane h-full min-h-0 grid grid-rows-[minmax(0,_1fr)]"
               style={{
-                display: !isSettings && !isTerminal && !isFiles && !isPluginView ? 'grid' : 'none'
+                display: !isSettings && !isTunnels && !isConnectionTunnels && !isTerminal && !isFiles && !isPluginView ? 'grid' : 'none'
               }}
-              aria-hidden={isSettings || isTerminal || isFiles || isPluginView}
+              aria-hidden={isSettings || isTunnels || isConnectionTunnels || isTerminal || isFiles || isPluginView}
             >
               <ConnectionWelcome
                 hosts={library.hosts}
@@ -747,7 +753,6 @@ function Workbench({
           </>
         }
       />
-      {tunnelsHostID !== null && <TunnelsDialog {...tunnels} hosts={library.hosts} initialHostID={tunnelsHostID} unlock={library.unlockForConnection} onClose={() => setTunnelsHostID(null)} />}
       {library.overlays}
       {terminal.dialogs}
       {searchOpen && (

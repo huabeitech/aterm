@@ -5,14 +5,19 @@ import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box } from 'lucide-react'
+import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box, Cable } from 'lucide-react'
 import { SplitLayout } from '@/components/ui/split-layout'
 import { ActionButton } from '@/components/ui/workbench-controls'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
 import type { FileSession, FileTransfer } from '../../../../shared/contracts/files'
 import './connection.css'
 
-export type ConnectionView = 'terminal' | 'files' | 'split' | `plugin:${string}:${string}`
+export type ConnectionView =
+  | 'terminal'
+  | 'files'
+  | 'tunnels'
+  | 'split'
+  | `plugin:${string}:${string}`
 type Props = {
   cycleViewRef: Ref<() => void>
   active: boolean
@@ -20,6 +25,7 @@ type Props = {
   session: TerminalSession
   fileSession?: FileSession
   transfers: FileTransfer[]
+  tunnels: ReactNode
   terminal: ReactNode
   renderFiles: (target: HTMLElement | null, transferRequest: number) => ReactNode
   onReconnectSSH: () => void
@@ -35,6 +41,7 @@ export function ConnectionWorkspace({
   fileSession,
   transfers,
   terminal,
+  tunnels,
   renderFiles,
   onReconnectSSH,
   onReconnectSFTP,
@@ -67,6 +74,7 @@ export function ConnectionWorkspace({
   useImperativeHandle(active ? cycleViewRef : null, () => () => {
     const order: ConnectionView[] = ['terminal']
     if (remote) order.push('files')
+    if (session.hostID) order.push('tunnels')
     for (const item of views) order.push(item.key)
     if (order.length < 2) return
     // Split is a separate control; start the tab cycle from Terminal in split mode.
@@ -166,7 +174,7 @@ export function ConnectionWorkspace({
               />
             </div>
           ))}
-        <div style={{ display: pluginSelected ? 'none' : 'contents' }}>
+        <div style={{ display: pluginSelected || view === 'tunnels' ? 'none' : 'contents' }}>
           <SplitLayout
             className="connection-split h-full min-h-0"
             size={size}
@@ -185,6 +193,7 @@ export function ConnectionWorkspace({
             second={files}
           />
         </div>
+        {view === 'tunnels' && tunnels}
         {/* Keep the same mounted panels when moving between single and split views. */}
       </div>
       <footer
@@ -202,13 +211,19 @@ export function ConnectionWorkspace({
             <span>{t(remote ? 'terminal:sshTerminal' : 'terminal:terminal')}</span>
           </button>
           {remote && (
-            <button
-              type="button"
-              aria-pressed={fileVisible}
-              onClick={() => onViewChange('files')}
-            >
+            <button type="button" aria-pressed={fileVisible} onClick={() => onViewChange('files')}>
               <FolderOpen size={14} aria-hidden="true" />
               <span>{t('terminal:sftpFiles')}</span>
+            </button>
+          )}
+          {session.hostID && (
+            <button
+              type="button"
+              aria-pressed={view === 'tunnels'}
+              onClick={() => onViewChange('tunnels')}
+            >
+              <Cable size={14} aria-hidden="true" />
+              <span>Tunnels</span>
             </button>
           )}
           {views.map((item) => (

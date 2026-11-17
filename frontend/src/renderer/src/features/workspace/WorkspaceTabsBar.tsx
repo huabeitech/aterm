@@ -8,6 +8,7 @@ import { useAppUI } from '@/components/ui/confirm-provider'
 import type { DragEvent, RefObject, WheelEvent } from 'react'
 
 import {
+  Cable,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -81,6 +82,28 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
       >
         {props.tabs.map((workspaceTab) => {
           const tab = workspaceTab.id
+          if (tab === 'tunnels') {
+            return (
+              <WorkspaceTab
+                key={tab}
+                tab={tab}
+                label="Tunnels"
+                icon={<Cable size={14} />}
+                active={props.activeTab === tab}
+                dragging={props.draggingTab === tab}
+                dropPosition={dropPosition(props, tab)}
+                onActivate={() => props.onActivateTab(tab)}
+                onClose={() => props.onCloseFiles(tab)}
+                onCloseAll={props.onCloseAll}
+                onCloseOther={props.onCloseOther}
+                onCloseToRight={props.onCloseToRight}
+                onDragStart={props.onDragStart}
+                onDragOver={props.onDragOver}
+                onDrop={props.onDrop}
+                onDragEnd={props.onDragEnd}
+              />
+            )
+          }
           if (tab === 'settings') {
             return (
               <WorkspaceTab
