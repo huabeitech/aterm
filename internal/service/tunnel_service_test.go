@@ -92,11 +92,18 @@ func TestTunnelParityFixtureThroughJumpHost(t *testing.T) {
 	defer store()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	if result, err := svc.TestTunnelConnection(ctx, "", config.TunnelInput, nil, nil); err != nil || result.LocalListener != "checked" {
+		t.Fatalf("test unsaved draft: %+v, %v", result, err)
+	}
 	if err := svc.StartTunnel(ctx, config.ID, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	defer svc.CloseTunnels()
 	waitTunnelState(t, ctx, svc, "running")
+	result, err := svc.TestTunnelConnection(ctx, config.ID, config.TunnelInput, nil, nil)
+	if err != nil || result.LocalListener != "existing" {
+		t.Fatalf("test running tunnel: %+v, %v", result, err)
+	}
 	verifyFixtureHTTP(t, config)
 	if err := svc.StopTunnel(ctx, config.ID); err != nil {
 		t.Fatal(err)
@@ -151,5 +158,26 @@ func verifyFixtureHTTP(t *testing.T, config domain.Tunnel) {
 	body, err := io.ReadAll(response.Body)
 	if err != nil || !strings.Contains(string(body), "aTerm tunnel fixture reached through SSH") {
 		t.Fatalf("body=%q, err=%v", body, err)
+	}
+}
+
+func TestTunnelConnectionReportsLocalPortConflictWithoutSaving(t *testing.T) {
+	svc, _, store := managedBackupService(t)
+	host, err := store.CreateHost(HostInput{Alias: "fixture", HostName: "127.0.0.1", Port: 22})
+	if err != nil {
+		t.Fatal(err)
+	}
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	input := domain.TunnelInput{Name: "Draft", HostID: host.ID, LocalAddress: "127.0.0.1", LocalPort: listener.Addr().(*net.TCPAddr).Port, TargetAddress: "127.0.0.1", TargetPort: 3306}
+	if _, err := svc.TestTunnelConnection(context.Background(), "", input, nil, nil); err == nil || !strings.Contains(err.Error(), "local listener") {
+		t.Fatalf("expected local bind failure: %v", err)
+	}
+	configs, err := store.ListTunnels()
+	if err != nil || len(configs) != 0 {
+		t.Fatal("test persisted draft", err)
 	}
 }

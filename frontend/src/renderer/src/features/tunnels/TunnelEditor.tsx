@@ -25,6 +25,7 @@ type Props = {
   hosts: domain.Host[]
   editing: boolean
   onClose: () => void
+  onTest: (input: TunnelInput) => Promise<{ localListener: 'checked' | 'existing' } | null>
   onSave: (input: TunnelInput, start: boolean) => Promise<void>
 }
 const presets = {
@@ -33,15 +34,18 @@ const presets = {
   'Web service': [8080, 18080],
   'Other TCP': [9000, 19000]
 } as const
-export function TunnelEditor({ input, hosts, editing, onClose, onSave }: Props) {
+export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }: Props) {
   const [draft, setDraft] = useState(input)
   const [privateHost, setPrivateHost] = useState(input.targetAddress !== '127.0.0.1')
   const [busy, setBusy] = useState(false)
   const saving = useRef(false)
   const [error, setError] = useState('')
+  const [testMessage, setTestMessage] = useState('')
+  const [testing, setTesting] = useState(false)
   function update<K extends keyof TunnelInput>(key: K, value: TunnelInput[K]) {
     setDraft((current) => ({ ...current, [key]: value }))
     setError('')
+    setTestMessage('')
   }
   async function save(start: boolean) {
     if (saving.current) return
@@ -60,6 +64,35 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave }: Props) 
     } finally {
       saving.current = false
       setBusy(false)
+    }
+  }
+  async function testConnection() {
+    if (saving.current) return
+    const value = { ...draft, targetAddress: privateHost ? draft.targetAddress : '127.0.0.1' }
+    const invalid = validateTunnel(value)
+    if (invalid) {
+      setError(invalid)
+      return
+    }
+    saving.current = true
+    setBusy(true)
+    setTesting(true)
+    setError('')
+    setTestMessage('')
+    try {
+      const result = await onTest(value)
+      if (result)
+        setTestMessage(
+          result.localListener === 'existing'
+            ? 'Connection successful. Existing local listener retained. Service TCP port is reachable.'
+            : 'Connection successful. Local port is available and the service TCP port is reachable.'
+        )
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      saving.current = false
+      setBusy(false)
+      setTesting(false)
     }
   }
   return (
@@ -113,6 +146,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave }: Props) 
                   options={Object.keys(presets).map((value) => ({ value, label: value }))}
                   onChange={(value) => {
                     const [targetPort, localPort] = presets[value as keyof typeof presets]
+                    setTestMessage('')
                     setDraft((current) => ({ ...current, targetPort, localPort }))
                   }}
                 />
@@ -140,8 +174,10 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave }: Props) 
                   { value: 'private', label: 'Another private host' }
                 ]}
                 onChange={(value) => {
+                  setTestMessage('')
                   setPrivateHost(value === 'private')
                   setError('')
+                  setTestMessage('')
                 }}
               />
             </Field>
@@ -198,7 +234,20 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave }: Props) 
               {error}
             </p>
           )}
+          {testMessage && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {testMessage}
+            </p>
+          )}
           <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => void testConnection()}
+            >
+              {testing ? 'Testing…' : 'Test connection'}
+            </Button>
             <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
               Cancel
             </Button>

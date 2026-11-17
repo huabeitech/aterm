@@ -24,6 +24,12 @@ func (a *App) desktopTunnels(ctx context.Context, raw []json.RawMessage) (any, e
 		return nil, err
 	}
 	switch op {
+	case "test":
+		input, err := argument[domain.TunnelInput](args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return svc.TestTunnelConnection(ctx, id, input, a.hostKeyConfirmer("tunnel-test:"+id), a.credentialPrompter("tunnel-test:"+id))
 	case "save":
 		input, err := argument[domain.TunnelInput](args, 1)
 		if err != nil {

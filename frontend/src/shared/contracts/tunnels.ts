@@ -18,6 +18,7 @@ export interface TunnelStatus extends Tunnel {
   activeConfig: Tunnel | null
 }
 export interface TunnelsApi {
+  test(id: string, input: TunnelInput): Promise<{ localListener: 'checked' | 'existing' }>
   list(): Promise<TunnelStatus[]>
   save(id: string, input: TunnelInput): Promise<Tunnel>
   start(id: string): Promise<void>

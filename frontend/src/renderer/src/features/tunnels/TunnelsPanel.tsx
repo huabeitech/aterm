@@ -173,6 +173,10 @@ export function TunnelsPanel({
       {editor && (
         <TunnelEditor
           input={editor.input}
+          onTest={async input => {
+            if (!(await unlock())) return null
+            return desktop.tunnels.test(editor.id, input)
+          }}
           hosts={hosts}
           editing={!!editor.id}
           onClose={() => setEditor(null)}

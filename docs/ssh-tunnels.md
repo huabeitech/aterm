@@ -14,6 +14,10 @@ The target address is resolved and contacted from the selected SSH host. A targe
 
 The listen address defaults to `127.0.0.1`. Both IPv4 and IPv6 literals are accepted. A non-loopback listener may expose the forwarded service to other devices; the editor displays a notice. Local ports are fixed and never silently replaced.
 
+## Test a configuration
+
+Choose **Test connection** in the new or edit dialog to test the current draft without saving it. The check validates the local listen address and port, SSH authentication and jump hosts, and a TCP connection to the target service. It times out after 30 seconds and closes its temporary resources. Testing a running tunnel retains its existing local listener and uses a separate SSH transport, so existing forwarded sessions are not interrupted. TCP reachability does not validate database credentials or application health. Editing configuration fields clears the previous test result.
+
 ## Lifecycle and status
 
 - Tunnels do not require a terminal tab or remote shell. Closing a terminal or the management dialog leaves tunnels running. The sidebar shows active and failed counts.

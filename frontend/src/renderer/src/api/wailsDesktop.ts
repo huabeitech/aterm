@@ -105,6 +105,7 @@ async function invokeFileEditor(operation: string, ...args: unknown[]) {
 const subscribeTerminal = terminalEvents((dispatch) => subscribe(channels.terminalEvent, dispatch))
 const desktop: DesktopApi = {
   tunnels: {
+    test: (id, input) => invokeRequest(channels.tunnels, 'test', id, input),
     list: () => invokeRequest(channels.tunnels, 'list'),
     save: (id, input) => invokeRequest(channels.tunnels, 'save', id, input),
     start: (id) => invokeRequest(channels.tunnels, 'start', id),
