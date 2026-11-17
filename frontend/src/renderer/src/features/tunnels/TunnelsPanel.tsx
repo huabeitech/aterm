@@ -10,6 +10,7 @@ import { desktop } from '../../api/app'
 import { Button } from '@/components/ui/button'
 import { useAppUI } from '@/components/ui/confirm-provider'
 import { TunnelEditor } from './TunnelEditor'
+import { TunnelStatusBadge } from './TunnelStatusBadge'
 import { tunnelAddress, tunnelNeedsRestart } from './tunnelModel'
 import type { useTunnels } from './useTunnels'
 export type TunnelsPanelProps = ReturnType<typeof useTunnels> & {
@@ -108,7 +109,7 @@ export function TunnelsPanel({
                       : tunnelAddress(active.targetAddress, active.targetPort)}
                   </td>
                   <td className="px-3 py-3">
-                    <span>{t(`hosts:tunnels.${row.state}`)}</span>
+                    <TunnelStatusBadge state={row.state} />
                     {tunnelNeedsRestart(row) && <div>{t('hosts:tunnels.restartRequired')}</div>}
                     {(row.error || row.lastError) && (
                       <p className="max-w-64 break-words text-destructive">
