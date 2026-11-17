@@ -3,11 +3,12 @@ import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useTunnelOperations } from './useTunnelOperations'
 import { useState } from 'react'
-import { Copy, Pencil, Play, Square, Trash2 } from 'lucide-react'
+import { Copy, Pencil, CirclePlay, CircleStop, Trash2 } from 'lucide-react'
 import type { domain } from '../../../../shared/contracts/domain'
 import type { TunnelInput, TunnelStatus } from '../../../../shared/contracts/tunnels'
 import { desktop } from '../../api/app'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAppUI } from '@/components/ui/confirm-provider'
 import { TunnelEditor } from './TunnelEditor'
 import { TunnelStatusBadge } from './TunnelStatusBadge'
@@ -90,6 +91,11 @@ export function TunnelsPanel({
           <tbody>
             {visible.map((row) => {
               const active = row.activeConfig ?? row
+              const canStop = row.state === 'running' || row.state === 'starting'
+              const toggleLabel = t(
+                canStop ? 'hosts:tunnels.stopAction' : 'hosts:tunnels.startAction',
+                { name: row.name }
+              )
               return (
                 <tr key={row.id} className="border-b border-border">
                   <td className="px-3 py-3">
@@ -119,24 +125,29 @@ export function TunnelsPanel({
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-1">
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        disabled={pending.includes(row.id) || row.state === 'stopping'}
-                        aria-label={t(
-                          row.state === 'running' || row.state === 'starting'
-                            ? 'hosts:tunnels.stopAction'
-                            : 'hosts:tunnels.startAction',
-                          { name: row.name }
-                        )}
-                        onClick={() => toggle(row)}
-                      >
-                        {row.state === 'running' || row.state === 'starting' ? (
-                          <Square size={14} />
-                        ) : (
-                          <Play size={14} />
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            className={
+                              canStop
+                                ? 'text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
+                                : 'text-green-700 hover:bg-green-500/10 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'
+                            }
+                            disabled={pending.includes(row.id) || row.state === 'stopping'}
+                            aria-label={toggleLabel}
+                            onClick={() => toggle(row)}
+                          >
+                            {canStop ? (
+                              <CircleStop aria-hidden="true" />
+                            ) : (
+                              <CirclePlay aria-hidden="true" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{toggleLabel}</TooltipContent>
+                      </Tooltip>
                       <Button
                         size="icon-sm"
                         variant="ghost"
