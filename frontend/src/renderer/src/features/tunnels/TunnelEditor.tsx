@@ -1,3 +1,6 @@
+import { tunnelErrorMessage } from './tunnelErrors'
+import { t } from '../../../../shared/i18n'
+import { useTranslation } from 'react-i18next'
 import { useRef, useState } from 'react'
 import { CircleCheck, CircleAlert } from 'lucide-react'
 import type { domain } from '../../../../shared/contracts/domain'
@@ -36,6 +39,7 @@ const presets = {
   'Other TCP': [9000, 19000]
 } as const
 export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }: Props) {
+  useTranslation()
   const [draft, setDraft] = useState(input)
   const [privateHost, setPrivateHost] = useState(input.targetAddress !== '127.0.0.1')
   const [busy, setBusy] = useState(false)
@@ -83,11 +87,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
     try {
       const result = await onTest(value)
       if (result)
-        setTestMessage(
-          result.localListener === 'existing'
-            ? 'Connection successful. Existing local listener retained. Service TCP port is reachable.'
-            : 'Connection successful. Local port is available and the service TCP port is reachable.'
-        )
+        setTestMessage(result.localListener === 'existing' ? 'existingSuccess' : 'success')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
@@ -113,7 +113,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
         }}
       >
         <DialogHeader>
-          <DialogTitle>{editing ? 'Edit tunnel' : 'New tunnel'}</DialogTitle>
+          <DialogTitle>{editing ? t('hosts:tunnels.edit') : t('hosts:tunnels.new')}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={(event) => {
@@ -123,10 +123,10 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
           className="space-y-4"
         >
           <fieldset disabled={busy} className="host-editor grid gap-4 p-1">
-            <Field label="Name" required>
+            <Field label={t('hosts:tunnels.name')} required>
               <Input
                 autoFocus
-                aria-label="Name"
+                aria-label={t('hosts:tunnels.name')}
                 required
                 value={draft.name}
                 onChange={(event) => update('name', event.target.value)}
@@ -135,16 +135,24 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               />
             </Field>
             {!editing && (
-              <Field label="Service">
+              <Field label={t('hosts:tunnels.service')}>
                 <TunnelSelect
-                  label="Service"
+                  label={t('hosts:tunnels.service')}
                   value={
                     Object.keys(presets).find(
                       (key) => presets[key as keyof typeof presets][0] === draft.targetPort
                     ) ?? 'Other TCP'
                   }
                   disabled={busy}
-                  options={Object.keys(presets).map((value) => ({ value, label: value }))}
+                  options={Object.keys(presets).map((value) => ({
+                    value,
+                    label:
+                      value === 'Web service'
+                        ? t('hosts:tunnels.web')
+                        : value === 'Other TCP'
+                          ? t('hosts:tunnels.custom')
+                          : value
+                  }))}
                   onChange={(value) => {
                     const [targetPort, localPort] = presets[value as keyof typeof presets]
                     setTestMessage('')
@@ -153,10 +161,10 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
                 />
               </Field>
             )}
-            <Field label="SSH host" required>
+            <Field label={t('hosts:tunnels.sshHost')} required>
               <SearchSelect
-                label="SSH host"
-                placeholder="Select an SSH host"
+                label={t('hosts:tunnels.sshHost')}
+                placeholder={t('hosts:tunnels.selectHost')}
                 value={draft.hostID || undefined}
                 onChange={(value) => update('hostID', value)}
                 options={hosts.map((host) => ({
@@ -165,27 +173,26 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
                 }))}
               />
             </Field>
-            <Field label="Service location">
+            <Field label={t('hosts:tunnels.location')}>
               <TunnelSelect
-                label="Service location"
+                label={t('hosts:tunnels.location')}
                 disabled={busy}
                 value={privateHost ? 'private' : 'same'}
                 options={[
-                  { value: 'same', label: 'This SSH host' },
-                  { value: 'private', label: 'Another private host' }
+                  { value: 'same', label: t('hosts:tunnels.same') },
+                  { value: 'private', label: t('hosts:tunnels.private') }
                 ]}
                 onChange={(value) => {
                   setTestMessage('')
                   setPrivateHost(value === 'private')
                   setError('')
-                  setTestMessage('')
                 }}
               />
             </Field>
             {privateHost && (
-              <Field label="Service address" required>
+              <Field label={t('hosts:tunnels.address')} required>
                 <Input
-                  aria-label="Service address"
+                  aria-label={t('hosts:tunnels.address')}
                   required
                   value={draft.targetAddress}
                   onChange={(event) => update('targetAddress', event.target.value)}
@@ -195,9 +202,9 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               </Field>
             )}
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Service port" required>
+              <Field label={t('hosts:tunnels.servicePort')} required>
                 <Input
-                  aria-label="Service port"
+                  aria-label={t('hosts:tunnels.servicePort')}
                   type="number"
                   min={1}
                   max={65535}
@@ -206,9 +213,9 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
                   onChange={(event) => update('targetPort', Number(event.target.value))}
                 />
               </Field>
-              <Field label="Local port" required>
+              <Field label={t('hosts:tunnels.localPort')} required>
                 <Input
-                  aria-label="Local port"
+                  aria-label={t('hosts:tunnels.localPort')}
                   type="number"
                   min={1}
                   max={65535}
@@ -219,10 +226,12 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               </Field>
             </div>
             <details>
-              <summary className="text-xs text-muted-foreground">Advanced</summary>
-              <Field label="Listen address" className="mt-3">
+              <summary className="text-xs text-muted-foreground">
+                {t('hosts:tunnels.advanced')}
+              </summary>
+              <Field label={t('hosts:tunnels.listen')} className="mt-3">
                 <Input
-                  aria-label="Listen address"
+                  aria-label={t('hosts:tunnels.listen')}
                   value={draft.localAddress}
                   onChange={(event) => update('localAddress', event.target.value)}
                   spellCheck={false}
@@ -233,13 +242,22 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
           {error && (
             <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
               <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>{error}</span>
+              <span>{tunnelErrorMessage(error)}</span>
             </p>
           )}
           {testMessage && (
-            <p role="status" className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400">
+            <p
+              role="status"
+              className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400"
+            >
               <CircleCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>{testMessage}</span>
+              <span>
+                {t(
+                  testMessage === 'existingSuccess'
+                    ? 'hosts:tunnels.existingSuccess'
+                    : 'hosts:tunnels.success'
+                )}
+              </span>
             </p>
           )}
           <DialogFooter>
@@ -249,18 +267,18 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
               disabled={busy}
               onClick={() => void testConnection()}
             >
-              {testing ? 'Testing…' : 'Test connection'}
+              {testing ? t('hosts:tunnels.testing') : t('hosts:tunnels.test')}
             </Button>
             {!editing && (
               <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
-                Cancel
+                {t('hosts:tunnels.cancel')}
               </Button>
             )}
             <Button type="submit" variant="outline" disabled={busy}>
-              Save
+              {t('hosts:tunnels.save')}
             </Button>
             <Button type="button" disabled={busy} onClick={() => void save(true)}>
-              {editing ? 'Save and restart' : 'Save and start'}
+              {editing ? t('hosts:tunnels.restartSave') : t('hosts:tunnels.startSave')}
             </Button>
           </DialogFooter>
         </form>

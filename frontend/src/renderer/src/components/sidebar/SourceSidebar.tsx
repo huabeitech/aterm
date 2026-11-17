@@ -94,13 +94,13 @@ export function SourceSidebar(props: SourceSidebarProps) {
                   type="button"
                   className="sidebar-utility-button sidebar-utility-icon"
                   onClick={props.onOpenTunnels}
-                  aria-label={`All tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`}
+                  aria-label={t('hosts:tunnels.sidebar', {active: props.runningTunnels, failed: props.failedTunnels})}
                 >
                   <Cable size={16} aria-hidden="true" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={8}>
-                All tunnels
+                {t('hosts:tunnels.all')}
               </TooltipContent>
             </Tooltip>
             {platformFeatures(props.platform).cloudBackup && (

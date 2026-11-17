@@ -416,7 +416,7 @@ function Workbench({
   const activeIndex = tabs.workspaceTabs.findIndex((tab) => tab.id === tabs.activeWorkspaceTab)
   const features = platformFeatures(bootstrap.info.platform)
   const paletteCommands: PaletteCommand[] = [
-    { id: 'ssh-tunnels', label: 'SSH tunnels', keywords: 'tunnel forwarding port 隧道 转发', run: () => openTunnels('') },
+    { id: 'ssh-tunnels', label: t('hosts:tunnels.title'), keywords: 'tunnel forwarding port 隧道 转发', run: () => openTunnels('') },
     {
       id: 'connect-ssh',
       label: t('commands:connectSsh'),
@@ -515,7 +515,7 @@ function Workbench({
   const paletteTabs: PaletteCommand[] = tabs.workspaceTabs.map((tab) => ({
     id: tab.id,
     label:
-      tab.id === 'tunnels' ? 'Tunnels' : tab.id === 'settings'
+      tab.id === 'tunnels' ? t('hosts:tunnels.title') : tab.id === 'settings'
         ? t('common:settings')
         : tab.kind === 'files'
           ? `${files.sessions.find((session) => session.hostID === tab.hostID)?.title ?? t('common:files')} · SFTP`

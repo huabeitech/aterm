@@ -1,3 +1,4 @@
+import { t } from '../../../../shared/i18n'
 import type { TunnelInput, TunnelStatus } from '../../../../shared/contracts/tunnels'
 
 export function tunnelAddress(address: string, port: number): string {
@@ -17,11 +18,10 @@ export function tunnelNeedsRestart(tunnel: TunnelStatus): boolean {
 }
 
 export function validateTunnel(input: TunnelInput): string | null {
-  if (!input.name.trim()) return 'Enter a tunnel name.'
-  if (new TextEncoder().encode(input.name.trim()).length > 200)
-    return 'Use a tunnel name of up to 200 bytes.'
-  if (!input.hostID) return 'Select an SSH host.'
-  if (!input.localAddress.trim()) return 'Enter a local listen address.'
+  if (!input.name.trim()) return t('hosts:tunnels.nameRequired')
+  if (new TextEncoder().encode(input.name.trim()).length > 200) return t('hosts:tunnels.nameLong')
+  if (!input.hostID) return t('hosts:tunnels.hostRequired')
+  if (!input.localAddress.trim()) return t('hosts:tunnels.listenRequired')
   if (
     !Number.isInteger(input.localPort) ||
     input.localPort < 1 ||
@@ -30,9 +30,9 @@ export function validateTunnel(input: TunnelInput): string | null {
     input.targetPort < 1 ||
     input.targetPort > 65535
   )
-    return 'Ports must be whole numbers between 1 and 65535.'
+    return t('hosts:tunnels.portsInvalid')
   if (!input.targetAddress.trim() || /[\s/\\\x00]/.test(input.targetAddress))
-    return 'Enter a target hostname or IP address without a port or URL scheme.'
+    return t('hosts:tunnels.targetInvalid')
   return null
 }
 

@@ -45,8 +45,8 @@ export function HostDetails({
           </DetailRow>
         </dl>
       </DetailSection>
-      <DetailSection title="SSH tunnels">
-        <Button variant="outline" size="sm" onClick={onOpenTunnels}>Manage tunnels</Button>
+      <DetailSection title={t('hosts:tunnels.title')}>
+        <Button variant="outline" size="sm" onClick={onOpenTunnels}>{t('hosts:tunnels.manage')}</Button>
       </DetailSection>
       <DetailSection title={t('hosts:authentication')}>
         <dl className="host-details-table overflow-hidden rounded-md border border-border">

@@ -87,7 +87,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
               <WorkspaceTab
                 key={tab}
                 tab={tab}
-                label="Tunnels"
+                label={t('hosts:tunnels.title')}
                 icon={<Cable size={14} />}
                 active={props.activeTab === tab}
                 dragging={props.draggingTab === tab}

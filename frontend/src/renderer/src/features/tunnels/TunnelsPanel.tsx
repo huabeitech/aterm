@@ -1,3 +1,6 @@
+import { tunnelErrorMessage } from './tunnelErrors'
+import { t } from '../../../../shared/i18n'
+import { useTranslation } from 'react-i18next'
 import { useTunnelOperations } from './useTunnelOperations'
 import { useState } from 'react'
 import { Copy, Pencil, Play, Square, Trash2 } from 'lucide-react'
@@ -23,6 +26,7 @@ export function TunnelsPanel({
   error,
   refresh
 }: TunnelsPanelProps) {
+  useTranslation()
   const { modal, message } = useAppUI()
   const [editor, setEditor] = useState<{ id: string; input: TunnelInput } | null>(null)
   const { perform, pending, failure } = useTunnelOperations(refresh)
@@ -36,7 +40,9 @@ export function TunnelsPanel({
   return (
     <section className="flex h-full min-h-0 flex-col">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-sm font-medium">{hostID ? 'Tunnels' : 'All tunnels'}</h2>
+        <h2 className="text-sm font-medium">
+          {hostID ? t('hosts:tunnels.title') : t('hosts:tunnels.all')}
+        </h2>
         <Button
           size="sm"
           variant="outline"
@@ -55,19 +61,25 @@ export function TunnelsPanel({
             })
           }
         >
-          New tunnel
+          {t('hosts:tunnels.new')}
         </Button>
       </header>
       {(failure || error) && (
         <p role="alert" className="px-4 py-3 text-sm text-destructive">
-          {failure || error}
+          {tunnelErrorMessage(failure || error)}
         </p>
       )}
       <div className="min-h-0 overflow-auto">
         <table className="w-full text-left text-xs">
           <thead className="bg-muted/40 text-muted-foreground">
             <tr>
-              {['Name', 'Local address', 'Service', 'Status', ''].map((label, index) => (
+              {[
+                t('hosts:tunnels.name'),
+                t('hosts:tunnels.localAddress'),
+                t('hosts:tunnels.service'),
+                t('hosts:tunnels.status'),
+                ''
+              ].map((label, index) => (
                 <th key={index} className="px-3 py-2 font-normal">
                   {label}
                 </th>
@@ -92,15 +104,15 @@ export function TunnelsPanel({
                   </td>
                   <td className="px-3 py-3">
                     {active.targetAddress === '127.0.0.1'
-                      ? `This host:${active.targetPort}`
+                      ? `${t('hosts:tunnels.same')}:${active.targetPort}`
                       : tunnelAddress(active.targetAddress, active.targetPort)}
                   </td>
                   <td className="px-3 py-3">
-                    <span className="capitalize">{row.state}</span>
-                    {tunnelNeedsRestart(row) && <div>Restart required</div>}
+                    <span>{t(`hosts:tunnels.${row.state}`)}</span>
+                    {tunnelNeedsRestart(row) && <div>{t('hosts:tunnels.restartRequired')}</div>}
                     {(row.error || row.lastError) && (
                       <p className="max-w-64 break-words text-destructive">
-                        {row.error || row.lastError}
+                        {tunnelErrorMessage(row.error || row.lastError)}
                       </p>
                     )}
                   </td>
@@ -110,7 +122,12 @@ export function TunnelsPanel({
                         size="icon-sm"
                         variant="ghost"
                         disabled={pending.includes(row.id) || row.state === 'stopping'}
-                        aria-label={`${row.state === 'running' || row.state === 'starting' ? 'Stop' : 'Start'} ${row.name}`}
+                        aria-label={t(
+                          row.state === 'running' || row.state === 'starting'
+                            ? 'hosts:tunnels.stopAction'
+                            : 'hosts:tunnels.startAction',
+                          { name: row.name }
+                        )}
                         onClick={() => toggle(row)}
                       >
                         {row.state === 'running' || row.state === 'starting' ? (
@@ -122,7 +139,7 @@ export function TunnelsPanel({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        aria-label={`Edit ${row.name}`}
+                        aria-label={t('hosts:tunnels.editAction', { name: row.name })}
                         onClick={() => setEditor({ id: row.id, input: row })}
                       >
                         <Pencil size={14} />
@@ -131,11 +148,11 @@ export function TunnelsPanel({
                         size="icon-sm"
                         variant="ghost"
                         disabled={row.state !== 'running'}
-                        aria-label={`Copy address for ${row.name}`}
+                        aria-label={t('hosts:tunnels.copy', { name: row.name })}
                         onClick={() =>
                           void desktop.library
                             .copyText(tunnelAddress(active.localAddress, active.localPort))
-                            .catch(() => message.error('Unable to copy address.'))
+                            .catch(() => message.error(t('hosts:tunnels.copyFailed')))
                         }
                       >
                         <Copy size={14} />
@@ -143,13 +160,13 @@ export function TunnelsPanel({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        aria-label={`Delete ${row.name}`}
+                        aria-label={t('hosts:tunnels.deleteAction', { name: row.name })}
                         onClick={() =>
                           modal.confirm({
-                            title: `Delete “${row.name}”?`,
-                            content: 'This stops the tunnel and removes its configuration.',
-                            okText: 'Delete',
-                            cancelText: 'Cancel',
+                            title: t('hosts:tunnels.deleteTitle', { name: row.name }),
+                            content: t('hosts:tunnels.deleteHelp'),
+                            okText: t('hosts:tunnels.delete'),
+                            cancelText: t('hosts:tunnels.cancel'),
                             okButtonProps: { danger: true },
                             onOk: () => perform(row.id, () => desktop.tunnels.delete(row.id))
                           })
@@ -166,14 +183,14 @@ export function TunnelsPanel({
         </table>
         {!visible.length && (
           <p className="p-8 text-center text-sm text-muted-foreground">
-            {loading ? 'Loading…' : 'No tunnels'}
+            {loading ? t('hosts:tunnels.loading') : t('hosts:tunnels.empty')}
           </p>
         )}
       </div>
       {editor && (
         <TunnelEditor
           input={editor.input}
-          onTest={async input => {
+          onTest={async (input) => {
             if (!(await unlock())) return null
             return desktop.tunnels.test(editor.id, input)
           }}

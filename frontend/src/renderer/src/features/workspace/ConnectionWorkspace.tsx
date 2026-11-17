@@ -223,7 +223,7 @@ export function ConnectionWorkspace({
               onClick={() => onViewChange('tunnels')}
             >
               <Cable size={14} aria-hidden="true" />
-              <span>Tunnels</span>
+              <span>{t('hosts:tunnels.title')}</span>
             </button>
           )}
           {views.map((item) => (
