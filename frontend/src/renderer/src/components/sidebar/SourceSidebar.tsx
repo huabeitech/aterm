@@ -87,73 +87,89 @@ export function SourceSidebar(props: SourceSidebarProps) {
             <SidebarUtilityIcon name="gear-six" />
             <span>{t('hosts:settings')}</span>
           </button>
-          <button type="button" className="sidebar-utility-button sidebar-utility-icon" onClick={props.onOpenTunnels} aria-label={`All tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`} title="All tunnels"><Cable size={16} aria-hidden="true" /></button>
-          {platformFeatures(props.platform).cloudBackup && (
-            <div className="sidebar-utility-actions">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="sidebar-utility-target"
-                    tabIndex={backupDisabled ? 0 : undefined}
-                    aria-label={backupDisabled ? backupLabel : undefined}
-                  >
-                    <button
-                      type="button"
-                      className="sidebar-utility-button sidebar-utility-icon"
-                      disabled={backupDisabled}
-                      aria-label={backupLabel}
-                      aria-busy={backupBusy}
-                      onClick={onBackUpToICloud}
+          <div className="sidebar-utility-actions">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="sidebar-utility-button sidebar-utility-icon"
+                  onClick={props.onOpenTunnels}
+                  aria-label={`All tunnels, ${props.runningTunnels} active, ${props.failedTunnels} failed`}
+                >
+                  <Cable size={16} aria-hidden="true" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={8}>
+                All tunnels
+              </TooltipContent>
+            </Tooltip>
+            {platformFeatures(props.platform).cloudBackup && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="sidebar-utility-target"
+                      tabIndex={backupDisabled ? 0 : undefined}
+                      aria-label={backupDisabled ? backupLabel : undefined}
                     >
-                      {backupBusy ? (
-                        <LoaderCircle
-                          className="source-sync-spinner animate-spin [animation-duration:800ms]"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <SidebarUtilityIcon name="cloud-arrow-up" />
-                      )}
-                    </button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={8}>
-                  {backupBusy ? backupLabel : backupDescription}
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="sidebar-utility-target"
-                    tabIndex={busyAction ? 0 : undefined}
-                    aria-label={busyAction ? exportLabel : undefined}
-                  >
-                    <button
-                      type="button"
-                      className="sidebar-utility-button sidebar-utility-icon"
-                      disabled={Boolean(busyAction)}
-                      aria-label={exportLabel}
-                      aria-busy={exportBusy}
-                      onClick={onExportOpenSSHConfig}
+                      <button
+                        type="button"
+                        className="sidebar-utility-button sidebar-utility-icon"
+                        disabled={backupDisabled}
+                        aria-label={backupLabel}
+                        aria-busy={backupBusy}
+                        onClick={onBackUpToICloud}
+                      >
+                        {backupBusy ? (
+                          <LoaderCircle
+                            className="source-sync-spinner animate-spin [animation-duration:800ms]"
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <SidebarUtilityIcon name="cloud-arrow-up" />
+                        )}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={8}>
+                    {backupBusy ? backupLabel : backupDescription}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="sidebar-utility-target"
+                      tabIndex={busyAction ? 0 : undefined}
+                      aria-label={busyAction ? exportLabel : undefined}
                     >
-                      {exportBusy ? (
-                        <LoaderCircle
-                          className="source-sync-spinner animate-spin [animation-duration:800ms]"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <SidebarUtilityIcon name="export" />
-                      )}
-                    </button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={8}>
-                  {exportLabel}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+                      <button
+                        type="button"
+                        className="sidebar-utility-button sidebar-utility-icon"
+                        disabled={Boolean(busyAction)}
+                        aria-label={exportLabel}
+                        aria-busy={exportBusy}
+                        onClick={onExportOpenSSHConfig}
+                      >
+                        {exportBusy ? (
+                          <LoaderCircle
+                            className="source-sync-spinner animate-spin [animation-duration:800ms]"
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <SidebarUtilityIcon name="export" />
+                        )}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={8}>
+                    {exportLabel}
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
         </div>
         <span className="sr-only" role="status">
           {backupBusy ? backupLabel : exportBusy ? exportLabel : ''}
