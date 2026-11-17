@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { CircleCheck, CircleAlert } from 'lucide-react'
 import type { domain } from '../../../../shared/contracts/domain'
 import type { TunnelInput } from '../../../../shared/contracts/tunnels'
 import { Button } from '@/components/ui/button'
@@ -230,13 +231,15 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
             </details>
           </fieldset>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
+            <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
+              <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
             </p>
           )}
           {testMessage && (
-            <p role="status" className="text-sm text-muted-foreground">
-              {testMessage}
+            <p role="status" className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400">
+              <CircleCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <span>{testMessage}</span>
             </p>
           )}
           <DialogFooter>
@@ -248,9 +251,11 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
             >
               {testing ? 'Testing…' : 'Test connection'}
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
-              Cancel
-            </Button>
+            {!editing && (
+              <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
+                Cancel
+              </Button>
+            )}
             <Button type="submit" variant="outline" disabled={busy}>
               Save
             </Button>
