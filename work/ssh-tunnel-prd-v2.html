@@ -1,0 +1,276 @@
+<style>
+#aterm-tunnel-design { --at-bg:light-dark(#ffffff,#1f1f1f); --at-side:light-dark(#f3f3f5,#272727); --at-muted:light-dark(#686870,#aaaab2); --at-text:light-dark(#242426,#f1f1f3); --at-line:light-dark(#dedee3,#414147); --at-soft:light-dark(#f7f7f9,#272727); --at-blue:light-dark(#0867d4,#62a8ff); --at-selected:light-dark(#e4edf9,#263d57); --at-good:light-dark(#257242,#7fcb98); --at-warn:light-dark(#956216,#e5b467); --at-warn-bg:light-dark(#fff7e8,#372e20); --at-danger:light-dark(#ae3535,#f09a9a); color:var(--at-text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:14px; line-height:1.5; color-scheme:light dark; }
+#aterm-tunnel-design * { box-sizing:border-box }
+#aterm-tunnel-design button,#aterm-tunnel-design input,#aterm-tunnel-design select { font:inherit }
+#aterm-tunnel-design button { cursor:default }
+#aterm-tunnel-design .at-review { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:0 100px 12px 0 }
+#aterm-tunnel-design .at-review button { border:0; border-radius:6px; background:transparent; color:var(--at-muted); padding:8px 12px }
+#aterm-tunnel-design .at-review button[aria-pressed=true] { color:var(--at-text); background:var(--at-side) }
+#aterm-tunnel-design .at-window { border:1px solid var(--at-line); border-radius:12px; background:var(--at-bg); overflow:hidden }
+#aterm-tunnel-design .at-titlebar { background:var(--at-side); display:flex; align-items:center; gap:16px; padding:12px 16px; border-bottom:1px solid var(--at-line) }
+#aterm-tunnel-design .at-lights { display:flex; gap:8px; flex-shrink:0 }
+#aterm-tunnel-design .at-lights span { height:12px; width:12px; border-radius:50%; background:light-dark(#c6c6cc,#67676e) }
+#aterm-tunnel-design .at-apptitle { font-weight:500 }
+#aterm-tunnel-design .at-draft { margin-left:auto; color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-shell { display:grid; grid-template-columns:184px minmax(0,1fr); min-height:620px }
+#aterm-tunnel-design .at-sidebar { background:var(--at-side); padding:16px 12px; border-right:1px solid var(--at-line); display:flex; flex-direction:column; gap:16px }
+#aterm-tunnel-design .at-sidegroup { display:grid; gap:4px }
+#aterm-tunnel-design .at-sidehead { font-size:12px; color:var(--at-muted); margin:0 0 4px 8px; font-weight:500 }
+#aterm-tunnel-design .at-nav { display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:0; background:transparent; color:var(--at-text); padding:8px; border-radius:6px }
+#aterm-tunnel-design .at-nav.is-active { background:var(--at-selected); color:var(--at-blue) }
+#aterm-tunnel-design .at-nav small { margin-left:auto; color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-sidefoot { margin-top:auto; color:var(--at-muted); font-size:12px; padding:8px; display:grid; gap:8px }
+#aterm-tunnel-design .at-sidefoot span { display:flex; align-items:center; gap:8px }
+#aterm-tunnel-design [data-lucide],#aterm-tunnel-design svg { width:16px; height:16px; flex-shrink:0 }
+#aterm-tunnel-design .at-content { min-width:0; padding:24px; display:flex; flex-direction:column; gap:16px }
+#aterm-tunnel-design .at-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap }
+#aterm-tunnel-design .at-top h2 { margin:0; font-size:20px; font-weight:500; line-height:1.4 }
+#aterm-tunnel-design .at-top p { margin:4px 0 0; color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-breadcrumb { color:var(--at-muted); font-size:12px; margin-bottom:8px }
+#aterm-tunnel-design .at-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 12px; color:var(--at-text); background:var(--at-bg); border:1px solid var(--at-line); border-radius:6px; white-space:normal }
+#aterm-tunnel-design .at-btn.primary { background:var(--at-blue); border-color:var(--at-blue); color:light-dark(#fff,#111c2a) }
+#aterm-tunnel-design .at-btn.link { border-color:transparent; background:transparent; color:var(--at-blue); padding:4px 0 }
+#aterm-tunnel-design .at-btn:disabled { opacity:.5 }
+#aterm-tunnel-design button:hover:not(:disabled) { filter:brightness(.96) }
+#aterm-tunnel-design button:active:not(:disabled) { transform:translateY(1px) }
+#aterm-tunnel-design :focus-visible { outline:2px solid var(--at-blue); outline-offset:3px }
+#aterm-tunnel-design .at-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px }
+#aterm-tunnel-design .at-tabs { display:flex; gap:24px; border-bottom:1px solid var(--at-line); color:var(--at-muted) }
+#aterm-tunnel-design .at-tabs span { padding-bottom:12px }
+#aterm-tunnel-design .at-tabs span.is-active { color:var(--at-text); border-bottom:2px solid var(--at-blue); font-weight:500 }
+#aterm-tunnel-design .at-sectionhead { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px }
+#aterm-tunnel-design h3 { margin:0; font-size:14px; font-weight:500 }
+#aterm-tunnel-design .at-subtle { color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-services { border:1px solid var(--at-line); border-radius:8px }
+#aterm-tunnel-design .at-service { display:grid; grid-template-columns: minmax(0,1fr) auto; gap:16px; align-items:center; padding:16px; border-bottom:1px solid var(--at-line) }
+#aterm-tunnel-design .at-service:last-child { border-bottom:0 }
+#aterm-tunnel-design .at-service-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+#aterm-tunnel-design .at-textbutton { padding:0; text-align:left; color:var(--at-text); background:none; border:0; font-weight:500 }
+#aterm-tunnel-design .at-service p { margin:4px 0 0; color:var(--at-muted); font-size:12px; overflow-wrap:anywhere }
+#aterm-tunnel-design .at-status { display:inline-flex; align-items:center; gap:8px; font-size:12px; color:var(--at-muted) }
+#aterm-tunnel-design .at-dot { width:6px; height:6px; border-radius:50%; background:var(--at-muted); flex-shrink:0 }
+#aterm-tunnel-design .at-status.good { color:var(--at-good) }
+#aterm-tunnel-design .at-status.good .at-dot { background:var(--at-good) }
+#aterm-tunnel-design .at-status.warn { color:var(--at-warn) }
+#aterm-tunnel-design .at-status.warn .at-dot { background:var(--at-warn) }
+#aterm-tunnel-design .at-note { display:flex; gap:8px; align-items:flex-start; color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-note p { margin:0 }
+#aterm-tunnel-design .at-form { display:grid; gap:16px; width:100%; max-width:620px }
+#aterm-tunnel-design .at-formgroup { display:grid; gap:12px }
+#aterm-tunnel-design .at-fields { display:grid; grid-template-columns:1fr 1fr; gap:16px }
+#aterm-tunnel-design .at-field { display:grid; align-content:start; gap:4px; min-width:0 }
+#aterm-tunnel-design label { font-weight:500; font-size:12px }
+#aterm-tunnel-design input,#aterm-tunnel-design select { min-width:0; width:100%; padding:8px 12px; border:1px solid var(--at-line); border-radius:6px; color:var(--at-text); background:var(--at-bg) }
+#aterm-tunnel-design .at-inputhelp { color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-segment { display:flex; flex-wrap:wrap; gap:8px }
+#aterm-tunnel-design .at-segment label { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--at-line); border-radius:6px; background:var(--at-bg); font-size:14px; font-weight:400 }
+#aterm-tunnel-design .at-segment label:has(input:checked) { border-color:var(--at-blue); background:var(--at-selected) }
+#aterm-tunnel-design .at-segment input { width:auto; padding:0; accent-color:var(--at-blue) }
+#aterm-tunnel-design .at-route { padding:16px; border-radius:8px; border:1px solid var(--at-line); background:var(--at-soft); display:grid; gap:12px }
+#aterm-tunnel-design .at-routeflow { display:flex; gap:12px; align-items:center }
+#aterm-tunnel-design .at-route-node { display:grid; flex:1; min-width:0; gap:4px }
+#aterm-tunnel-design .at-route-node strong { font-weight:500; overflow-wrap:anywhere }
+#aterm-tunnel-design .at-route-node small { font-size:12px; color:var(--at-muted); overflow-wrap:anywhere }
+#aterm-tunnel-design .at-routeflow>svg { color:var(--at-muted) }
+#aterm-tunnel-design .at-routefoot { font-size:12px; color:var(--at-muted); display:flex; align-items:center; gap:8px }
+#aterm-tunnel-design details { border-top:1px solid var(--at-line); padding-top:16px }
+#aterm-tunnel-design summary { color:var(--at-muted); font-size:12px; cursor:default }
+#aterm-tunnel-design details .at-fields { margin-top:16px }
+#aterm-tunnel-design .at-formfoot { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap }
+#aterm-tunnel-design .at-endpoint { background:var(--at-soft); border:1px solid var(--at-line); border-radius:8px; padding:24px; display:grid; gap:12px }
+#aterm-tunnel-design .at-endpoint-top { display:flex; align-items:center; justify-content:space-between; gap:8px }
+#aterm-tunnel-design .at-endpoint-input { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+#aterm-tunnel-design .at-endpoint-input input { flex:1; min-width:160px; background:var(--at-bg); font-family:ui-monospace,SFMono-Regular,monospace; font-size:18px; font-weight:500 }
+#aterm-tunnel-design .at-detailrows { display:grid; gap:0 }
+#aterm-tunnel-design .at-detailrow { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--at-line); flex-wrap:wrap }
+#aterm-tunnel-design .at-detailrow>span:first-child { color:var(--at-muted) }
+#aterm-tunnel-design .at-servicecheck { display:flex; align-items:center; flex-wrap:wrap; gap:12px }
+#aterm-tunnel-design .at-error { background:var(--at-warn-bg); border:1px solid color-mix(in srgb,var(--at-warn) 35%,transparent); border-radius:8px; padding:24px; display:grid; gap:12px }
+#aterm-tunnel-design .at-error h3 { color:var(--at-text) }
+#aterm-tunnel-design .at-error p { margin:0; color:var(--at-muted) }
+#aterm-tunnel-design .at-error .at-actions { margin-top:4px }
+#aterm-tunnel-design .at-table { width:100%; border-collapse:collapse; text-align:left }
+#aterm-tunnel-design .at-table td,#aterm-tunnel-design .at-table th { padding:12px 8px; border-bottom:1px solid var(--at-line); font-weight:400; vertical-align:top; overflow-wrap:anywhere }
+#aterm-tunnel-design .at-table th { color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-table td small { display:block; color:var(--at-muted); font-size:12px; margin-top:4px }
+#aterm-tunnel-design .at-helpbar { margin-top:auto; padding-top:16px; border-top:1px solid var(--at-line); color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-review-errors { display:flex; gap:8px; align-items:center; flex-wrap:wrap; color:var(--at-muted); font-size:12px }
+#aterm-tunnel-design .at-review-errors select { width:auto; padding:4px 8px; font-size:12px }
+#aterm-tunnel-design .at-feedback { min-height:20px; color:var(--at-blue); font-size:12px; margin-top:12px }
+#aterm-tunnel-design [hidden] { display:none!important }
+@media(max-width:760px) {
+ #aterm-tunnel-design .at-shell { grid-template-columns:144px minmax(0,1fr) }
+ #aterm-tunnel-design .at-content { padding:16px }
+ #aterm-tunnel-design .at-tabs { gap:16px }
+ #aterm-tunnel-design .at-fields { grid-template-columns:1fr }
+ #aterm-tunnel-design .at-detailrow { align-items:flex-start }
+ #aterm-tunnel-design .at-table .at-hostcol { display:none }
+}
+@media(max-width:540px) {
+ #aterm-tunnel-design .at-shell { display:block; min-height:620px }
+ #aterm-tunnel-design .at-sidebar { border-right:0; border-bottom:1px solid var(--at-line); display:flex; flex-direction:row; padding:8px; gap:8px }
+ #aterm-tunnel-design .at-sidegroup { display:contents }
+ #aterm-tunnel-design .at-sidegroup:first-child,#aterm-tunnel-design .at-sidehead,#aterm-tunnel-design .at-sidefoot { display:none }
+ #aterm-tunnel-design .at-nav { width:auto; font-size:12px }
+ #aterm-tunnel-design .at-nav small { display:none }
+ #aterm-tunnel-design .at-review { padding-right:0 }
+ #aterm-tunnel-design .at-review button { padding:8px }
+ #aterm-tunnel-design .at-routeflow { flex-direction:column; align-items:flex-start }
+ #aterm-tunnel-design .at-routeflow>svg { transform:rotate(90deg); margin-left:8px }
+ #aterm-tunnel-design .at-endpoint { padding:16px }
+ #aterm-tunnel-design .at-service { padding:12px; gap:8px }
+ #aterm-tunnel-design .at-table th,#aterm-tunnel-design .at-table td { padding:12px 4px }
+ #aterm-tunnel-design .at-table .at-localcol { display:none }
+ #aterm-tunnel-design .at-draft { display:none }
+}
+@media(pointer:coarse) { #aterm-tunnel-design button,#aterm-tunnel-design select { min-height:44px } }
+</style>
+<div id="aterm-tunnel-design">
+ <nav class="at-review" aria-label="设计稿评审页面">
+  <button type="button" data-review="host" aria-pressed="true">主机内入口</button>
+  <button type="button" data-review="create" aria-pressed="false">新建流程</button>
+  <button type="button" data-review="detail" aria-pressed="false">运行与使用</button>
+  <button type="button" data-review="global" aria-pressed="false">集中管理</button>
+  <button type="button" data-review="error" aria-pressed="false">异常恢复</button>
+ </nav>
+ <div class="at-review-errors" id="at-error-picker" hidden>
+  <label for="at-error-scenario">评审场景</label>
+  <select id="at-error-scenario"><option value="port">本地端口占用</option><option value="target">目标服务无法访问</option><option value="ssh">SSH 连接中断</option><option value="auth">需要 SSH 身份验证</option></select>
+ </div>
+ <div class="at-window">
+  <header class="at-titlebar"><span class="at-lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="at-apptitle">aTerm</span><span class="at-draft">Product concept · Sample data</span></header>
+  <div class="at-shell">
+   <aside class="at-sidebar" aria-label="Workspace navigation">
+    <div class="at-sidegroup"><span class="at-sidehead">Connections</span><span class="at-nav"><i data-lucide="folder" aria-hidden="true"></i>Production</span><button type="button" class="at-nav is-active" data-action="host"><i data-lucide="server" aria-hidden="true"></i>prod-app</button><span class="at-nav"><i data-lucide="server" aria-hidden="true"></i>bastion</span></div>
+    <div class="at-sidegroup"><span class="at-sidehead">Workspace</span><button type="button" class="at-nav" data-action="global"><i data-lucide="cable" aria-hidden="true"></i>Tunnels<small id="at-active-count">0 active</small></button></div>
+    <div class="at-sidefoot"><span><i data-lucide="shield-check" aria-hidden="true"></i>This Mac only</span><span>Services stay available when terminal tabs close.</span></div>
+   </aside>
+   <main class="at-content" id="at-main" aria-label="SSH tunnel design"></main>
+  </div>
+ </div>
+ <div class="at-feedback" id="at-feedback" role="status" aria-live="polite"></div>
+</div>
+<script>
+(function(){
+ const root=document.getElementById('aterm-tunnel-design');
+ const main=root.querySelector('#at-main');
+ const defaults={mode:'host',location:'same',host:'prod-app',type:'mysql',name:'Production database',servicePort:'3306',localPort:'13306',address:'db.internal',binding:'local',running:false,reachability:'unchecked',error:'port',selected:'database'};
+ const saved=window.openai?.widgetState?.modelContent;
+ const state={...defaults};
+ const recordFields=['host','type','name','servicePort','localPort','address','location','binding','running','reachability'];
+ const records={database:{...defaults},redis:{...defaults,type:'redis',name:'Application cache',servicePort:'6379',localPort:'16379'},dashboard:{...defaults,type:'web',name:'Internal dashboard',host:'bastion',location:'private',address:'monitor.internal',servicePort:'8080',localPort:'18080',issue:true}};
+ function commitRecord(){const record=records[state.selected];if(record)recordFields.forEach(key=>record[key]=state[key]);}
+ function selectRecord(key){commitRecord();Object.assign(state,records[key]);state.selected=key;}
+ if(saved&&typeof saved==='object') {
+  if(['host','create','detail','global','error'].includes(saved.screen))state.mode=saved.screen;
+  if(['same','private'].includes(saved.serviceLocation))state.location=saved.serviceLocation;
+ }
+ const escape=(v)=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const icon=(name)=>'<i data-lucide="'+name+'" aria-hidden="true"></i>';
+ const status=(running)=>'<span class="at-status '+(running?'good':'')+'"><span class="at-dot"></span>'+(running?'Running':'Stopped')+'</span>';
+ const address=()=> '127.0.0.1:'+state.localPort;
+ const serviceType=(type)=>({mysql:'MySQL',redis:'Redis',web:'Web service',custom:'TCP service'}[type]);
+ const serviceLabel=()=>serviceType(state.type);
+ const note=(text)=>'<div class="at-note">'+icon('info')+'<p>'+text+'</p></div>';
+ const btn=(text,action,primary=false)=>'<button type="button" class="at-btn'+(primary?' primary':'')+'" data-action="'+action+'">'+text+'</button>';
+ function persist(){
+  if(window.openai?.setWidgetState)window.openai.setWidgetState({modelContent:{design:'SSH tunnels product concept',screen:state.mode,serviceLocation:state.location,serviceType:state.type},privateContent:{}}).catch(()=>{});
+ }
+ function announce(text){root.querySelector('#at-feedback').textContent=text;}
+ function route(){
+  const same=state.location==='same';
+  return '<div class="at-route" id="at-route-preview"><div class="at-routeflow"><div class="at-route-node"><small>This Mac</small><strong>'+escape(address())+'</strong></div>'+icon('arrow-right')+'<div class="at-route-node"><small>'+ (same?'Service on SSH host':'SSH connection')+'</small><strong>'+escape(state.host)+'</strong><small>'+(same?escape(serviceLabel()+' · port '+state.servicePort):'Secure entry point')+'</small></div>'+(same?'':icon('arrow-right')+'<div class="at-route-node"><small>Private service</small><strong>'+escape(state.address||'Service address')+'</strong><small>Port '+escape(state.servicePort)+'</small></div>')+'</div><div class="at-routefoot">'+icon('lock-keyhole')+'Access from this Mac through SSH</div></div>';
+ }
+ function header(title,sub,actions=''){
+  return '<div class="at-top"><div><div class="at-breadcrumb">'+(state.mode==='global'?'Workspace / Tunnels':'Connections / Production / '+escape(state.host))+'</div><h2>'+escape(title)+'</h2><p>'+escape(sub)+'</p></div>'+actions+'</div>';
+ }
+ function tabs(){return '<div class="at-tabs" aria-label="Host workspace sections"><span>Overview</span><span>Terminal</span><span>Files</span><span class="is-active">Tunnels</span></div>';}
+ function host(){
+  const entries=Object.entries(records).filter(([key,record])=>record.host===state.host);
+  const rows=entries.map(([key,record])=>'<div class="at-service"><div><div class="at-service-title"><button class="at-textbutton" data-action="record-view:'+key+'">'+escape(record.name)+'</button>'+status(record.running)+'</div><p>'+escape(serviceType(record.type))+' '+(record.location==='same'?'on '+escape(record.host):'at '+escape(record.address))+' · Connect at 127.0.0.1:'+escape(record.localPort)+'</p></div>'+btn(record.running?'Stop':'Start','record-toggle:'+key)+'</div>').join('');
+  return header(state.host,'SSH host · Terminal not required')+tabs()+'<section><div class="at-sectionhead"><h3>Access services from this Mac</h3>'+btn(icon('plus')+' Add tunnel','create',true)+'</div><div class="at-services">'+rows+'</div></section>'+note('Need a database, dashboard, or other private service? Add it here once, then start it whenever you need it.')+'<div class="at-helpbar">Closing a terminal tab does not stop your tunnels. Running tunnels also appear in Workspace → Tunnels.</div>';
+ }
+ function create(){
+  const same=state.location==='same';
+  return header(state.editing?'Edit tunnel':'New tunnel','Choose the service you want to access. The SSH host is already selected.')+'<form class="at-form" id="at-create-form"><section class="at-formgroup"><h3>Service</h3><div class="at-fields"><div class="at-field"><label for="at-service-type">Service type</label><select id="at-service-type" data-field="type">'+[['mysql','MySQL'],['redis','Redis'],['web','Web service'],['custom','Other TCP service']].map(([v,l])=>'<option value="'+v+'"'+(state.type===v?' selected':'')+'>'+l+'</option>').join('')+'</select></div><div class="at-field"><label for="at-name">Name</label><input id="at-name" data-field="name" required value="'+escape(state.name)+'"></div></div><div class="at-field"><label for="at-ssh-host">Connect through</label><select id="at-ssh-host" data-field="host"><option'+(state.host==='prod-app'?' selected':'')+'>prod-app</option><option'+(state.host==='bastion'?' selected':'')+'>bastion</option></select><span class="at-inputhelp">Uses this host’s saved SSH login and jump hosts.</span></div><div class="at-field"><label>Where does the service run?</label><div class="at-segment"><label><input type="radio" name="location" data-field="location" value="same"'+(same?' checked':'')+'>On this SSH host</label><label><input type="radio" name="location" data-field="location" value="private"'+(!same?' checked':'')+'>On another private host</label></div></div>'+(same?'': '<div class="at-field"><label for="at-private-address">Private service address</label><input id="at-private-address" data-field="address" required value="'+escape(state.address)+'" placeholder="db.internal"><span class="at-inputhelp">An address that '+escape(state.host)+' can reach. It does not need to be reachable from your Mac.</span></div>')+'<div class="at-fields"><div class="at-field"><label for="at-service-port">Service port</label><input id="at-service-port" data-field="servicePort" type="number" min="1" max="65535" required value="'+escape(state.servicePort)+'"><span class="at-inputhelp">The port '+escape(serviceLabel())+' listens on.</span></div><div class="at-field"><label for="at-local-port">Port on this Mac</label><input id="at-local-port" data-field="localPort" type="number" min="1" max="65535" required value="'+escape(state.localPort)+'"><span class="at-inputhelp">Suggested port. Change it if needed.</span></div></div></section>'+route()+(state.editing&&state.running?note('Saving will restart this tunnel and close existing connections.'):'' )+'<details><summary>Advanced settings</summary><div class="at-fields"><div class="at-field"><label for="at-bind">Allow access from</label><select id="at-bind" data-field="binding"><option value="local"'+(state.binding==='local'?' selected':'')+'>This Mac only</option><option value="network"'+(state.binding==='network'?' selected':'')+'>Other devices on my network</option></select><span class="at-inputhelp" id="at-bind-help">'+(state.binding==='network'?'Other devices may access this service through your Mac.':'Local connections only. Recommended.')+'</span></div>'+(same?'<div class="at-field"><label for="at-service-interface">Service address on SSH host</label><input id="at-service-interface" value="127.0.0.1"><span class="at-inputhelp">Only change this if the service listens on a specific interface.</span></div>':'')+'</div></details><div class="at-formfoot">'+btn('Cancel','host')+btn('Save for later','save')+'<button type="button" class="at-btn primary" data-action="save-start">'+(state.editing&&state.running?'Save and restart':'Save and start')+'</button></div></form>';
+ }
+ function detail(){
+  const isWeb=state.type==='web';
+  const checked=state.reachability==='reachable';
+  return header(state.name,serviceLabel()+' · '+(state.location==='same'?'On '+state.host:'On '+state.address),'<div class="at-actions">'+btn(icon('pencil')+' Edit','edit')+btn(state.running?'Stop tunnel':'Start tunnel','toggle-db',!state.running)+'</div>')+'<section class="at-endpoint"><div class="at-endpoint-top"><h3>Connect from this Mac</h3>'+status(state.running)+'</div><div class="at-endpoint-input"><input id="at-endpoint-copy" aria-label="Address to use in your application" readonly value="'+escape(address())+'">'+btn(icon('copy')+' Copy address','copy')+'</div><span class="at-subtle">'+(state.running?'Use this address in your '+(isWeb?'browser':'database client')+'. '+(isWeb?'':'Sign in with your database credentials.'):'Start the tunnel before connecting your application.')+'</span>'+(isWeb?'<div>'+btn('Open in browser','open-browser')+'</div>':'')+'</section>'+route()+'<section class="at-detailrows"><div class="at-detailrow"><span>SSH forwarding</span>'+status(state.running)+'</div><div class="at-detailrow"><span>Service reachability</span><div class="at-servicecheck"><span class="at-subtle">'+(checked?'TCP port reachable · Checked just now':'Not checked')+'</span><button type="button" class="at-btn" data-action="test"'+(!state.running?' disabled':'')+'>Test service</button></div></div><div class="at-detailrow"><span>Availability</span><span>Until you stop it or quit aTerm</span></div></section>'+note('A running tunnel opens the local connection path. Test service checks the remote TCP port, not the service login.')+'<div class="at-helpbar">No terminal window needs to stay open. This tunnel is also visible in the global Tunnels list.</div>';
+ }
+ function global(){
+  const rows=Object.entries(records).map(([key,record])=>'<tr><td><button class="at-textbutton" data-action="record-view:'+key+'">'+escape(record.name)+'</button><small>'+escape(serviceType(record.type))+'</small></td><td class="at-hostcol">'+escape(record.host)+'</td><td class="at-localcol">127.0.0.1:'+escape(record.localPort)+'</td><td>'+(record.issue?'<span class="at-status warn"><span class="at-dot"></span>Needs attention</span>':status(record.running))+'</td><td>'+btn(record.issue?'Resolve':record.running?'Stop':'Start',record.issue?'record-view:'+key:'record-toggle:'+key)+'</td></tr>').join('');
+  return header('Tunnels','All saved service connections across your SSH hosts.',btn(icon('plus')+' Add tunnel','create',true))+'<table class="at-table"><thead><tr><th>Service</th><th class="at-hostcol">SSH host</th><th class="at-localcol">Connect from this Mac</th><th>Status</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table><div class="at-helpbar">Tunnels keep running when you switch hosts or close terminal tabs. Quitting aTerm stops all tunnels.</div>';
+ }
+ function error(){
+  const scenarios={
+   port:{title:'Port '+state.localPort+' is already in use on this Mac',body:'Another application is using this local port. Your service settings are saved. Choose a different port to start the tunnel.',primary:'Use '+String(Number(state.localPort)+1)+' and start',action:'fix-port',secondary:'Choose another port',secondaryAction:'create',ssh:'Not connected',local:'Unavailable',target:'Not checked'},
+   target:{title:'The service could not be reached from '+state.host,body:'SSH is connected and the local port is open. Check that the service is running and that its address and port are correct.',primary:'Test again',action:'fix-target',secondary:'Edit service',secondaryAction:'create',ssh:'Connected',local:'Listening',target:'Unreachable'},
+   ssh:{title:'The SSH connection was interrupted',body:'The tunnel has stopped and the local port has been released. Reconnect to restore access. Existing database sessions may need to be reopened.',primary:'Reconnect tunnel',action:'recover',secondary:'Back to host',secondaryAction:'host',ssh:'Disconnected',local:'Closed',target:'Not checked'},
+   auth:{title:'SSH authentication is required',body:'Sign in to '+state.host+' using its saved SSH settings. Your database or service password is not requested here.',primary:'Authenticate and start',action:'recover',secondary:'Edit SSH host',secondaryAction:'edit-host',ssh:'Authentication required',local:'Not listening',target:'Not checked'}
+  };
+  const s=scenarios[state.error];
+  return header(state.name,'Needs attention · Saved configuration preserved')+'<section class="at-error"><div class="at-service-title">'+icon('circle-alert')+'<h3>'+escape(s.title)+'</h3></div><p>'+escape(s.body)+'</p><div class="at-actions">'+btn(escape(s.primary),s.action,true)+btn(escape(s.secondary),s.secondaryAction)+'</div></section><section class="at-detailrows"><div class="at-detailrow"><span>SSH connection</span><span>'+s.ssh+'</span></div><div class="at-detailrow"><span>Port on this Mac</span><span>'+s.local+'</span></div><div class="at-detailrow"><span>Service</span><span>'+s.target+'</span></div></section>'+route()+'<div class="at-helpbar">Other tunnels and terminal sessions are unaffected.</div>';
+ }
+ function render(){
+  commitRecord();
+  main.innerHTML=({host,create,detail,global,error}[state.mode])();
+  root.querySelectorAll('[data-review]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.review===state.mode)));
+  root.querySelector('#at-error-picker').hidden=state.mode!=='error';
+  root.querySelector('#at-error-scenario').value=state.error;
+  root.querySelector('#at-active-count').textContent=Object.values(records).filter(record=>record.running).length+' active';
+  root.querySelectorAll('.at-nav[data-action]').forEach(b=>b.classList.toggle('is-active',state.mode==='global'?b.dataset.action==='global':b.dataset.action==='host'));
+  if(globalThis.lucide)lucide.createIcons();
+ }
+ function navigate(mode){state.mode=mode;if(mode==='error')state.running=state.error==='target';announce('');render();persist();}
+ root.addEventListener('click',event=>{
+  const review=event.target.closest('[data-review]');
+  if(review){if(review.dataset.review==='create')state.editing=false;if(review.dataset.review==='detail')state.running=true;navigate(review.dataset.review);return;}
+  const action=event.target.closest('[data-action]')?.dataset.action;
+  if(!action)return;
+  if(action.startsWith('record-view:')){const key=action.split(':')[1];selectRecord(key);if(records[key].issue){state.error='target';navigate('error');}else navigate('detail');return;}
+  if(action.startsWith('record-toggle:')){const key=action.split(':')[1];if(key===state.selected){state.running=!state.running;}else records[key].running=!records[key].running;render();persist();return;}
+  if(action==='edit'){state.editing=true;navigate('create');return;}
+
+  if(['host','create','global','error'].includes(action)){if(action==='create')state.editing=false;navigate(action);return;}
+  if(action==='dashboard-error'){state.type='web';state.name='Internal dashboard';state.host='bastion';state.location='private';state.address='monitor.internal';state.servicePort='8080';state.localPort='18080';state.error='target';navigate('error');return;}
+  if(action==='database'){state.selected='database';navigate('detail');return;}
+  if(action==='redis'||action==='redis-start'){state.type='redis';state.name='Application cache';state.localPort='16379';state.servicePort='6379';state.location='same';state.running=action==='redis-start';navigate('detail');return;}
+  if(action==='toggle-db'){state.running=!state.running;state.reachability='unchecked';render();persist();return;}
+  if(action==='save-start'){if(!root.querySelector('#at-create-form').reportValidity())return;state.running=true;state.reachability='unchecked';navigate('detail');return;}
+  if(action==='save'){if(!root.querySelector('#at-create-form').reportValidity())return;state.running=false;navigate('host');announce('Saved. Start this tunnel whenever you need it.');return;}
+  if(action==='copy'){const field=root.querySelector('#at-endpoint-copy');field.focus();field.select();announce('Preview: local address selected for copying.');return;}
+  if(action==='test'){state.reachability='reachable';render();announce('Preview: the remote TCP port is reachable. Service login is not tested.');return;}
+  if(action==='open-browser'){announce('Preview: opens http://'+address()+' in your browser.');return;}
+  if(action==='fix-port'){state.localPort=String(Number(state.localPort)+1);state.running=true;navigate('detail');announce('Preview: the new port was explicitly accepted before restarting.');return;}
+  if(action==='fix-target'){records[state.selected].issue=false;state.running=true;state.reachability='reachable';navigate('detail');return;}
+  if(action==='recover'){state.running=true;state.reachability='unchecked';navigate('detail');announce('Preview: SSH authentication succeeds and the tunnel starts.');return;}
+  if(action==='edit-host'){announce('Preview: opens the saved SSH host’s authentication settings.');}
+ });
+ root.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.closest('#at-create-form')&&event.target.tagName==='INPUT'){event.preventDefault();root.querySelector('[data-action="save-start"]').click();}});
+ root.addEventListener('submit',event=>{event.preventDefault();if(event.target.id!=='at-create-form')return;if(!event.target.reportValidity())return;state.running=true;state.reachability='unchecked';navigate('detail');});
+ root.addEventListener('input',event=>{
+  const field=event.target.dataset.field;
+  if(!['name','address','servicePort','localPort'].includes(field))return;
+  state[field]=event.target.value;
+  const preview=root.querySelector('#at-route-preview');
+  if(preview){preview.outerHTML=route();if(globalThis.lucide)lucide.createIcons();}
+ });
+ root.addEventListener('change',event=>{
+  if(event.target.id==='at-error-scenario'){state.error=event.target.value;state.running=state.error==='target';render();persist();return;}
+  const field=event.target.dataset.field;
+  if(!['type','host','location','binding'].includes(field))return;
+  state[field]=event.target.value;
+  if(field==='type'){
+   const types={mysql:['3306','13306','Production database'],redis:['6379','16379','Application cache'],web:['8080','18080','Internal dashboard'],custom:['9000','19000','Private service']};
+   [state.servicePort,state.localPort,state.name]=types[state.type];
+  }
+  if(field==='binding'){
+   root.querySelector('#at-bind-help').textContent=state.binding==='network'?'Other devices may access this service through your Mac.':'Local connections only. Recommended.';
+  } else render();
+  persist();
+ });
+ render();
+})();
+</script>
