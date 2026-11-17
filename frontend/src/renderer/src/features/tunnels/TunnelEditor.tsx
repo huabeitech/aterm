@@ -30,7 +30,7 @@ type Props = {
   editing: boolean
   onClose: () => void
   onTest: (input: TunnelInput) => Promise<{ localListener: 'checked' | 'existing' } | null>
-  onSave: (input: TunnelInput, start: boolean) => Promise<void>
+  onSave: (input: TunnelInput) => Promise<void>
 }
 const presets = {
   MySQL: [3306, 13306],
@@ -52,7 +52,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
     setError('')
     setTestMessage('')
   }
-  async function save(start: boolean) {
+  async function save() {
     if (saving.current) return
     const value = { ...draft, targetAddress: privateHost ? draft.targetAddress : '127.0.0.1' }
     const invalid = validateTunnel(value)
@@ -63,7 +63,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
     saving.current = true
     setBusy(true)
     try {
-      await onSave(value, start)
+      await onSave(value)
     } catch (cause) {
       setError(String(cause))
     } finally {
@@ -118,7 +118,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            void save(false)
+            void save()
           }}
           className="space-y-4"
         >
@@ -274,11 +274,8 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
                 {t('hosts:tunnels.cancel')}
               </Button>
             )}
-            <Button type="submit" variant="outline" disabled={busy}>
+            <Button type="submit" disabled={busy}>
               {t('hosts:tunnels.save')}
-            </Button>
-            <Button type="button" disabled={busy} onClick={() => void save(true)}>
-              {editing ? t('hosts:tunnels.restartSave') : t('hosts:tunnels.startSave')}
             </Button>
           </DialogFooter>
         </form>

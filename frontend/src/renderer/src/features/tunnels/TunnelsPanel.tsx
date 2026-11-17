@@ -197,15 +197,8 @@ export function TunnelsPanel({
           hosts={hosts}
           editing={!!editor.id}
           onClose={() => setEditor(null)}
-          onSave={async (input, start) => {
-            if (start && !(await unlock())) return
-            await perform(editor.id || 'new', async () => {
-              const saved = await desktop.tunnels.save(editor.id, input)
-              if (start) {
-                await desktop.tunnels.stop(saved.id)
-                await desktop.tunnels.start(saved.id)
-              }
-            })
+          onSave={async (input) => {
+            await perform(editor.id || 'new', () => desktop.tunnels.save(editor.id, input))
             setEditor(null)
           }}
         />
