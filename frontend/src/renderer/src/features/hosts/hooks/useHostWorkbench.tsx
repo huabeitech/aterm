@@ -279,30 +279,24 @@ export function useHostWorkbench(
     const host = hosts.find((item) => item.id === id)
     if (!host) return <p className="p-4 text-muted-foreground">{t('hosts:thisHostNoLongerExists')}</p>
     return (
-      <div key={id} className="host-inspector grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+      <div key={id} className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)]">
         <HostDetailsToolbar
           favorite={host.favorite}
           disabled={!!busyAction || actions.connecting}
           connecting={actions.connecting}
-          connectDisabledReason={null}
-          canConnect
-          canOpenFiles
-          canCopy
+          pluginActions={renderPluginActions(id)}
           onConnect={actions.connect}
           onEdit={() => editor.startEditHost(id)}
           onOpenFiles={actions.openFiles}
           onCopy={() => void copySSHCommand(id)}
           onFavorite={() => void editor.toggleFavoriteHost(id)}
         />
-        <ScrollArea className="min-h-0 overflow-auto p-4">
-          <div className="mx-auto max-w-3xl">
-            <HostDetails
-              host={host}
-              directoryName={directoryLabel(host.directoryID, directories)}
-              pluginActions={renderPluginActions(id)}
-              onGetHostPassword={getPassword}
-            />
-          </div>
+        <ScrollArea className="min-h-0">
+          <HostDetails
+            host={host}
+            directoryName={directoryLabel(host.directoryID, directories)}
+            onGetHostPassword={getPassword}
+          />
         </ScrollArea>
       </div>
     )

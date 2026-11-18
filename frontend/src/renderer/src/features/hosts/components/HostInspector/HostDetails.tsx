@@ -7,101 +7,79 @@ import { toast } from '@/components/ui/toast'
 import { Copy, Eye, EyeOff } from 'lucide-react'
 import { domain } from '../../../../api/types'
 import { ClipboardSetText } from '../../../../api/runtime'
-import { DetailSection } from './DetailSection'
 
 export function HostDetails({
   host,
   directoryName,
-  pluginActions,
   onGetHostPassword
 }: {
   host: domain.Host
   directoryName: string
-  pluginActions: import("react").ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
   return (
-    <div className="details-stack grid gap-4.5 [.host-inspector_&]:gap-3.5">
-      <h2 className="host-details-title m-0 text-[var(--mac-text)] text-lg font-[650] leading-[calc(1.5rem*var(--app-font-scale))] overflow-hidden text-ellipsis whitespace-nowrap">
+    <div className="grid w-full max-w-3xl gap-5 px-6 pt-5 pb-8 text-[length:var(--app-text-13)]">
+      <h2 className="m-0 wrap-anywhere text-lg font-semibold text-[var(--mac-text)]">
         {host.name}
       </h2>
-      <DetailSection title={t('hosts:connection')}>
-        <dl className="host-details-table overflow-hidden rounded-md border border-border">
-          <DetailRow label={t('hosts:directory')}>{directoryName}</DetailRow>
-          {host.alias && (
-            <DetailRow label={t('hosts:hostAlias')}>
-              <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+      <DetailGroup title={t('hosts:connection')}>
+        <DetailRow label={t('hosts:directory')}>{directoryName}</DetailRow>
+        {host.alias && (
+          <DetailRow label={t('hosts:hostAlias')}>
+            <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+          </DetailRow>
+        )}
+        <DetailRow label={t('hosts:address')}>
+          <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
+        </DetailRow>
+        <DetailRow label={t('hosts:username')}>
+          <CopyableDetailValue value={host.user} label={t('hosts:username')} fallback="-" />
+        </DetailRow>
+        <DetailRow label={t('hosts:port')}>{String(host.port || 22)}</DetailRow>
+        <DetailRow label={t('hosts:jumpHost')}>
+          {host.proxyJump || t('hosts:directConnection')}
+        </DetailRow>
+      </DetailGroup>
+      <DetailGroup title={t('hosts:metadata')}>
+        <DetailRow label={t('hosts:notes')} multiline>
+          {host.remark || '-'}
+        </DetailRow>
+        <DetailRow label={t('hosts:updated')}>{formatDate(host.updatedAt)}</DetailRow>
+      </DetailGroup>
+      <DetailGroup title={t('hosts:authentication')}>
+        <DetailRow label={t('hosts:method')}>
+          {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
+        </DetailRow>
+        {host.passwordAuth ? (
+          <DetailRow label={t('hosts:password')}>
+            <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
+          </DetailRow>
+        ) : (
+          <>
+            <DetailRow label={t('hosts:privateKeyFile')}>
+              {host.identityFile || t('hosts:defaultSshKeys')}
             </DetailRow>
-          )}
-          <DetailRow label={t('hosts:address')}>
-            <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
-          </DetailRow>
-          <DetailRow label={t('hosts:username')}>
-            <CopyableDetailValue value={host.user} label={t('hosts:username')} fallback="-" />
-          </DetailRow>
-          <DetailRow label={t('hosts:port')}>{String(host.port || 22)}</DetailRow>
-          <DetailRow label={t('hosts:jumpHost')}>
-            {host.proxyJump || t('hosts:directConnection')}
-          </DetailRow>
-        </dl>
-      </DetailSection>
-      <DetailSection title={t('hosts:metadata')}>
-        <dl className="host-details-table overflow-hidden rounded-md border border-border">
-          <DetailRow label={t('hosts:notes')}>
-            <div className="remark-content max-w-full wrap-anywhere whitespace-pre-wrap [word-break:break-word]">
-              {host.remark || '-'}
-            </div>
-          </DetailRow>
-          <DetailRow label={t('hosts:updated')}>{formatDate(host.updatedAt)}</DetailRow>
-        </dl>
-      </DetailSection>
-      {pluginActions}
-      <DetailSection title={t('hosts:authentication')}>
-        <dl className="host-details-table overflow-hidden rounded-md border border-border">
-          <DetailRow label={t('hosts:method')}>
-            {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
-          </DetailRow>
-          {host.passwordAuth ? (
-            <DetailRow label={t('hosts:password')}>
-              <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
+            <DetailRow label={t('hosts:agentForwarding')}>
+              {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
             </DetailRow>
-          ) : (
-            <>
-              <DetailRow label={t('hosts:privateKeyFile')}>
-                <span
-                  className={cn(
-                    'host-detail-value min-w-0 [font:inherit] leading-[calc(1.25rem*var(--app-font-scale))] [.copyable-detail-value_&]:min-w-0 [.copyable-detail-value_&]:overflow-hidden',
-                    '[.copyable-detail-value_&]:text-ellipsis [.copyable-detail-value_&]:whitespace-nowrap',
-                    '[.host-inspector_.copyable-detail-value_&]:whitespace-normal [.host-inspector_.copyable-detail-value_&]:wrap-anywhere'
-                  )}
-                >
-                  {host.identityFile || t('hosts:defaultSshKeys')}
-                </span>
-              </DetailRow>
-              <DetailRow label={t('hosts:agentForwarding')}>
-                {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-              </DetailRow>
-            </>
-          )}
-          <DetailRow label={t('hosts:compression')}>
-            {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-          </DetailRow>
-        </dl>
-      </DetailSection>
-      <DetailSection title={t('hosts:reliability')}>
-        <dl className="host-details-table overflow-hidden rounded-md border border-border">
-          <DetailRow label={t('hosts:keepaliveInterval')}>
-            {secondsLabel(host.serverAliveInterval)}
-          </DetailRow>
-          <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
-            {host.serverAliveCountMax > 0 ? String(host.serverAliveCountMax) : t('hosts:default')}
-          </DetailRow>
-          <DetailRow label={t('hosts:connectionTimeout')}>
-            {secondsLabel(host.connectTimeout)}
-          </DetailRow>
-        </dl>
-      </DetailSection>
+          </>
+        )}
+        <DetailRow label={t('hosts:compression')}>
+          {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+        </DetailRow>
+      </DetailGroup>
+      <DetailGroup title={t('hosts:reliability')}>
+        <DetailRow label={t('hosts:keepaliveInterval')}>
+          {secondsLabel(host.serverAliveInterval)}
+        </DetailRow>
+        <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
+          {host.serverAliveCountMax > 0 ? String(host.serverAliveCountMax) : t('hosts:default')}
+        </DetailRow>
+        <DetailRow label={t('hosts:connectionTimeout')}>
+          {secondsLabel(host.connectTimeout)}
+        </DetailRow>
+      </DetailGroup>
     </div>
   )
 }
@@ -164,23 +142,13 @@ function PasswordDetailValue({
   }
 
   return (
-    <span className="copyable-detail-value inline-flex max-w-full items-center gap-1 align-middle">
-      <span
-        className={cn(
-          'host-detail-value min-w-0 [font:inherit] leading-[calc(1.25rem*var(--app-font-scale))] [.copyable-detail-value_&]:min-w-0 [.copyable-detail-value_&]:overflow-hidden',
-          '[.copyable-detail-value_&]:text-ellipsis [.copyable-detail-value_&]:whitespace-nowrap',
-          '[.host-inspector_.copyable-detail-value_&]:whitespace-normal [.host-inspector_.copyable-detail-value_&]:wrap-anywhere'
-        )}
-      >
+    <span className="inline-flex max-w-full items-center gap-1">
+      <span className="min-w-0 wrap-anywhere">
         {visible && password ? password : '••••••••'}
       </span>
       <span className="inline-flex gap-0.5">
         <IconButton
-          className={cn(
-            'copyable-detail-button w-6 min-w-6 h-6 text-[rgba(60,_60,_67,_0.58)] hover:text-[#1d1d1f]',
-            '[:root[data-theme=dark]_&]:text-[var(--mac-secondary-text)] [:root[data-theme=dark]_&:hover]:text-[var(--mac-text)]',
-            '[.host-inspector_&]:shrink-0'
-          )}
+          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           icon={visible ? <EyeOff size={13} /> : <Eye size={13} />}
           loading={loading === 'reveal'}
           title={visible ? t('hosts:hidePassword') : t('hosts:revealPassword')}
@@ -188,11 +156,7 @@ function PasswordDetailValue({
           onClick={revealPassword}
         />
         <IconButton
-          className={cn(
-            'copyable-detail-button w-6 min-w-6 h-6 text-[rgba(60,_60,_67,_0.58)] hover:text-[#1d1d1f]',
-            '[:root[data-theme=dark]_&]:text-[var(--mac-secondary-text)] [:root[data-theme=dark]_&:hover]:text-[var(--mac-text)]',
-            '[.host-inspector_&]:shrink-0'
-          )}
+          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           icon={<Copy size={13} />}
           loading={loading === 'copy'}
           title={t('hosts:copyPassword')}
@@ -225,22 +189,12 @@ function CopyableDetailValue({
     toast.add({ title: t('hosts:copied'), type: 'success' })
   }
   return (
-    <span className="copyable-detail-value inline-flex max-w-full items-center gap-1 align-middle">
-      <span
-        className={cn(
-          'host-detail-value min-w-0 [font:inherit] leading-[calc(1.25rem*var(--app-font-scale))] [.copyable-detail-value_&]:min-w-0 [.copyable-detail-value_&]:overflow-hidden',
-          '[.copyable-detail-value_&]:text-ellipsis [.copyable-detail-value_&]:whitespace-nowrap',
-          '[.host-inspector_.copyable-detail-value_&]:whitespace-normal [.host-inspector_.copyable-detail-value_&]:wrap-anywhere'
-        )}
-      >
+    <span className="inline-flex max-w-full items-center gap-1">
+      <span className="min-w-0 wrap-anywhere">
         {value}
       </span>
       <IconButton
-        className={cn(
-          'copyable-detail-button w-6 min-w-6 h-6 text-[rgba(60,_60,_67,_0.58)] hover:text-[#1d1d1f]',
-          '[:root[data-theme=dark]_&]:text-[var(--mac-secondary-text)] [:root[data-theme=dark]_&:hover]:text-[var(--mac-text)]',
-          '[.host-inspector_&]:shrink-0'
-        )}
+        className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
         icon={<Copy size={13} />}
         title={t('hosts:copyField', { label })}
         aria-label={t('hosts:copyField', { label })}
@@ -263,11 +217,38 @@ function formatDate(value: string) {
       }).format(date)
 }
 
-function DetailRow({ label, children }: { label: string; children: ReactNode }) {
+function DetailGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[104px_minmax(0,1fr)] border-b border-border last:border-0 text-xs">
-      <dt className="bg-muted/50 px-2.5 py-2 text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 break-words px-2.5 py-2">{children}</dd>
+    <section className="min-w-0">
+      <h3 className="mb-2 px-3 text-xs font-semibold text-[var(--mac-secondary-text)]">{title}</h3>
+      <dl className="overflow-hidden rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)]">
+        {children}
+      </dl>
+    </section>
+  )
+}
+
+function DetailRow({
+  label,
+  children,
+  multiline = false
+}: {
+  label: string
+  children: ReactNode
+  multiline?: boolean
+}) {
+  return (
+    <div className={cn(
+      'grid min-h-11 items-center gap-y-1 border-b border-[var(--mac-separator)] px-3 py-2 last:border-b-0',
+      !multiline && 'grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4'
+    )}>
+      <dt className="min-w-0 wrap-anywhere">{label}</dt>
+      <dd className={cn(
+        'min-w-0 wrap-anywhere text-[var(--mac-secondary-text)]',
+        multiline ? 'whitespace-pre-wrap' : 'flex items-center justify-end text-right'
+      )}>
+        {children}
+      </dd>
     </div>
   )
 }
