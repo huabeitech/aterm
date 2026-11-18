@@ -105,5 +105,15 @@
   "menuReload": "Neu laden",
   "menuToggleDevTools": "Entwicklerwerkzeuge",
   "edit": "Bearbeiten",
-  "ok": "OK"
+  "ok": "OK",
+  "nativePlugin.installTitle": "{{plugin}} installieren?",
+  "nativePlugin.installMessage": "Dieses Plugin führt nativen Code aus und kann auf Dateien und das Netzwerk Ihres Kontos zugreifen. Installieren Sie nur Plugins aus vertrauenswürdigen Quellen.",
+  "nativePlugin.install": "Installieren",
+  "nativePlugin.cancel": "Abbrechen",
+  "nativePlugin.hostTitle": "Verbindung für {{plugin}} erlauben?",
+  "nativePlugin.hostMessage": "Darf dieses Plugin die gespeicherte SSH-Verbindung {{host}} verwenden?",
+  "nativePlugin.allow": "Erlauben",
+  "nativePlugin.restoreTitle": "Verschlüsseltes Backup wiederherstellen?",
+  "nativePlugin.restoreMessage": "Gespeicherte Verbindungen, Plugin-Einstellungen und geschützte Daten ersetzen? Laufende Plugin-Aufgaben werden beendet.\n\nQuelle: {{source}}\nDatum: {{date}}\nHosts: {{hosts}}\nOrdner: {{folders}}",
+  "nativePlugin.restore": "Wiederherstellen"
 }

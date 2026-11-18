@@ -1,5 +1,6 @@
-import { TunnelsPanel } from '../features/tunnels/TunnelsPanel'
-import { useTunnels } from '../features/tunnels/useTunnels'
+import { NativeWorkspace, PluginActions, pluginTitle } from '../features/plugins/NativeWorkspace'
+import { usePluginCatalog } from '../features/plugins/pluginCatalog'
+
 import type { FileTarget } from '../../../shared/contracts/files'
 import { hasRemoteConnection, remoteFileTarget } from '../../../shared/contracts/terminal'
 import { useThemeRevision, themePreferences, effectiveAppTheme } from './themeRegistry'
@@ -44,7 +45,7 @@ export function App() {
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null)
   const [selectedTheme, setSelectedTheme] = useState<ThemePreference>('system')
   const [appearance, setAppearance] = useState<'light' | 'dark'>(
-    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
   )
   const [error, setError] = useState(false)
   const load = useCallback(() => {
@@ -83,13 +84,13 @@ export function App() {
 function Workbench({
   bootstrap,
   appearance,
-  onThemeChange
+  onThemeChange,
 }: {
   bootstrap: Bootstrap
   appearance: 'light' | 'dark'
   onThemeChange: (theme: ThemePreference) => void
 }) {
-  useTranslation()
+  const { i18n } = useTranslation()
   const { message, notification } = useAppUI()
   const [settings, setSettings] = useState(bootstrap.preferences)
   const themeRevision = useThemeRevision()
@@ -105,7 +106,7 @@ function Workbench({
     // Set on the document so dialogs, menus and tooltips rendered in portals scale too.
     document.documentElement.style.setProperty(
       '--app-font-scale',
-      String(settings.appFontScale / 100)
+      String(settings.appFontScale / 100),
     )
     return () => {
       document.documentElement.style.removeProperty('--app-font-scale')
@@ -121,12 +122,12 @@ function Workbench({
         savedPreferences.current = { ...savedPreferences.current, language: preference }
         setSettings((current) => ({ ...current, language: preference }))
       }),
-    []
+    [],
   )
   const sidebar = useConnectionSidebar()
   const [searchOpen, setSearchOpen] = useState(false)
-  const [tunnelsHostID, setTunnelsHostID] = useState<string | null>(null)
-  const tunnels = useTunnels()
+  const plugins = usePluginCatalog()
+  const [pluginHostIDs, setPluginHostIDs] = useState<Record<string, string | undefined>>({})
   const [searchRequest, setSearchRequest] = useState({ query: '', serial: 0 })
   const searchOpenRef = useRef(false)
   const searchOrigin = useRef<HTMLElement | null>(null)
@@ -138,24 +139,30 @@ function Workbench({
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
-  const isTunnels = tabs.activeWorkspaceTab === 'tunnels'
-  function openTunnels(id: string) { setTunnelsHostID(id); tabs.openWorkspaceTab('tunnels'); tabs.setActiveWorkspaceTab('tunnels') }
+  const isPluginWorkspace = tabs.activeWorkspaceTab.startsWith('plugin:')
+  function openPlugin(pluginID: string, viewID: string, hostID?: string) {
+    const id = `plugin:${pluginID}:${viewID}` as const
+    setPluginHostIDs((current) => ({ ...current, [id]: hostID }))
+    tabs.openWorkspaceTab(id)
+    tabs.setActiveWorkspaceTab(id)
+  }
+
   const notifyUnavailable = useCallback(
     (feature: string) => {
       void message.info(t('common:featureUnavailable', { feature }))
     },
-    [message]
+    [message],
   )
   const library = useHostWorkbench(
     (id) => void terminal.open({ kind: 'ssh', hostID: id }),
     (id) => void openFiles(id),
-    (id) => openTunnels(id)
+    (id) => <PluginActions location="host.details" hostID={id} onOpen={openPlugin} />,
   )
   const files = useFilesWorkbench(
     library.unlockForConnection,
     library.refresh,
     Math.max(1, settings.appFontScale / 100),
-    (id): string | undefined => terminal.sessionForGroup(id)?.id
+    (id): string | undefined => terminal.sessionForGroup(id)?.id,
   )
   const terminal = useTerminalWorkbench(
     tabs,
@@ -179,7 +186,7 @@ function Workbench({
           fileSession={fileSession}
           transfers={files.transfers.filter((t) => t.sessionID === fileSession?.id)}
           terminal={content}
-          tunnels={<TunnelsPanel {...tunnels} hosts={library.hosts} hostID={session.hostID} unlock={library.unlockForConnection} />}
+          unlock={library.unlockForConnection}
           onReconnectSSH={onReconnect}
           onReconnectSFTP={() => {
             if (fileSession) void files.reconnect(fileSession.id)
@@ -194,7 +201,7 @@ function Workbench({
           }}
         />
       )
-    }
+    },
   )
   useEffect(() => {
     setConnectionViews((previous) => {
@@ -223,12 +230,14 @@ function Workbench({
     ? tabs.activeWorkspaceTab.slice(9)
     : null
   const isFiles = !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
-  const isConnectionTunnels = !!activeConnectionID && connectionViews[activeConnectionID] === 'tunnels'
+  const isConnectionPlugin =
+    !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:')
   const isPluginView =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:') === true
   const isTerminal =
     tabs.activeWorkspaceTab.startsWith('terminal:') &&
-    !isFiles && !isConnectionTunnels &&
+    !isFiles &&
+    !isConnectionPlugin &&
     !connectionViews[activeConnectionID ?? '']?.startsWith('plugin:')
   async function openFiles(hostID: FileTarget, groupID?: string) {
     if (typeof hostID !== 'string') {
@@ -242,14 +251,14 @@ function Workbench({
     openingFiles.current.add(hostID)
     try {
       const active = terminal.tabSessions.find(
-        (s) => s.id === activeConnectionID && s.hostID === hostID
+        (s) => s.id === activeConnectionID && s.hostID === hostID,
       )
       const existing = active ?? terminal.tabSessions.find((s) => s.hostID === hostID)
       const id =
         groupID ??
         existing?.id ??
         (await terminal.open({ kind: 'ssh', hostID }, (id) =>
-          setConnectionViews((previous) => ({ ...previous, [id]: 'files' }))
+          setConnectionViews((previous) => ({ ...previous, [id]: 'files' })),
         ))
       if (!id) return
       tabs.setActiveWorkspaceTab(`terminal:${id}`)
@@ -283,7 +292,7 @@ function Workbench({
     if (bootstrap.recoveryNotice)
       notification.warning({
         title: t('common:preferencesRecovered'),
-        description: bootstrap.recoveryNotice
+        description: bootstrap.recoveryNotice,
       })
     if (bootstrap.info.localTerminalAvailable && settings.defaultHome === 'local-terminal')
       void terminal.open({ kind: 'local' })
@@ -370,7 +379,7 @@ function Workbench({
         else if (isTerminal) terminal.findActive()
         else if (tabs.activeWorkspaceTab === 'home')
           requestAnimationFrame(() =>
-            document.querySelector<HTMLInputElement>('[data-action="search-hosts"]')?.focus()
+            document.querySelector<HTMLInputElement>('[data-action="search-hosts"]')?.focus(),
           )
         break
       case 'new-terminal':
@@ -384,7 +393,7 @@ function Workbench({
         )
           terminal.closeActive()
         else if (activeConnectionID) void closeConnection(activeConnectionID)
-        else if (isTunnels) tabs.removeTabs(['tunnels'])
+        else if (isPluginWorkspace) tabs.removeTabs([tabs.activeWorkspaceTab])
         else if (isSettings) closeSettings()
         break
       case 'previous-tab':
@@ -416,18 +425,26 @@ function Workbench({
   const activeIndex = tabs.workspaceTabs.findIndex((tab) => tab.id === tabs.activeWorkspaceTab)
   const features = platformFeatures(bootstrap.info.platform)
   const paletteCommands: PaletteCommand[] = [
-    { id: 'ssh-tunnels', label: t('hosts:tunnels.title'), keywords: 'tunnel forwarding port 隧道 转发', run: () => openTunnels('') },
+    ...plugins
+      .filter((p) => p.enabled && p.manifest.runtime === 'native')
+      .flatMap((p) =>
+        (p.manifest.contributes.views ?? []).map((v) => ({
+          id: `plugin:${p.manifest.id}:${v.id}`,
+          label: pluginTitle(p, v.title, i18n.resolvedLanguage ?? i18n.language),
+          run: () => openPlugin(p.manifest.id, v.id),
+        })),
+      ),
     {
       id: 'connect-ssh',
       label: t('commands:connectSsh'),
       keywords: '连接 主机 ssh',
-      run: () => {}
+      run: () => {},
     },
     {
       id: 'connect-sftp',
       label: t('commands:connectSftp'),
       keywords: '文件 传输 sftp',
-      run: () => {}
+      run: () => {},
     },
     { id: 'switch-tab', label: t('commands:switchTab'), keywords: '切换 标签页', run: () => {} },
     ...(!integration.busy && features.cloudBackup
@@ -436,7 +453,7 @@ function Workbench({
             id: 'backup',
             label: t('commands:backupCommand'),
             keywords: '备份 backup icloud',
-            run: () => integration.backup()
+            run: () => integration.backup(),
           },
           {
             id: 'export-openssh',
@@ -444,8 +461,8 @@ function Workbench({
             keywords: '导出 open ssh config 配置',
             run: () => {
               integration.exportSSH()
-            }
-          }
+            },
+          },
         ]
       : []),
     {
@@ -461,11 +478,11 @@ function Workbench({
           detail: settings.theme === value ? t('common:current') : undefined,
           run: () => {
             void saveSettings({ ...settings, theme: value as ThemePreference }).catch(
-              reportThemeError
+              reportThemeError,
             )
-          }
-        }))
-      }
+          },
+        })),
+      },
     },
     ...getCommands(settings, bootstrap.info.platform)
       .filter(({ id }) => {
@@ -497,10 +514,10 @@ function Workbench({
               'new-terminal': '终端 本地 shell',
               'split-vertical': '分屏 right',
               'split-horizontal': '分屏 down',
-              'close-tab': '关闭 标签页'
+              'close-tab': '关闭 标签页',
             } as Record<string, string>
           )[id],
-        run: () => execute(id)
+        run: () => execute(id),
       })),
     {
       id: 'settings-shortcuts',
@@ -509,13 +526,20 @@ function Workbench({
       run: () => {
         setSettingsSectionRequest((value) => value + 1)
         openSettings()
-      }
-    }
+      },
+    },
   ]
+  function nativeTabTitle(id: string) {
+    const [, pluginID, viewID] = id.split(':')
+    const p = plugins.find((p) => p.manifest.id === pluginID)
+    const v = p?.manifest.contributes.views?.find((v) => v.id === viewID)
+    return p && v ? pluginTitle(p, v.title, i18n.resolvedLanguage ?? i18n.language) : pluginID
+  }
   const paletteTabs: PaletteCommand[] = tabs.workspaceTabs.map((tab) => ({
     id: tab.id,
-    label:
-      tab.id === 'tunnels' ? t('hosts:tunnels.title') : tab.id === 'settings'
+    label: tab.id.startsWith('plugin:')
+      ? nativeTabTitle(tab.id)
+      : tab.id === 'settings'
         ? t('common:settings')
         : tab.kind === 'files'
           ? `${files.sessions.find((session) => session.hostID === tab.hostID)?.title ?? t('common:files')} · SFTP`
@@ -524,7 +548,7 @@ function Workbench({
     run: () => {
       if (tab.id === 'settings') openSettings()
       else tabs.setActiveWorkspaceTab(tab.id)
-    }
+    },
   }))
   const executeRef = useRef(execute)
   executeRef.current = execute
@@ -567,7 +591,7 @@ function Workbench({
             ? 'recorder'
             : editable && !element?.closest('[data-allow-global-shortcuts="true"]')
               ? 'editable'
-              : 'normal'
+              : 'normal',
       )
     }
     document.addEventListener('focusin', updateInputMode)
@@ -581,7 +605,7 @@ function Workbench({
   }, [])
   function reportThemeError(error: unknown) {
     void message.error(
-      error instanceof Error ? localizedError(error) : t('common:unableToSaveTheme')
+      error instanceof Error ? localizedError(error) : t('common:unableToSaveTheme'),
     )
   }
   async function saveSettings(value: domain.AppSettings) {
@@ -618,7 +642,7 @@ function Workbench({
     sshDirectoryAuthorized: false,
     sshDirectoryAuthorizationRequired: false,
     sshDirectoryAuthorizationErrorText: '',
-    hostCount: library.hosts.length
+    hostCount: library.hosts.length,
   }
   return (
     <>
@@ -635,7 +659,7 @@ function Workbench({
             ? 'settings'
             : isFiles
               ? 'files'
-              : isTerminal || isPluginView || isConnectionTunnels
+              : isTerminal || isPluginView || isConnectionPlugin
                 ? 'terminal'
                 : 'home'
         }
@@ -691,9 +715,7 @@ function Workbench({
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}
-            onOpenTunnels={() => openTunnels('')}
-            runningTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'running' || tunnel.state === 'starting').length}
-            failedTunnels={tunnels.tunnels.filter((tunnel) => tunnel.state === 'failed').length}
+            pluginActions={<PluginActions location="sidebar" onOpen={openPlugin} />}
             onOpenSettings={openSettings}
             onBackUpToICloud={() => integration.backup()}
             onExportOpenSSHConfig={integration.exportSSH}
@@ -702,7 +724,28 @@ function Workbench({
         content={
           <>
             {terminal.pages}
-            {isTunnels && <TunnelsPanel {...tunnels} hosts={library.hosts} hostID={tunnelsHostID || undefined} unlock={library.unlockForConnection} />}
+            {tabs.workspaceTabs
+              .filter((tab) => tab.kind === 'plugin')
+              .map((tab) => {
+                const [, pluginID, viewID] = tab.id.split(':')
+                const plugin = plugins.find((p) => p.manifest.id === pluginID && p.enabled)
+                const view = plugin?.manifest.contributes.views?.find((v) => v.id === viewID)
+                return plugin && view ? (
+                  <div
+                    key={tab.id}
+                    style={{ display: tabs.activeWorkspaceTab === tab.id ? 'contents' : 'none' }}
+                  >
+                    <NativeWorkspace
+                      plugin={plugin}
+                      view={view}
+                      hostID={pluginHostIDs[tab.id]}
+                      active={tabs.activeWorkspaceTab === tab.id}
+                      unlock={library.unlockForConnection}
+                      onClose={() => tabs.removeTabs([tab.id])}
+                    />
+                  </div>
+                ) : null
+              })}
             {settingsOpen && (
               <div style={{ display: isSettings ? 'contents' : 'none' }}>
                 <SettingsPage
@@ -731,9 +774,24 @@ function Workbench({
             <div
               className="workspace-welcome-pane h-full min-h-0 grid grid-rows-[minmax(0,_1fr)]"
               style={{
-                display: !isSettings && !isTunnels && !isConnectionTunnels && !isTerminal && !isFiles && !isPluginView ? 'grid' : 'none'
+                display:
+                  !isSettings &&
+                  !isPluginWorkspace &&
+                  !isConnectionPlugin &&
+                  !isTerminal &&
+                  !isFiles &&
+                  !isPluginView
+                    ? 'grid'
+                    : 'none',
               }}
-              aria-hidden={isSettings || isTunnels || isConnectionTunnels || isTerminal || isFiles || isPluginView}
+              aria-hidden={
+                isSettings ||
+                isPluginWorkspace ||
+                isConnectionPlugin ||
+                isTerminal ||
+                isFiles ||
+                isPluginView
+              }
             >
               <ConnectionWelcome
                 hosts={library.hosts}

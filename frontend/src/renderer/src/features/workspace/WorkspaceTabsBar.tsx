@@ -1,3 +1,5 @@
+import { usePluginCatalog } from '../plugins/pluginCatalog'
+import { pluginTitle } from '../plugins/NativeWorkspace'
 import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +10,7 @@ import { useAppUI } from '@/components/ui/confirm-provider'
 import type { DragEvent, RefObject, WheelEvent } from 'react'
 
 import {
-  Cable,
+  Box,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -17,7 +19,7 @@ import {
   Search,
   Server,
   Settings,
-  Terminal
+  Terminal,
 } from 'lucide-react'
 import { desktop } from '../../api/app'
 import { domain } from '../../api/types'
@@ -27,7 +29,7 @@ import { WorkspaceTab } from './WorkspaceTab'
 import type {
   WorkspaceTab as WorkspaceTabModel,
   WorkspaceTabDropPosition,
-  WorkspaceTabID
+  WorkspaceTabID,
 } from './workspaceModel'
 
 interface WorkspaceTabsBarProps {
@@ -70,7 +72,8 @@ interface WorkspaceTabsBarProps {
 }
 
 export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
-  useTranslation()
+  const { i18n } = useTranslation()
+  const plugins = usePluginCatalog()
   return (
     <HoverDetailsGroup>
       <div
@@ -82,13 +85,20 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
       >
         {props.tabs.map((workspaceTab) => {
           const tab = workspaceTab.id
-          if (tab === 'tunnels') {
+          if (tab.startsWith('plugin:')) {
+            const [, pluginID, viewID] = tab.split(':')
+            const plugin = plugins.find((p) => p.manifest.id === pluginID)
+            const view = plugin?.manifest.contributes.views?.find((v) => v.id === viewID)
             return (
               <WorkspaceTab
                 key={tab}
                 tab={tab}
-                label={t('hosts:tunnels.title')}
-                icon={<Cable size={14} />}
+                label={
+                  plugin && view
+                    ? pluginTitle(plugin, view.title, i18n.resolvedLanguage ?? i18n.language)
+                    : pluginID
+                }
+                icon={<Box size={14} />}
                 active={props.activeTab === tab}
                 dragging={props.draggingTab === tab}
                 dropPosition={dropPosition(props, tab)}
@@ -190,7 +200,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
         {props.localTerminalAvailable && (
           <Tip
             title={t('terminal:newShellShortcut', {
-              shortcut: formatCommandPaletteShortcut(props.newTerminalShortcut)
+              shortcut: formatCommandPaletteShortcut(props.newTerminalShortcut),
             })}
           >
             <button
@@ -199,7 +209,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
                 'workspace-new-session [:root[data-theme=dark]_&:hover]:bg-[var(--mac-hover-background)] inline-flex items-center justify-center h-7',
                 'text-[var(--mac-secondary-text)] [font:var(--app-text-12)/1_var(--font-family-sans)] bg-transparent border-0 rounded-[7px] [-webkit-app-region:no-drag] w-7',
                 'p-0 hover:text-[var(--mac-text)] hover:bg-[var(--workspace-tab-hover-background)] focus-visible:relative focus-visible:z-1',
-                'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]'
+                'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]',
               )}
               aria-label={t('terminal:newLocalShell')}
               onClick={props.onOpenLocalTerminal}
@@ -217,7 +227,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
               'workspace-tab-scroll [:root[data-theme=dark]_&:hover:not(:disabled)]:bg-[var(--mac-hover-background)] inline-flex items-center justify-center',
               'w-6 h-7 p-0 text-[var(--mac-secondary-text)] bg-transparent border-0 rounded-[5px] [&:hover:not(:disabled)]:text-[var(--mac-text)]',
               '[&:hover:not(:disabled)]:bg-[var(--workspace-tab-hover-background)] disabled:opacity-35 focus-visible:relative focus-visible:z-1',
-              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]'
+              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]',
             )}
             aria-label={t('terminal:showPreviousTabs')}
             disabled={!props.scrollState.canScrollBack}
@@ -231,7 +241,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
               'workspace-tab-scroll [:root[data-theme=dark]_&:hover:not(:disabled)]:bg-[var(--mac-hover-background)] inline-flex items-center justify-center',
               'w-6 h-7 p-0 text-[var(--mac-secondary-text)] bg-transparent border-0 rounded-[5px] [&:hover:not(:disabled)]:text-[var(--mac-text)]',
               '[&:hover:not(:disabled)]:bg-[var(--workspace-tab-hover-background)] disabled:opacity-35 focus-visible:relative focus-visible:z-1',
-              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]'
+              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]',
             )}
             aria-label={t('terminal:showNextTabs')}
             disabled={!props.scrollState.canScrollForward}
@@ -248,7 +258,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
       <div className="workspace-tab-actions flex items-center ml-3 [-webkit-app-region:no-drag]">
         <Tip
           title={t('terminal:searchShortcut', {
-            shortcut: formatCommandPaletteShortcut(props.commandPaletteShortcut)
+            shortcut: formatCommandPaletteShortcut(props.commandPaletteShortcut),
           })}
         >
           <button
@@ -257,7 +267,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
               'workspace-header-button inline-flex items-center justify-center h-7',
               'text-[var(--mac-secondary-text)] [font:var(--app-text-12)/1_var(--font-family-sans)] bg-transparent border border-transparent rounded-[7px] w-7 p-0',
               'hover:text-[var(--mac-text)] hover:bg-[var(--workspace-tab-hover-background)] hover:border-[var(--workspace-tab-hover-border)] focus-visible:relative focus-visible:z-1',
-              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]'
+              'focus-visible:[outline:1px_solid_var(--mac-secondary-text)] focus-visible:[outline-offset:-1px]',
             )}
             aria-label={t('terminal:search')}
             onClick={props.onOpenSearch}
@@ -272,7 +282,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
 
 function TerminalTabDetails({
   session,
-  host
+  host,
 }: {
   session: TerminalSession
   host: domain.Host | null
@@ -282,7 +292,7 @@ function TerminalTabDetails({
   const copy = (label: string, value: string) => {
     void desktop.library.copyText(value).then(
       () => message.success(t('terminal:fieldCopied', { label })),
-      () => message.error(t('terminal:copyFailed', { label }))
+      () => message.error(t('terminal:copyFailed', { label })),
     )
   }
   const rows = hasRemoteConnection(session)
@@ -296,7 +306,7 @@ function TerminalTabDetails({
             ? String(session.remote.port)
             : host
               ? String(host.port)
-              : t('terminal:unavailable')
+              : t('terminal:unavailable'),
         ],
         ...(session.remote?.user || host?.user
           ? [[t('terminal:username'), session.remote?.user || host!.user]]
@@ -307,9 +317,9 @@ function TerminalTabDetails({
             connecting: t('terminal:sessionConnecting'),
             running: t('terminal:sessionRunning'),
             exited: t('terminal:sessionExited'),
-            error: t('terminal:sessionError')
-          }[session.state]
-        ]
+            error: t('terminal:sessionError'),
+          }[session.state],
+        ],
       ]
     : [
         [t('terminal:type'), t('terminal:localTerminal')],
@@ -321,16 +331,16 @@ function TerminalTabDetails({
             connecting: t('terminal:sessionConnecting'),
             running: t('terminal:sessionRunning'),
             exited: t('terminal:sessionExited'),
-            error: t('terminal:sessionError')
-          }[session.state]
-        ]
+            error: t('terminal:sessionError'),
+          }[session.state],
+        ],
       ]
   return (
     <dl
       className={cn(
         'workspace-host-details grid min-w-60 max-w-90 gap-1.5 m-0 [&_>_div]:grid [&_>_div]:grid-cols-[64px_minmax(0,_1fr)] [&_>_div]:gap-2.5',
         '[&_dt]:text-[var(--mac-secondary-text)] [&_dt]:text-xs [&_dd]:min-w-0 [&_dd]:m-0 [&_dd]:text-[var(--mac-text)] [&_dd]:text-xs',
-        '[&_dd]:wrap-anywhere'
+        '[&_dd]:wrap-anywhere',
       )}
     >
       {rows.map(([label, value]) => (

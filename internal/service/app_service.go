@@ -8,7 +8,6 @@ import (
 
 	"ssh-connect/internal/domain"
 	"ssh-connect/internal/ssh/hostkeys"
-	"ssh-connect/internal/tunnel"
 )
 
 const IncludeLine = "Include ~/.ssh/config.d/*.conf"
@@ -52,7 +51,7 @@ type HostKeyInfo struct {
 }
 
 type AppServiceOptions struct {
-	TunnelChanged        func()
+	WorkspaceReset       func() func()
 	Store                HostStore
 	SSHDir               string
 	ConfigPath           string
@@ -76,7 +75,7 @@ type AppServiceOptions struct {
 }
 
 type AppService struct {
-	*TunnelService
+	workspaceReset func() func()
 	*ConnectionPolicy
 	*HostService
 	*DirectoryService
@@ -152,11 +151,7 @@ func NewAppService(options AppServiceOptions) *AppService {
 	service.SyncService = &SyncService{AppService: service}
 	service.RemoteFileService = &RemoteFileService{AppService: service}
 	service.HostImportService = &HostImportService{AppService: service}
-	changed := options.TunnelChanged
-	if changed == nil {
-		changed = func() {}
-	}
-	service.TunnelService = &TunnelService{AppService: service, manager: tunnel.NewManager(changed), changed: changed}
+	service.workspaceReset = options.WorkspaceReset
 	service.HostService = NewHostService(options.Store, service.hostPasswordStore)
 	service.DirectoryService = NewDirectoryService(options.Store)
 	return service

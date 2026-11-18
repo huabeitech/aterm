@@ -6,7 +6,7 @@ import type {
   JsonValue,
   PluginInfo,
   PluginStatus,
-  PluginViewDocument
+  PluginViewDocument,
 } from '../../../../shared/contracts/plugins'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
 import { desktop } from '../../api/app'
@@ -51,7 +51,7 @@ function environment(locale: string, element: HTMLElement) {
     '--secondary-foreground',
     '--radius',
     '--app-layout-scale',
-    '--font-family-mono'
+    '--font-family-mono',
   ]) {
     const value = style.getPropertyValue(key).trim()
     if (value) tokens[key] = value
@@ -69,12 +69,12 @@ export function PluginView({
   onClose,
   onCommand,
   active = true,
-  workspace = false
+  workspace = false,
 }: {
   active?: boolean
   workspace?: boolean
   plugin: PluginInfo
-  session: TerminalSession
+  session: Pick<TerminalSession, 'id' | 'alias' | 'title'>
   status?: PluginStatus
   view: OpenPluginView
   panel: HTMLElement
@@ -98,9 +98,9 @@ export function PluginView({
       invocationId: view.invocationId,
       sessionId: session.id,
       sessionLabel: session.alias || session.title,
-      view: view.context ?? null
+      view: view.context ?? null,
     },
-    environment: environment(i18n.resolvedLanguage ?? i18n.language, panel)
+    environment: environment(i18n.resolvedLanguage ?? i18n.language, panel),
   }
   const publish = () => {
     if (document)
@@ -109,15 +109,16 @@ export function PluginView({
           channel: 'aterm-view',
           instanceId: document.instanceId,
           type: 'state',
-          state: state.current
+          state: state.current,
         },
-        '*'
+        '*',
       )
   }
   useEffect(() => {
     let cancelled = false
     let instance: string | undefined
     setError('')
+    setDocument(undefined)
     void desktop.plugins
       .openView(plugin.manifest.id, session.id, view.id)
       .then((value) => {
@@ -132,7 +133,7 @@ export function PluginView({
       cancelled = true
       if (instance) void desktop.plugins.closeView(instance).catch(() => {})
     }
-  }, [plugin.manifest.id, plugin.manifest.version, session.id, view.id])
+  }, [plugin.manifest.id, plugin.manifest.version, plugin.state === 'failed', session.id, view.id])
   useEffect(publish, [
     document,
     active,
@@ -142,13 +143,13 @@ export function PluginView({
     i18n.resolvedLanguage,
     session.alias,
     session.title,
-    revision
+    revision,
   ])
   useEffect(() => {
     const observer = new MutationObserver(() => setRevision((n) => n + 1))
     observer.observe(window.document.documentElement, {
       attributes: true,
-      attributeFilter: ['class', 'style']
+      attributeFilter: ['class', 'style'],
     })
     return () => observer.disconnect()
   }, [])
@@ -194,9 +195,9 @@ export function PluginView({
           type: 'response',
           requestId: data.requestId,
           result: result ?? null,
-          error
+          error,
         },
-        '*'
+        '*',
       )
     }
     window.addEventListener('message', receive)
@@ -227,6 +228,6 @@ export function PluginView({
         <div className="plugin-view-loading" aria-busy="true" />
       )}
     </aside>,
-    panel
+    panel,
   )
 }

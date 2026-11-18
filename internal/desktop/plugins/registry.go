@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -133,14 +134,27 @@ func (r *Registry) save() error {
 	}
 	return fsutil.AtomicWriteFile(r.path, data, 0600)
 }
-func (r *Registry) Package(id string) (Package, Config, uint64, error) {
+func (r *Registry) Package(id string) (Package, Config, uint64, error) { return r.snapshot(id, true) }
+
+// Describe does not copy executable bytes on every command or UI request.
+// Immutable strings can be shared; mutable maps and manifest slices cannot.
+func (r *Registry) Describe(id string) (Package, Config, uint64, error) { return r.snapshot(id, false) }
+func (r *Registry) snapshot(id string, includeBinary bool) (Package, Config, uint64, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	e := r.entries[id]
 	if e == nil {
 		return Package{}, Config{}, 0, errors.New("plugin not found")
 	}
-	return clone(e.plugin), clone(e.config), e.generation, nil
+	p := e.plugin
+	p.Manifest = clone(p.Manifest)
+	p.Localizations = clone(p.Localizations)
+	p.Views = maps.Clone(p.Views)
+	p.Binary = nil
+	if includeBinary {
+		p.Binary = append([]byte(nil), e.plugin.Binary...)
+	}
+	return p, clone(e.config), e.generation, nil
 }
 func (r *Registry) InstallationAllowed() error {
 	r.mu.Lock()
@@ -352,7 +366,7 @@ func (r *Registry) SetRuntimeState(id string, generation uint64, state, message 
 // must earn permission even when it declares identical programs and targets.
 func sameExecutionAuthority(previous, next Package) bool {
 	return PolicyDigest(previous.Manifest) == PolicyDigest(next.Manifest) &&
-		(len(next.Manifest.Permissions) == 0 || previous.Source == next.Source)
+		(len(next.Manifest.Permissions) == 0 || (previous.Source == next.Source && string(previous.Binary) == string(next.Binary)))
 }
 
 func PolicyDigest(manifest Manifest) string {
@@ -376,9 +390,10 @@ func PolicyDigest(manifest Manifest) string {
 		}{programs, targets, unset, env}
 	}
 	data, _ := marshalJSON(struct {
-		Permissions []string `json:"permissions"`
-		Execution   any      `json:"execution"`
-	}{permissions, execution})
+		Permissions []string       `json:"permissions"`
+		Execution   any            `json:"execution"`
+		Backend     *NativeBackend `json:"backend,omitempty"`
+	}{permissions, execution, manifest.Backend})
 	sum := sha256.Sum256(data)
 	return fmt.Sprintf("%x", sum)
 }
@@ -408,4 +423,14 @@ func (r *Registry) Available(id string) bool {
 	defer r.mu.Unlock()
 	e := r.entries[id]
 	return e != nil && !r.safeMode && r.startupError == nil && e.config.Enabled && e.error == ""
+}
+
+func (r *Registry) Executable(id string) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	e := r.entries[id]
+	if e == nil {
+		return "", errors.New("plugin not found")
+	}
+	return r.packages.Executable(e.config.Key)
 }

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "huabei.ssh-tunnels",
+  "name": "SSH tunnels",
+  "version": "1.0.0",
+  "runtime": "native",
+  "entry": "backend/darwin-arm64/plugin",
+  "backend": {
+    "platform": "darwin-arm64",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "engines": {
+    "hostApi": 1
+  },
+  "permissions": [
+    "native.execute",
+    "ssh.connect",
+    "hosts.read"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "tunnels.request",
+        "title": "command.title"
+      },
+      {
+        "id": "tunnels.connect",
+        "title": "command.title",
+        "requiresUnlock": true
+      },
+      {
+        "id": "tunnels.copy",
+        "title": "command.title"
+      }
+    ],
+    "views": [
+      {
+        "id": "tunnels.workspace",
+        "title": "view.title",
+        "entry": "ui/workspace.html",
+        "placement": "app.workspace",
+        "locations": [
+          "sidebar",
+          "host.details",
+          "connection"
+        ]
+      }
+    ]
+  },
+  "i18n": {
+    "defaultLocale": "en",
+    "locales": {
+      "ja": "locales/ja.json",
+      "zh-CN": "locales/zh-CN.json",
+      "zh-TW": "locales/zh-TW.json",
+      "pt-BR": "locales/pt-BR.json",
+      "de": "locales/de.json",
+      "ko": "locales/ko.json",
+      "fr": "locales/fr.json",
+      "es": "locales/es.json",
+      "en": "locales/en.json"
+    }
+  }
+}

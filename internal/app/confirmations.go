@@ -18,12 +18,17 @@ const (
 )
 
 type windowConfirmation struct {
-	Title        string `json:"title"`
-	Message      string `json:"message"`
-	ConfirmLabel string `json:"confirmLabel"`
-	CancelLabel  string `json:"cancelLabel,omitempty"`
-	ExtraLabel   string `json:"extraLabel,omitempty"`
-	Danger       bool   `json:"danger,omitempty"`
+	TitleKey     string            `json:"titleKey,omitempty"`
+	MessageKey   string            `json:"messageKey,omitempty"`
+	ConfirmKey   string            `json:"confirmKey,omitempty"`
+	CancelKey    string            `json:"cancelKey,omitempty"`
+	Parameters   map[string]string `json:"parameters,omitempty"`
+	Title        string            `json:"title"`
+	Message      string            `json:"message"`
+	ConfirmLabel string            `json:"confirmLabel"`
+	CancelLabel  string            `json:"cancelLabel,omitempty"`
+	ExtraLabel   string            `json:"extraLabel,omitempty"`
+	Danger       bool              `json:"danger,omitempty"`
 }
 
 type confirmationEvent struct {

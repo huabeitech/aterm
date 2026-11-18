@@ -43,7 +43,7 @@ export async function buildPlugin(pluginURL, workerEntry, outputDirectory) {
     }
     mkdirSync(output, {recursive: true})
     const archive = join(output, `${basename(root)}-${manifest.version}.aterm-plugin`)
-    execFileSync('go', ['run', './scripts/pack-plugin', stage, archive], {cwd: repo, stdio: 'inherit'})
+    execFileSync('go', ['run', './scripts/pack-plugin', stage, archive], {cwd: repo, stdio: 'inherit', env:{...process.env,GOOS:process.platform==='win32'?'windows':process.platform,GOARCH:process.arch==='x64'?'amd64':process.arch,CGO_ENABLED:'0'}})
     console.log(archive)
   } finally {
     rmSync(stage, {recursive: true, force: true})

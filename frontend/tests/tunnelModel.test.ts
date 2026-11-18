@@ -5,8 +5,8 @@ import {
   tunnelNeedsRestart,
   validateTunnel,
   localAddressIsLoopback
-} from '../src/renderer/src/features/tunnels/tunnelModel'
-import type { TunnelStatus } from '../src/shared/contracts/tunnels'
+} from '../../plugins/ssh-tunnels/src/ui/tunnelModel'
+import type { TunnelStatus } from '../../plugins/ssh-tunnels/src/ui/types'
 const tunnel: TunnelStatus = {
   id: 'fixture',
   name: 'Database',

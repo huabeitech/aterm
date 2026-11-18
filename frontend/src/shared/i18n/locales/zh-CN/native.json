@@ -105,5 +105,15 @@
   "menuReload": "重新加载",
   "menuToggleDevTools": "开发者工具",
   "edit": "编辑",
-  "ok": "确定"
+  "ok": "确定",
+  "nativePlugin.installTitle": "安装 {{plugin}}？",
+  "nativePlugin.installMessage": "此插件运行本机代码，可以访问当前账户的文件和网络。请仅安装来自可信来源的插件。",
+  "nativePlugin.install": "安装",
+  "nativePlugin.cancel": "取消",
+  "nativePlugin.hostTitle": "允许 {{plugin}} 连接？",
+  "nativePlugin.hostMessage": "允许此插件使用已保存的 SSH 连接 {{host}}？",
+  "nativePlugin.allow": "允许",
+  "nativePlugin.restoreTitle": "恢复加密备份？",
+  "nativePlugin.restoreMessage": "替换已保存的连接、插件配置和受保护数据？正在运行的插件任务将停止。\n\n来源：{{source}}\n日期：{{date}}\n主机：{{hosts}}\n文件夹：{{folders}}",
+  "nativePlugin.restore": "恢复"
 }

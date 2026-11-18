@@ -105,5 +105,15 @@
   "menuReload": "Reload",
   "menuToggleDevTools": "Developer Tools",
   "edit": "Edit",
-  "ok": "OK"
+  "ok": "OK",
+  "nativePlugin.installTitle": "Install {{plugin}}?",
+  "nativePlugin.installMessage": "This plugin runs native code with your account’s file and network access. Only install plugins from sources you trust.",
+  "nativePlugin.install": "Install",
+  "nativePlugin.cancel": "Cancel",
+  "nativePlugin.hostTitle": "Allow {{plugin}} to connect?",
+  "nativePlugin.hostMessage": "Allow this plugin to use the saved SSH connection {{host}}?",
+  "nativePlugin.allow": "Allow",
+  "nativePlugin.restoreTitle": "Restore encrypted backup?",
+  "nativePlugin.restoreMessage": "Replace saved connections, plugin configurations and protected data? Running plugin tasks will be stopped.\n\nSource: {{source}}\nDate: {{date}}\nHosts: {{hosts}}\nFolders: {{folders}}",
+  "nativePlugin.restore": "Restore"
 }

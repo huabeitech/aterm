@@ -5,20 +5,22 @@ import {
   fstatSync,
   readSync,
   lstatSync,
-  realpathSync
+  realpathSync,
 } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { validateManifest } from './manifest'
 import type { PluginManifest, PluginLocalizations } from '../../plugin-sdk'
 export interface InstalledPlugin {
   manifest: PluginManifest
   source: string
+  binary?: Uint8Array
   builtIn: boolean
   localizations?: PluginLocalizations
   views?: Record<string, string>
 }
 
-function readBounded(path: string, limit: number) {
+function readBytes(path: string, limit: number) {
   const descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW)
   try {
     const stat = fstatSync(descriptor)
@@ -26,10 +28,13 @@ function readBounded(path: string, limit: number) {
     const buffer = Buffer.alloc(limit + 1)
     const length = readSync(descriptor, buffer, 0, buffer.length, 0)
     if (length > limit) throw Error('Invalid plugin file')
-    return buffer.subarray(0, length).toString('utf8')
+    return buffer.subarray(0, length)
   } finally {
     closeSync(descriptor)
   }
+}
+function readBounded(path: string, limit: number) {
+  return readBytes(path, limit).toString('utf8')
 }
 function localizations(root: string, manifest: PluginManifest): PluginLocalizations | undefined {
   if (!manifest.i18n) return undefined
@@ -68,7 +73,20 @@ export function inspectDirectory(directory: string): InstalledPlugin {
   const root = realpathSync(directory)
   const manifest = validateManifest(JSON.parse(readBounded(join(root, 'manifest.json'), 32768)))
   if (manifest.id.startsWith('aterm.')) throw Error('Reserved plugin identifier')
-  const source = readBounded(join(root, 'plugin.js'), 256 * 1024)
+  const source =
+    manifest.runtime === 'native' ? '' : readBounded(join(root, 'plugin.js'), 256 * 1024)
+  let binary: Buffer | undefined
+  if (manifest.runtime === 'native') {
+    const parent = join(root, 'backend'),
+      target = join(parent, manifest.backend!.platform)
+    for (const path of [parent, target]) {
+      const stat = lstatSync(path)
+      if (!stat.isDirectory() || stat.isSymbolicLink()) throw Error('Invalid backend directory')
+    }
+    binary = readBytes(join(root, manifest.entry), 48 * 1024 * 1024)
+    if (createHash('sha256').update(binary).digest('hex') !== manifest.backend!.sha256)
+      throw Error('Native backend checksum mismatch')
+  }
   const views: Record<string, string> = {}
   if (manifest.contributes.views?.length) {
     const stat = lstatSync(join(root, 'ui'))
@@ -84,8 +102,9 @@ export function inspectDirectory(directory: string): InstalledPlugin {
   return {
     manifest,
     source,
+    ...(binary ? { binary } : {}),
     builtIn: false,
     localizations: localizations(root, manifest),
-    ...(Object.keys(views).length ? { views } : {})
+    ...(Object.keys(views).length ? { views } : {}),
   }
 }

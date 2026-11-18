@@ -1,3 +1,4 @@
+import { NativeWorkspace, pluginTitle } from '../plugins/NativeWorkspace'
 import { useWorkspaceAvailability } from '../plugins/useWorkspaceAvailability'
 import { usePluginCatalog } from '../plugins/pluginCatalog'
 import { PluginWorkspace } from '../plugins/PluginWorkspace'
@@ -5,19 +6,14 @@ import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box, Cable } from 'lucide-react'
+import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box } from 'lucide-react'
 import { SplitLayout } from '@/components/ui/split-layout'
 import { ActionButton } from '@/components/ui/workbench-controls'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
 import type { FileSession, FileTransfer } from '../../../../shared/contracts/files'
 import './connection.css'
 
-export type ConnectionView =
-  | 'terminal'
-  | 'files'
-  | 'tunnels'
-  | 'split'
-  | `plugin:${string}:${string}`
+export type ConnectionView = 'terminal' | 'files' | 'split' | `plugin:${string}:${string}`
 type Props = {
   cycleViewRef: Ref<() => void>
   active: boolean
@@ -25,7 +21,7 @@ type Props = {
   session: TerminalSession
   fileSession?: FileSession
   transfers: FileTransfer[]
-  tunnels: ReactNode
+  unlock: () => Promise<boolean>
   terminal: ReactNode
   renderFiles: (target: HTMLElement | null, transferRequest: number) => ReactNode
   onReconnectSSH: () => void
@@ -41,30 +37,34 @@ export function ConnectionWorkspace({
   fileSession,
   transfers,
   terminal,
-  tunnels,
+  unlock,
   renderFiles,
   onReconnectSSH,
   onReconnectSFTP,
-  onViewChange
+  onViewChange,
 }: Props) {
-  useTranslation()
+  const { i18n } = useTranslation()
   const catalog = usePluginCatalog()
   const availability = useWorkspaceAvailability(catalog, session, active)
   const configuredViews = catalog
     .filter((p) => p.enabled)
     .flatMap((plugin) =>
       (plugin.manifest.contributes.views ?? [])
-        .filter((v) => v.placement === 'terminal.workspace')
+        .filter(
+          (v) =>
+            v.placement === 'terminal.workspace' ||
+            (session.hostID && v.locations?.includes('connection')),
+        )
         .map((v) => ({
           plugin,
           view: v,
-          key: `plugin:${plugin.manifest.id}:${v.id}` as ConnectionView
-        }))
+          key: `plugin:${plugin.manifest.id}:${v.id}` as ConnectionView,
+        })),
     )
   const views = configuredViews.filter(
     (item) =>
       item.view.availability !== 'dynamic' ||
-      availability[item.plugin.manifest.id]?.[item.view.id]?.visible !== false
+      availability[item.plugin.manifest.id]?.[item.view.id]?.visible !== false,
   )
   const selectedPlugin = views.find((v) => v.key === view)
   const pluginSelected = view.startsWith('plugin:')
@@ -74,7 +74,6 @@ export function ConnectionWorkspace({
   useImperativeHandle(active ? cycleViewRef : null, () => () => {
     const order: ConnectionView[] = ['terminal']
     if (remote) order.push('files')
-    if (session.hostID) order.push('tunnels')
     for (const item of views) order.push(item.key)
     if (order.length < 2) return
     // Split is a separate control; start the tab cycle from Terminal in split mode.
@@ -93,7 +92,7 @@ export function ConnectionWorkspace({
         ?.querySelector<HTMLElement>(
           view === 'files'
             ? '.files-table-scroll'
-            : '.terminal-pane.is-focused .xterm-helper-textarea'
+            : '.terminal-pane.is-focused .xterm-helper-textarea',
         )
         ?.focus({ preventScroll: true })
     })
@@ -117,8 +116,8 @@ export function ConnectionWorkspace({
             protocol: remote ? 'SSH' : 'Terminal',
             state: session.state,
             error: session.error,
-            retry: onReconnectSSH
-          }
+            retry: onReconnectSSH,
+          },
         ]
       : []),
     ...(fileSession
@@ -127,10 +126,10 @@ export function ConnectionWorkspace({
             protocol: 'SFTP',
             state: fileSession.state,
             error: fileSession.error,
-            retry: onReconnectSFTP
-          }
+            retry: onReconnectSFTP,
+          },
         ]
-      : [])
+      : []),
   ].filter(({ state }) => state === 'connecting' || state === 'error' || state === 'exited')
   const files = (
     <div className="file-workspace-container h-full min-h-0" data-active={active && fileVisible}>
@@ -165,16 +164,27 @@ export function ConnectionWorkspace({
               key={`${session.id}:${item.key}`}
               style={{ display: view === item.key ? 'block' : 'none', height: '100%' }}
             >
-              <PluginWorkspace
-                plugin={item.plugin}
-                session={session}
-                viewId={item.view.id}
-                onClose={() => onViewChange('terminal')}
-                active={active && view === item.key}
-              />
+              {item.plugin.manifest.runtime === 'native' ? (
+                <NativeWorkspace
+                  plugin={item.plugin}
+                  view={item.view}
+                  hostID={session.hostID}
+                  active={active && view === item.key}
+                  unlock={unlock}
+                  onClose={() => onViewChange('terminal')}
+                />
+              ) : (
+                <PluginWorkspace
+                  plugin={item.plugin}
+                  session={session}
+                  viewId={item.view.id}
+                  onClose={() => onViewChange('terminal')}
+                  active={active && view === item.key}
+                />
+              )}
             </div>
           ))}
-        <div style={{ display: pluginSelected || view === 'tunnels' ? 'none' : 'contents' }}>
+        <div style={{ display: pluginSelected ? 'none' : 'contents' }}>
           <SplitLayout
             className="connection-split h-full min-h-0"
             size={size}
@@ -193,7 +203,6 @@ export function ConnectionWorkspace({
             second={files}
           />
         </div>
-        {view === 'tunnels' && tunnels}
         {/* Keep the same mounted panels when moving between single and split views. */}
       </div>
       <footer
@@ -216,27 +225,23 @@ export function ConnectionWorkspace({
               <span>{t('terminal:sftpFiles')}</span>
             </button>
           )}
-          {session.hostID && (
-            <button
-              type="button"
-              aria-pressed={view === 'tunnels'}
-              onClick={() => onViewChange('tunnels')}
-            >
-              <Cable size={14} aria-hidden="true" />
-              <span>{t('hosts:tunnels.title')}</span>
-            </button>
-          )}
           {views.map((item) => (
             <button
               key={item.key}
               type="button"
               aria-pressed={view === item.key}
-              aria-label={item.view.title}
+              aria-label={pluginTitle(
+                item.plugin,
+                item.view.title,
+                i18n.resolvedLanguage ?? i18n.language,
+              )}
               title={availability[item.plugin.manifest.id]?.[item.view.id]?.message}
               onClick={() => onViewChange(item.key)}
             >
               <Box size={14} aria-hidden="true" />
-              <span>{item.view.title}</span>
+              <span>
+                {pluginTitle(item.plugin, item.view.title, i18n.resolvedLanguage ?? i18n.language)}
+              </span>
               {availability[item.plugin.manifest.id]?.[item.view.id]?.available === false && (
                 <span className="connection-state-dot" data-state="error" aria-hidden="true" />
               )}
@@ -294,7 +299,7 @@ export function ConnectionWorkspace({
                 : activeTransfers.length
                   ? t('terminal:transferring', {
                       count: activeTransfers.length,
-                      progress: progress === null ? '' : `· ${progress}%`
+                      progress: progress === null ? '' : `· ${progress}%`,
                     })
                   : t('terminal:transfers')}
             </span>

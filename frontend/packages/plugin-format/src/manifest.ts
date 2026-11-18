@@ -19,27 +19,35 @@ export function validateManifest(input: unknown): PluginManifest {
           'contributes',
           'i18n',
           'engines',
-          'execution'
-        ].includes(key)
+          'execution',
+          'backend',
+        ].includes(key),
     ) ||
     m.schemaVersion !== 1 ||
-    m.runtime !== 'sandbox' ||
+    !['sandbox', 'native'].includes(m.runtime) ||
     !/^[a-z][a-z0-9-]*\.[a-z][a-z0-9.-]*$/.test(m.id) ||
     m.id.length > 100 ||
     typeof m.name !== 'string' ||
     !m.name.trim() ||
     m.name.length > 100 ||
     !/^\d+\.\d+\.\d+$/.test(m.version) ||
-    m.entry !== 'plugin.js' ||
+    (m.runtime === 'sandbox' && m.entry !== 'plugin.js') ||
     !Array.isArray(m.permissions) ||
-    m.permissions.length > 2 ||
+    m.permissions.length > 6 ||
     new Set(m.permissions).size !== m.permissions.length ||
     m.permissions.some(
-      (permission) => !['process.execute', 'terminal.create'].includes(permission)
+      (permission) =>
+        ![
+          'process.execute',
+          'terminal.create',
+          ...(m.runtime === 'native'
+            ? ['native.execute', 'ssh.connect', 'hosts.read', 'terminal.open']
+            : []),
+        ].includes(permission),
     ) ||
     !m.contributes ||
     Object.keys(m.contributes).some(
-      (key) => !['terminalStatusBar', 'commands', 'views'].includes(key)
+      (key) => !['terminalStatusBar', 'commands', 'views'].includes(key),
     ) ||
     (m.contributes.terminalStatusBar !== undefined &&
       (m.contributes.terminalStatusBar?.id !== `${m.id}.status` ||
@@ -52,13 +60,26 @@ export function validateManifest(input: unknown): PluginManifest {
     id: m.id,
     name: m.name,
     version: m.version,
-    runtime: 'sandbox',
-    entry: 'plugin.js',
+    runtime: m.runtime,
+    entry: m.entry,
     permissions: [...m.permissions].sort(),
     contributes: m.contributes.terminalStatusBar
       ? { terminalStatusBar: { id: `${m.id}.status` } }
-      : {}
+      : {},
   }
+  if (m.runtime === 'native') {
+    if (
+      !m.backend ||
+      !/^(darwin|linux|windows)-(amd64|arm64)$/.test(m.backend.platform) ||
+      !/^[a-f0-9]{64}$/.test(m.backend.sha256) ||
+      m.entry !==
+        `backend/${m.backend.platform}/plugin${m.backend.platform.startsWith('windows-') ? '.exe' : ''}` ||
+      !m.permissions.includes('native.execute') ||
+      Object.keys(m.backend).some((k) => !['platform', 'sha256'].includes(k))
+    )
+      throw Error('Invalid native backend')
+    normalized.backend = { ...m.backend }
+  } else if (m.backend !== undefined) throw Error('Backend requires native runtime')
   const executes = m.permissions.some((p) => p === 'process.execute' || p === 'terminal.create')
   if (executes !== (m.execution !== undefined))
     throw Error('Execution permissions require an execution policy')
@@ -115,22 +136,34 @@ export function validateManifest(input: unknown): PluginManifest {
         !validId(view.id) ||
         ids.has(view.id) ||
         !validTitle(view.title) ||
-        !['terminal.sidePanel', 'terminal.workspace'].includes(view.placement) ||
+        ![
+          'terminal.sidePanel',
+          'terminal.workspace',
+          ...(m.runtime === 'native' ? ['app.workspace'] : []),
+        ].includes(view.placement) ||
         !/^ui\/[a-zA-Z0-9_-]+\.html$/.test(view.entry) ||
         (view.availability !== undefined &&
           (view.availability !== 'dynamic' || view.placement !== 'terminal.workspace')) ||
         Object.keys(view).some(
-          (k) => !['id', 'title', 'placement', 'entry', 'availability'].includes(k)
+          (k) => !['id', 'title', 'placement', 'entry', 'availability', 'locations'].includes(k),
         )
       )
         throw Error('Invalid view')
+      if (
+        view.locations !== undefined &&
+        (m.runtime !== 'native' ||
+          !Array.isArray(view.locations) ||
+          view.locations.some((l) => !['sidebar', 'host.details', 'connection'].includes(l)))
+      )
+        throw Error('Invalid view location')
       ids.add(view.id)
       return {
         id: view.id,
         title: view.title,
         placement: view.placement,
         entry: view.entry,
-        ...(view.availability ? { availability: view.availability } : {})
+        ...(view.locations ? { locations: [...view.locations] } : {}),
+        ...(view.availability ? { availability: view.availability } : {}),
       }
     })
   }
@@ -144,9 +177,11 @@ export function validateManifest(input: unknown): PluginManifest {
         !validId(command.id) ||
         ids.has(command.id) ||
         !validTitle(command.title) ||
-        Object.keys(command).some((k) => !['id', 'title', 'action'].includes(k))
+        Object.keys(command).some((k) => !['id', 'title', 'action', 'requiresUnlock'].includes(k))
       )
         throw Error('Invalid command')
+      if (command.requiresUnlock !== undefined && typeof command.requiresUnlock !== 'boolean')
+        throw Error('Invalid unlock requirement')
       ids.add(command.id)
       if (command.action !== undefined) {
         const action = command.action
@@ -154,7 +189,7 @@ export function validateManifest(input: unknown): PluginManifest {
           !action ||
           !['view.open', 'view.toggle', 'view.close'].includes(action.type) ||
           !normalized.contributes.views?.some(
-            (v) => v.id === action.view && v.placement === 'terminal.sidePanel'
+            (v) => v.id === action.view && v.placement === 'terminal.sidePanel',
           ) ||
           Object.keys(action).some((k) => !['type', 'view', 'context'].includes(k))
         )
@@ -162,19 +197,28 @@ export function validateManifest(input: unknown): PluginManifest {
         return {
           id: command.id,
           title: command.title,
+          ...(command.requiresUnlock ? { requiresUnlock: true } : {}),
           action: {
             type: action.type,
             view: action.view,
-            ...(action.context === undefined ? {} : { context: jsonSnapshot(action.context, 4096) })
-          }
+            ...(action.context === undefined
+              ? {}
+              : { context: jsonSnapshot(action.context, 4096) }),
+          },
         }
       }
-      return { id: command.id, title: command.title }
+      return {
+        id: command.id,
+        title: command.title,
+        ...(command.requiresUnlock ? { requiresUnlock: true } : {}),
+      }
     })
   }
   if (
     !normalized.contributes.terminalStatusBar &&
-    !normalized.contributes.views?.some((v) => v.placement === 'terminal.workspace')
+    !normalized.contributes.views?.some(
+      (v) => v.placement === 'terminal.workspace' || v.placement === 'app.workspace',
+    )
   )
     throw Error('Plugin must contribute a status bar or workspace view')
   return normalized

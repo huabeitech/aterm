@@ -1,0 +1,57 @@
+name: Native plugins
+on:
+  pull_request:
+    paths: ['plugins/**', 'packages/plugin-go/**', 'internal/desktop/plugins/**', 'scripts/pack-plugin/**', 'frontend/**', 'scripts/go-macos.py', 'build/config.yml', 'go.mod', 'go.sum', '.github/workflows/native-plugins.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            goos: darwin
+            goarch: arm64
+          - runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+          - runner: windows-latest
+            goos: windows
+            goarch: amd64
+          - runner: windows-11-arm
+            goos: windows
+            goarch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22.13.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci
+      - run: go test ./internal/desktop/plugins ./packages/plugin-go ./plugins/ssh-tunnels/backend/...
+      - run: node frontend/node_modules/typescript/bin/tsc --noEmit -p plugins/ssh-tunnels/tsconfig.json
+      - run: node plugins/ssh-tunnels/build.mjs
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ssh-tunnels-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/bin/plugins/*.aterm-plugin
+          if-no-files-found: error

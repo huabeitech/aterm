@@ -76,13 +76,20 @@ func (a *App) confirmPluginExecution(ctx context.Context, request desktopplugins
 }
 
 func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {
+	lock, err := desktopplugins.LockProfile(root)
+	if err != nil {
+		return err
+	}
+	a.desktopPluginLock = lock
 	registry, err := desktopplugins.NewRegistry(desktopplugins.RegistryOptions{
 		Root: root, SafeMode: slices.Contains(os.Args, "--disable-plugins"), MacAppStore: service.IsMacAppStoreBuild(),
 	})
 	if err != nil {
+		lock.Close()
 		return err
 	}
 	a.desktopPluginRegistry = registry
+	a.desktopNativePlugins = desktopplugins.NewNativeManager(desktopplugins.NativeOptions{LogRoot: filepath.Join(root, "logs"), Registry: registry, Host: a.newNativePluginHost, Changed: func() { a.emitEvent("plugins:changed", nil) }})
 	a.desktopPluginViews = desktopplugins.NewViewHost()
 	a.desktopPluginRuntime = desktopplugins.NewNativeRuntime(a.requestPluginCapability)
 	if preferences, err := a.desktopPreferences(); err == nil {

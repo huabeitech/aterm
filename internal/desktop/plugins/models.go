@@ -4,7 +4,12 @@ package plugins
 
 import "encoding/json"
 
+type NativeBackend struct {
+	Platform string `json:"platform"`
+	SHA256   string `json:"sha256"`
+}
 type Manifest struct {
+	Backend       *NativeBackend      `json:"backend,omitempty"`
 	SchemaVersion int                 `json:"schemaVersion"`
 	ID            string              `json:"id"`
 	Name          string              `json:"name"`
@@ -26,16 +31,18 @@ type StatusContribution struct {
 	ID string `json:"id"`
 }
 type View struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	Placement    string `json:"placement"`
-	Entry        string `json:"entry"`
-	Availability string `json:"availability,omitempty"`
+	ID           string   `json:"id"`
+	Title        string   `json:"title"`
+	Placement    string   `json:"placement"`
+	Entry        string   `json:"entry"`
+	Availability string   `json:"availability,omitempty"`
+	Locations    []string `json:"locations,omitempty"`
 }
 type Command struct {
-	ID     string      `json:"id"`
-	Title  string      `json:"title"`
-	Action *ViewAction `json:"action,omitempty"`
+	RequiresUnlock bool        `json:"requiresUnlock,omitempty"`
+	ID             string      `json:"id"`
+	Title          string      `json:"title"`
+	Action         *ViewAction `json:"action,omitempty"`
 }
 type ViewAction struct {
 	Type    string          `json:"type"`
@@ -60,6 +67,7 @@ type Localizations struct {
 	Messages      map[string]map[string]string `json:"messages"`
 }
 type Package struct {
+	Binary        []byte            `json:"binary,omitempty"`
 	Manifest      Manifest          `json:"manifest"`
 	Source        string            `json:"source"`
 	BuiltIn       bool              `json:"builtIn"`

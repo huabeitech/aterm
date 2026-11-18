@@ -27,6 +27,7 @@ import (
 
 // App struct
 type App struct {
+	desktopPluginLock           *desktopplugins.ProfileLock
 	ctx                         context.Context
 	wailsApp                    *application.App
 	mainWindowRef               atomic.Pointer[mainWindowReference]
@@ -48,6 +49,7 @@ type App struct {
 	desktopPrompts              *prompts.Broker
 	desktopConfirmations        map[string]pendingConfirmation
 	desktopThemesStore          *desktopthemes.Store
+	desktopNativePlugins        *desktopplugins.NativeManager
 	desktopPluginRegistry       *desktopplugins.Registry
 	desktopPluginRuntime        *desktopplugins.RuntimeHost
 	desktopPluginManager        *desktopplugins.Manager
@@ -138,8 +140,17 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	a.desktopThemesStore = themeStore
 
 	a.svc = service.NewAppService(service.AppServiceOptions{
-		Store:               store,
-		TunnelChanged:       func() { a.emitEvent("tunnels:changed", nil) },
+		Store: store,
+		WorkspaceReset: func() func() {
+			resume := func() {}
+			if a.desktopNativePlugins != nil {
+				resume = a.desktopNativePlugins.Pause()
+			}
+			if a.desktopPluginManager != nil {
+				a.desktopPluginManager.Reset()
+			}
+			return resume
+		},
 		HostKeyStorePath:    filepath.Join(paths.appSupportDir, "ssh-host-keys.json"),
 		PasswordStore:       secretStore,
 		IdentityReader:      func(identity string) ([]byte, error) { return a.desktopKeys.ReadIdentity(identity) },
@@ -213,8 +224,11 @@ func (a *App) ServiceShutdown() error {
 	if a.desktopPluginRuntime != nil {
 		a.desktopPluginRuntime.Close()
 	}
-	if a.svc != nil {
-		a.svc.CloseTunnels()
+	if a.desktopNativePlugins != nil {
+		a.desktopNativePlugins.Close()
+	}
+	if a.desktopPluginLock != nil {
+		_ = a.desktopPluginLock.Close()
 	}
 	if a.desktopPrompts != nil {
 		a.desktopPrompts.Close()

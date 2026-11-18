@@ -41,7 +41,7 @@ func rejectOptionalNull(data []byte) error {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
 	}
-	for _, key := range []string{"execution", "engines", "i18n"} {
+	for _, key := range []string{"execution", "engines", "i18n", "backend"} {
 		if v, ok := m[key]; ok && bytes.Equal(v, []byte("null")) {
 			return fmt.Errorf("invalid plugin %s", key)
 		}
@@ -73,7 +73,7 @@ func rejectOptionalNull(data []byte) error {
 			if availability, exists := entry["availability"]; exists && !bytes.Equal(availability, []byte(`"dynamic"`)) {
 				return errors.New("invalid plugin view availability")
 			}
-			for _, key := range []string{"action", "availability"} {
+			for _, key := range []string{"action", "availability", "requiresUnlock", "locations"} {
 				if v, ok := entry[key]; ok && bytes.Equal(v, []byte("null")) {
 					return errors.New("invalid plugin contribution")
 				}
@@ -93,18 +93,25 @@ func ParseManifest(data []byte) (Manifest, error) {
 	if err := decodeStrict(data, &m); err != nil {
 		return m, fmt.Errorf("invalid plugin manifest: %w", err)
 	}
-	if m.SchemaVersion != 1 || m.Runtime != "sandbox" || !pluginID.MatchString(m.ID) || len(m.ID) > 100 || !validTitle(m.Name, 100) || !semver.MatchString(m.Version) || m.Entry != "plugin.js" || m.Permissions == nil || len(m.Permissions) > 2 {
+	if m.SchemaVersion != 1 || (m.Runtime != "sandbox" && m.Runtime != "native") || !pluginID.MatchString(m.ID) || len(m.ID) > 100 || !validTitle(m.Name, 100) || !semver.MatchString(m.Version) || (m.Runtime == "sandbox" && m.Entry != "plugin.js") || m.Permissions == nil || len(m.Permissions) > 6 {
 		return m, errors.New("unsupported plugin manifest")
+	}
+	if m.Runtime == "native" {
+		if m.Backend == nil || !regexp.MustCompile(`^(darwin|linux|windows)-(amd64|arm64)$`).MatchString(m.Backend.Platform) || !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(m.Backend.SHA256) || m.Entry != nativeEntry(m.Backend.Platform) || !slices.Contains(m.Permissions, "native.execute") {
+			return m, errors.New("invalid native backend")
+		}
+	} else if m.Backend != nil {
+		return m, errors.New("backend requires native runtime")
 	}
 	seen := map[string]bool{}
 	for _, p := range m.Permissions {
-		if (p != "process.execute" && p != "terminal.create") || seen[p] {
+		if (p != "process.execute" && p != "terminal.create" && !(m.Runtime == "native" && (p == "native.execute" || p == "ssh.connect" || p == "hosts.read" || p == "terminal.open"))) || seen[p] {
 			return m, errors.New("unsupported plugin permission")
 		}
 		seen[p] = true
 	}
 	slices.Sort(m.Permissions)
-	if (len(m.Permissions) > 0) != (m.Execution != nil) {
+	if (slices.Contains(m.Permissions, "process.execute") || slices.Contains(m.Permissions, "terminal.create")) != (m.Execution != nil) {
 		return m, errors.New("execution permissions require an execution policy")
 	}
 	if m.Execution != nil {
@@ -139,8 +146,13 @@ func ParseManifest(data []byte) (Manifest, error) {
 	sidePanels := map[string]bool{}
 	hasWorkspace := false
 	for _, view := range m.Contributes.Views {
-		if !contributionID.MatchString(view.ID) || ids[view.ID] || !validTitle(view.Title, 150) || (view.Placement != "terminal.sidePanel" && view.Placement != "terminal.workspace") || !uiEntry.MatchString(view.Entry) || (view.Availability != "" && (view.Availability != "dynamic" || view.Placement != "terminal.workspace")) {
+		if !contributionID.MatchString(view.ID) || ids[view.ID] || !validTitle(view.Title, 150) || (view.Placement != "terminal.sidePanel" && view.Placement != "terminal.workspace" && !(m.Runtime == "native" && view.Placement == "app.workspace")) || !uiEntry.MatchString(view.Entry) || (view.Availability != "" && (view.Availability != "dynamic" || view.Placement != "terminal.workspace")) {
 			return m, errors.New("invalid plugin view")
+		}
+		for _, location := range view.Locations {
+			if m.Runtime != "native" || (location != "sidebar" && location != "host.details" && location != "connection") {
+				return m, errors.New("invalid view location")
+			}
 		}
 		ids[view.ID] = true
 		if view.Placement == "terminal.sidePanel" {
@@ -262,4 +274,12 @@ func marshalJSON(value any) ([]byte, error) {
 		return nil, err
 	}
 	return bytes.TrimSuffix(buffer.Bytes(), []byte{'\n'}), nil
+}
+
+func nativeEntry(platform string) string {
+	path := "backend/" + platform + "/plugin"
+	if strings.HasPrefix(platform, "windows-") {
+		path += ".exe"
+	}
+	return path
 }

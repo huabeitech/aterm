@@ -1,5 +1,5 @@
-export type WorkspaceTabID = 'home' | 'tunnels' | 'settings' | `files:${string}` | `terminal:${string}`
-export type WorkspaceTabKind = 'tunnels' | 'settings' | 'files' | 'terminal'
+export type WorkspaceTabID = 'home' | `plugin:${string}:${string}` | 'settings' | `files:${string}` | `terminal:${string}`
+export type WorkspaceTabKind = 'plugin' | 'settings' | 'files' | 'terminal'
 export type WorkspaceTabDropPosition = 'before' | 'after'
 
 export type WorkspaceTab = {
@@ -12,7 +12,7 @@ export type WorkspaceTab = {
 let fileWorkspaceTabSequence = 0
 
 export function createWorkspaceTab(id: Exclude<WorkspaceTabID, 'home'>): WorkspaceTab {
-  if (id === 'tunnels') return { id, kind: 'tunnels', closable: true }
+  if (id.startsWith('plugin:')) return { id, kind: 'plugin', closable: true }
   if (id === 'settings') return { id, kind: 'settings', closable: true }
   return { id, kind: id.startsWith('files:') ? 'files' : 'terminal', closable: true }
 }

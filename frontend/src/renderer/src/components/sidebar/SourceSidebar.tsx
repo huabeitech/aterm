@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'
-import { Cable, LoaderCircle } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { SidebarUtilityIcon } from './SidebarUtilityIcon'
 import { ConnectionTree, type ConnectionTreeProps } from './ConnectionTree'
 import { DIRECTORY_NAME_MAX_LENGTH, validateDirectoryName } from '../common/directoryValidation'
@@ -28,9 +28,7 @@ type SourceSidebarProps = ConnectionTreeProps & {
   onCancelDirectoryEditor: () => void
   syncStatus: domain.EncryptedSyncStatus | null
   quickBackupPhase: 'authorizing' | 'uploading' | null
-  onOpenTunnels: () => void
-  runningTunnels: number
-  failedTunnels: number
+  pluginActions: import("react").ReactNode
   onOpenSettings: () => void
   onBackUpToICloud: () => void
   onExportOpenSSHConfig: () => void
@@ -88,21 +86,7 @@ export function SourceSidebar(props: SourceSidebarProps) {
             <span>{t('hosts:settings')}</span>
           </button>
           <div className="sidebar-utility-actions">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="sidebar-utility-button sidebar-utility-icon"
-                  onClick={props.onOpenTunnels}
-                  aria-label={t('hosts:tunnels.sidebar', {active: props.runningTunnels, failed: props.failedTunnels})}
-                >
-                  <Cable size={16} aria-hidden="true" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={8}>
-                {t('hosts:tunnels.all')}
-              </TooltipContent>
-            </Tooltip>
+            {props.pluginActions}
             {platformFeatures(props.platform).cloudBackup && (
               <>
                 <Tooltip>

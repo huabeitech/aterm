@@ -159,10 +159,12 @@ func main() {
 		}
 		localPort := local.Addr().(*net.TCPAddr).Port
 		local.Close()
-		tunnel, err := store.CreateTunnel(domain.TunnelInput{Name: "Fixture web service", HostID: jumpHost.ID, LocalAddress: "127.0.0.1", LocalPort: localPort, TargetAddress: "127.0.0.1", TargetPort: target.Addr().(*net.TCPAddr).Port})
-		if err != nil {
+		tunnel := domain.Tunnel{ID: "fixture", TunnelInput: domain.TunnelInput{Name: "Fixture web service", HostID: jumpHost.ID, LocalAddress: "127.0.0.1", LocalPort: localPort, TargetAddress: "127.0.0.1", TargetPort: target.Addr().(*net.TCPAddr).Port}}
+		payload, _ := json.Marshal([]domain.Tunnel{tunnel})
+		if err := store.SetPluginData(domain.PluginData{PluginID: "huabei.ssh-tunnels", Key: "configs", Value: payload, HostIDs: []string{jumpHost.ID}}); err != nil {
 			log.Fatal(err)
 		}
+
 		data, _ := json.MarshalIndent(tunnel, "", "  ")
 		if err := os.WriteFile(filepath.Join(*profile, "tunnel-fixture.json"), data, 0600); err != nil {
 			log.Fatal(err)

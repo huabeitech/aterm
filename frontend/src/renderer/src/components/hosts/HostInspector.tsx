@@ -28,7 +28,7 @@ type HostInspectorPanelProps = {
   onSave: () => void
   onStartEdit: () => void
   onConnect: () => void
-  onOpenTunnels: () => void
+  pluginActions: import("react").ReactNode
   onOpenFiles: () => void
   onCopySSHCommand: () => void
   onToggleFavorite: () => void
@@ -54,7 +54,7 @@ export function HostInspectorPanel({
   onSave,
   onStartEdit,
   onConnect,
-  onOpenTunnels,
+  pluginActions,
   onOpenFiles,
   onCopySSHCommand,
   onToggleFavorite,
@@ -124,7 +124,7 @@ export function HostInspectorPanel({
         ) : host ? (
           <HostDetails
             host={host}
-            onOpenTunnels={onOpenTunnels}
+            pluginActions={pluginActions}
             directoryName={directoryName}
             onGetHostPassword={onGetHostPassword}
           />

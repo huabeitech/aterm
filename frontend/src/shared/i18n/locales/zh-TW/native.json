@@ -105,5 +105,15 @@
   "menuReload": "重新載入",
   "menuToggleDevTools": "開發者工具",
   "edit": "編輯",
-  "ok": "確定"
+  "ok": "確定",
+  "nativePlugin.installTitle": "安裝 {{plugin}}？",
+  "nativePlugin.installMessage": "此外掛程式執行原生程式碼，可以存取目前帳號的檔案和網路。請僅安裝來自可信來源的外掛程式。",
+  "nativePlugin.install": "安裝",
+  "nativePlugin.cancel": "取消",
+  "nativePlugin.hostTitle": "允許 {{plugin}} 連線？",
+  "nativePlugin.hostMessage": "允許此外掛程式使用已儲存的 SSH 連線 {{host}}？",
+  "nativePlugin.allow": "允許",
+  "nativePlugin.restoreTitle": "還原加密備份？",
+  "nativePlugin.restoreMessage": "取代已儲存的連線、外掛程式設定和受保護資料？執行中的外掛程式工作將停止。\n\n來源：{{source}}\n日期：{{date}}\n主機：{{hosts}}\n資料夾：{{folders}}",
+  "nativePlugin.restore": "還原"
 }

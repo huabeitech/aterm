@@ -105,5 +105,15 @@
   "menuReload": "Recharger",
   "menuToggleDevTools": "Outils de développement",
   "edit": "Modifier",
-  "ok": "OK"
+  "ok": "OK",
+  "nativePlugin.installTitle": "Installer {{plugin}} ?",
+  "nativePlugin.installMessage": "Ce plugin exécute du code natif et peut accéder aux fichiers et au réseau de votre compte. Installez uniquement des plugins de sources fiables.",
+  "nativePlugin.install": "Installer",
+  "nativePlugin.cancel": "Annuler",
+  "nativePlugin.hostTitle": "Autoriser la connexion de {{plugin}} ?",
+  "nativePlugin.hostMessage": "Autoriser ce plugin à utiliser la connexion SSH enregistrée {{host}} ?",
+  "nativePlugin.allow": "Autoriser",
+  "nativePlugin.restoreTitle": "Restaurer la sauvegarde chiffrée ?",
+  "nativePlugin.restoreMessage": "Remplacer les connexions, configurations de plugins et données protégées ? Les tâches des plugins seront arrêtées.\n\nSource : {{source}}\nDate : {{date}}\nHôtes : {{hosts}}\nDossiers : {{folders}}",
+  "nativePlugin.restore": "Restaurer"
 }

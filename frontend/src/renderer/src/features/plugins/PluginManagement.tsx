@@ -12,7 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
 } from '../../components/ui/dialog'
 import { useAppUI } from '../../components/ui/confirm-provider'
 
@@ -26,7 +26,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
   const [error, setError] = useState('')
   const [activity, setActivity] = useState<Record<string, PluginActivity[]>>({})
   const [activityState, setActivityState] = useState<Record<string, 'loading' | 'ready' | 'error'>>(
-    {}
+    {},
   )
   const { modal } = useAppUI()
   useEffect(() => {
@@ -124,7 +124,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
           aria-label={pluginDisplayName(
             plugin.manifest,
             plugin.localizations,
-            i18n.resolvedLanguage ?? i18n.language
+            i18n.resolvedLanguage ?? i18n.language,
           )}
         >
           <div className="plugin-package-heading">
@@ -133,7 +133,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                 {pluginDisplayName(
                   plugin.manifest,
                   plugin.localizations,
-                  i18n.resolvedLanguage ?? i18n.language
+                  i18n.resolvedLanguage ?? i18n.language,
                 )}
               </h2>
               <p
@@ -162,7 +162,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
               disabled={Boolean(pending[plugin.manifest.id])}
               onClick={() =>
                 void run(plugin.manifest.id, 'toggle', () =>
-                  desktop.plugins.configure(plugin.manifest.id, !plugin.enabled, plugin.interval)
+                  desktop.plugins.configure(plugin.manifest.id, !plugin.enabled, plugin.interval),
                 )
               }
             >
@@ -187,32 +187,50 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                     ? 'settings:pluginsUninstalling'
                     : pending[plugin.manifest.id]?.startsWith('revoke:')
                       ? 'settings:pluginsRevoking'
-                      : 'settings:pluginsSaving'
+                      : 'settings:pluginsSaving',
               )}
             </p>
           )}
-          <dl className="plugin-settings-rows">
-            <div className="settings-row">
-              <dt className="settings-row-label">{t('settings:pluginsInterval')}</dt>
-              <dd className="settings-row-control">
-                <SelectField
-                  aria-label={t('settings:pluginsInterval')}
-                  value={String(plugin.interval)}
-                  disabled={Boolean(pending[plugin.manifest.id])}
-                  options={[5, 10, 30].map((n) => ({
-                    value: String(n),
-                    label: t('settings:pluginsSeconds', { count: n })
-                  }))}
-                  onValueChange={(value) =>
-                    void run(plugin.manifest.id, 'configure', () =>
-                      desktop.plugins.configure(plugin.manifest.id, plugin.enabled, Number(value))
-                    )
-                  }
-                />
-              </dd>
-            </div>
-          </dl>
+          {plugin.manifest.runtime !== 'native' && (
+            <dl className="plugin-settings-rows">
+              <div className="settings-row">
+                <dt className="settings-row-label">{t('settings:pluginsInterval')}</dt>
+                <dd className="settings-row-control">
+                  <SelectField
+                    aria-label={t('settings:pluginsInterval')}
+                    value={String(plugin.interval)}
+                    disabled={Boolean(pending[plugin.manifest.id])}
+                    options={[5, 10, 30].map((n) => ({
+                      value: String(n),
+                      label: t('settings:pluginsSeconds', { count: n }),
+                    }))}
+                    onValueChange={(value) =>
+                      void run(plugin.manifest.id, 'configure', () =>
+                        desktop.plugins.configure(
+                          plugin.manifest.id,
+                          plugin.enabled,
+                          Number(value),
+                        ),
+                      )
+                    }
+                  />
+                </dd>
+              </div>
+            </dl>
+          )}
           <footer className="plugin-maintenance">
+            {plugin.state === 'failed' && (
+              <ActionButton
+                disabled={Boolean(pending[plugin.manifest.id])}
+                onClick={() =>
+                  void run(plugin.manifest.id, 'retry', () =>
+                    desktop.plugins.configure(plugin.manifest.id, true, plugin.interval),
+                  )
+                }
+              >
+                {t('settings:pluginsRetry')}
+              </ActionButton>
+            )}
             <Dialog>
               <DialogTrigger asChild>
                 <ActionButton className="plugin-maintenance-button">
@@ -226,7 +244,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                     {pluginDisplayName(
                       plugin.manifest,
                       plugin.localizations,
-                      i18n.resolvedLanguage ?? i18n.language
+                      i18n.resolvedLanguage ?? i18n.language,
                     )}
                   </DialogDescription>
                 </DialogHeader>
@@ -237,10 +255,15 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                       targets: plugin.manifest.execution.targets.join(', '),
                       terminal: plugin.manifest.permissions.includes('terminal.create')
                         ? t('settings:pluginsExecutionTerminal')
-                        : ''
+                        : '',
                     })}
                   </p>
                 ) : null}
+                {plugin.manifest.runtime === 'native' && (
+                  <p className="plugin-permission-note">
+                    {t('native:nativePlugin.installMessage')}
+                  </p>
+                )}
                 <div className="plugin-grants">
                   <h3>{t('settings:pluginsAuthorizedHosts')}</h3>
                   {!plugin.grants.length && (
@@ -255,14 +278,14 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                         disabled={Boolean(pending[plugin.manifest.id])}
                         onClick={() =>
                           void run(plugin.manifest.id, `revoke:${grant.id}`, () =>
-                            desktop.plugins.revoke(plugin.manifest.id, grant.id)
+                            desktop.plugins.revoke(plugin.manifest.id, grant.id),
                           )
                         }
                       >
                         {t(
                           pending[plugin.manifest.id] === `revoke:${grant.id}`
                             ? 'settings:pluginsRevoking'
-                            : 'settings:pluginsRevoke'
+                            : 'settings:pluginsRevoke',
                         )}
                       </ActionButton>
                     </div>
@@ -281,14 +304,14 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                 disabled={Boolean(pending[plugin.manifest.id])}
                 onClick={() =>
                   void run(plugin.manifest.id, 'rollback', () =>
-                    desktop.plugins.rollback(plugin.manifest.id)
+                    desktop.plugins.rollback(plugin.manifest.id),
                   )
                 }
               >
                 {t(
                   pending[plugin.manifest.id] === 'rollback'
                     ? 'settings:pluginsRollingBack'
-                    : 'settings:pluginsRollback'
+                    : 'settings:pluginsRollback',
                 )}
               </ActionButton>
             )}
@@ -310,7 +333,7 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                       {pluginDisplayName(
                         plugin.manifest,
                         plugin.localizations,
-                        i18n.resolvedLanguage ?? i18n.language
+                        i18n.resolvedLanguage ?? i18n.language,
                       )}
                     </p>
                     <DialogDescription>
@@ -366,20 +389,20 @@ export function PluginManagement({ macAppStoreBuild }: { macAppStoreBuild: boole
                     content: pluginDisplayName(
                       plugin.manifest,
                       plugin.localizations,
-                      i18n.resolvedLanguage ?? i18n.language
+                      i18n.resolvedLanguage ?? i18n.language,
                     ),
                     okButtonProps: { danger: true },
                     onOk: () =>
                       run(plugin.manifest.id, 'uninstall', () =>
-                        desktop.plugins.uninstall(plugin.manifest.id)
-                      )
+                        desktop.plugins.uninstall(plugin.manifest.id),
+                      ),
                   })
                 }
               >
                 {t(
                   pending[plugin.manifest.id] === 'uninstall'
                     ? 'settings:pluginsUninstalling'
-                    : 'settings:pluginsUninstall'
+                    : 'settings:pluginsUninstall',
                 )}
               </ActionButton>
             )}

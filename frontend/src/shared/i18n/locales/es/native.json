@@ -105,5 +105,15 @@
   "menuReload": "Recargar",
   "menuToggleDevTools": "Herramientas de desarrollo",
   "edit": "Editar",
-  "ok": "Aceptar"
+  "ok": "Aceptar",
+  "nativePlugin.installTitle": "¿Instalar {{plugin}}?",
+  "nativePlugin.installMessage": "Este complemento ejecuta código nativo y puede acceder a los archivos y la red de su cuenta. Instale solo complementos de fuentes confiables.",
+  "nativePlugin.install": "Instalar",
+  "nativePlugin.cancel": "Cancelar",
+  "nativePlugin.hostTitle": "¿Permitir la conexión de {{plugin}}?",
+  "nativePlugin.hostMessage": "¿Permitir que este complemento use la conexión SSH guardada {{host}}?",
+  "nativePlugin.allow": "Permitir",
+  "nativePlugin.restoreTitle": "¿Restaurar la copia cifrada?",
+  "nativePlugin.restoreMessage": "¿Reemplazar las conexiones, configuraciones de complementos y datos protegidos? Se detendrán las tareas de los complementos.\n\nOrigen: {{source}}\nFecha: {{date}}\nHosts: {{hosts}}\nCarpetas: {{folders}}",
+  "nativePlugin.restore": "Restaurar"
 }

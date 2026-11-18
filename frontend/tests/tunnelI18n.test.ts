@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { i18n, t } from '../src/shared/i18n'
-import { resources } from '../src/shared/i18n/resources'
-import { validateTunnel } from '../src/renderer/src/features/tunnels/tunnelModel'
-import { tunnelErrorMessage } from '../src/renderer/src/features/tunnels/tunnelErrors'
+import { i18n, t } from '../../plugins/ssh-tunnels/src/ui/i18n'
+import { resources } from '../../plugins/ssh-tunnels/src/ui/i18n'
+import { validateTunnel } from '../../plugins/ssh-tunnels/src/ui/tunnelModel'
+import { tunnelErrorMessage } from '../../plugins/ssh-tunnels/src/ui/tunnelErrors'
 
 test('every locale supplies matching tunnel keys and interpolation parameters', () => {
   const entries = Object.entries(resources.en.hosts).filter(([key]) => key.startsWith('tunnels.'))

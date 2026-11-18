@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { t, i18n } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -13,12 +12,12 @@ import { DetailSection } from './DetailSection'
 export function HostDetails({
   host,
   directoryName,
-  onOpenTunnels,
+  pluginActions,
   onGetHostPassword
 }: {
   host: domain.Host
   directoryName: string
-  onOpenTunnels: () => void
+  pluginActions: import("react").ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
@@ -45,9 +44,7 @@ export function HostDetails({
           </DetailRow>
         </dl>
       </DetailSection>
-      <DetailSection title={t('hosts:tunnels.title')}>
-        <Button variant="outline" size="sm" onClick={onOpenTunnels}>{t('hosts:tunnels.manage')}</Button>
-      </DetailSection>
+      {pluginActions}
       <DetailSection title={t('hosts:authentication')}>
         <dl className="host-details-table overflow-hidden rounded-md border border-border">
           <DetailRow label={t('hosts:method')}>

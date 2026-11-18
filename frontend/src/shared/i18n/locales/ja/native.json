@@ -105,5 +105,15 @@
   "menuReload": "再読み込み",
   "menuToggleDevTools": "開発者ツール",
   "edit": "編集",
-  "ok": "OK"
+  "ok": "OK",
+  "nativePlugin.installTitle": "{{plugin}} をインストールしますか？",
+  "nativePlugin.installMessage": "このプラグインはネイティブコードを実行し、現在のアカウントのファイルとネットワークにアクセスできます。信頼できる提供元のプラグインのみインストールしてください。",
+  "nativePlugin.install": "インストール",
+  "nativePlugin.cancel": "キャンセル",
+  "nativePlugin.hostTitle": "{{plugin}} の接続を許可しますか？",
+  "nativePlugin.hostMessage": "保存済みの SSH 接続 {{host}} の使用を許可しますか？",
+  "nativePlugin.allow": "許可",
+  "nativePlugin.restoreTitle": "暗号化バックアップを復元しますか？",
+  "nativePlugin.restoreMessage": "保存した接続、プラグイン設定、保護されたデータを置き換えますか？実行中のプラグインタスクは停止します。\n\nソース：{{source}}\n日付：{{date}}\nホスト：{{hosts}}\nフォルダ：{{folders}}",
+  "nativePlugin.restore": "復元"
 }

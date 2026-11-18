@@ -53,9 +53,10 @@ export interface PluginManifest {
   id: string
   name: string
   version: string
-  runtime: 'sandbox'
+  runtime: 'sandbox' | 'native'
+  backend?: {platform: string; sha256: string}
   entry: string
-  permissions: ('process.execute' | 'terminal.create')[]
+  permissions: ('process.execute' | 'terminal.create' | 'native.execute' | 'ssh.connect' | 'hosts.read' | 'terminal.open')[]
   execution?: PluginExecutionPolicy
   engines?: { hostApi: 1 }
   contributes: {
@@ -66,6 +67,7 @@ export interface PluginManifest {
   i18n?: { defaultLocale: string; locales: Record<string, string> }
 }
 export interface PluginCommand {
+  requiresUnlock?: boolean
   id: string
   title: string
   action?: PluginViewAction
@@ -79,7 +81,8 @@ export interface PluginView {
   id: string
   title: string
   entry: string
-  placement: 'terminal.sidePanel' | 'terminal.workspace'
+  placement: 'terminal.sidePanel' | 'terminal.workspace' | 'app.workspace'
+  locations?: string[]
   /** Opt in to session-scoped availability published by the plugin. */
   availability?: 'dynamic'
 }

@@ -6,8 +6,9 @@ import { fromBuffer } from 'yauzl'
 import { zipSync } from 'fflate'
 import { inspectDirectory, type InstalledPlugin } from './directory'
 
-const archiveLimit = 16 * 1024 * 1024
-const fileLimit = 2 * 1024 * 1024
+const archiveLimit = 64 * 1024 * 1024
+const fileLimit = (name: string) =>
+  name.startsWith('backend/') ? 48 * 1024 * 1024 : 2 * 1024 * 1024
 const countLimit = 128
 
 export function packageFiles(plugin: InstalledPlugin): Record<string, Uint8Array> {
@@ -16,7 +17,10 @@ export function packageFiles(plugin: InstalledPlugin): Record<string, Uint8Array
     files[path] = Buffer.from(value)
   }
   add('manifest.json', JSON.stringify(plugin.manifest, null, 2) + '\n')
-  add('plugin.js', plugin.source)
+  if (plugin.manifest.runtime === 'native') {
+    if (!plugin.binary) throw Error('Native backend missing')
+    files[plugin.manifest.entry] = plugin.binary
+  } else add('plugin.js', plugin.source)
   for (const [path, html] of Object.entries(plugin.views ?? {})) add(path, html)
   if (plugin.localizations && plugin.manifest.i18n)
     for (const [locale, path] of Object.entries(plugin.manifest.i18n.locales))
@@ -30,7 +34,7 @@ export function createArchive(plugin: InstalledPlugin): Uint8Array {
   const entries = Object.fromEntries(
     Object.keys(files)
       .sort()
-      .map((path) => [path, [files[path], { mtime: new Date(2020, 0, 1) }]])
+      .map((path) => [path, [files[path], { mtime: new Date(2020, 0, 1) }]]),
   )
   return zipSync(entries as Parameters<typeof zipSync>[0], { level: 9 })
 }
@@ -80,12 +84,12 @@ export async function inspectArchive(path: string): Promise<InstalledPlugin> {
           if (
             ++count > countLimit ||
             result.has(name) ||
-            !/^(manifest\.json|plugin\.js|ui\/[A-Za-z0-9._-]+\.html|locales\/[A-Za-z0-9._-]+\.json)$/.test(
-              name
+            !/^(manifest\.json|plugin\.js|ui\/[A-Za-z0-9._-]+\.html|locales\/[A-Za-z0-9._-]+\.json|backend\/(darwin|linux|windows)-(amd64|arm64)\/plugin(\.exe)?)$/.test(
+              name,
             ) ||
             (mode !== 0 && mode !== 0x8000) ||
             entry.generalPurposeBitFlag & 1 ||
-            entry.uncompressedSize > fileLimit ||
+            entry.uncompressedSize > fileLimit(name) ||
             (size += entry.uncompressedSize) > archiveLimit
           ) {
             return fail(Error('Invalid plugin archive entry'))
@@ -97,7 +101,7 @@ export async function inspectArchive(path: string): Promise<InstalledPlugin> {
             stream.on('error', fail)
             stream.on('data', (chunk: Buffer) => {
               length += chunk.length
-              if (length > entry.uncompressedSize || length > fileLimit) {
+              if (length > entry.uncompressedSize || length > fileLimit(name)) {
                 stream.destroy()
                 fail(Error('Plugin archive expansion limit'))
                 return
@@ -115,7 +119,7 @@ export async function inspectArchive(path: string): Promise<InstalledPlugin> {
           })
         })
         zip.readEntry()
-      }
+      },
     )
   })
   const temporary = mkdtempSync(join(tmpdir(), 'aterm-plugin-'))

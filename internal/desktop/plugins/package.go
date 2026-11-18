@@ -15,10 +15,10 @@ import (
 	"strings"
 )
 
-const ArchiveLimit = 16 * 1024 * 1024
+const ArchiveLimit = 64 * 1024 * 1024
 const archiveFileLimit = 2 * 1024 * 1024
 
-var archiveName = regexp.MustCompile(`^(manifest\.json|plugin\.js|ui/[A-Za-z0-9._-]+\.html|locales/[A-Za-z0-9._-]+\.json)$`)
+var archiveName = regexp.MustCompile(`^(manifest\.json|plugin\.js|ui/[A-Za-z0-9._-]+\.html|locales/[A-Za-z0-9._-]+\.json|backend/(darwin|linux|windows)-(amd64|arm64)/plugin(\.exe)?)$`)
 var translationKey = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,120}$`)
 var packageReference = regexp.MustCompile(`^[a-z][a-z0-9-]*\.[a-z][a-z0-9.-]*/[0-9]+\.[0-9]+\.[0-9]+-[a-f0-9]{64}$`)
 
@@ -70,7 +70,7 @@ func InspectDirectory(directory string) (Package, error) {
 		return Package{}, err
 	}
 	return inspectFiles(func(name string, limit int) ([]byte, error) {
-		if dir := filepath.Dir(name); dir != "." {
+		for dir := filepath.Dir(name); dir != "."; dir = filepath.Dir(dir) {
 			if err := checkedDirectory(filepath.Join(root, dir)); err != nil {
 				return nil, err
 			}
@@ -101,7 +101,7 @@ func InspectArchiveBytes(data []byte) (Package, error) {
 	for _, entry := range archive.File {
 		_, duplicate := files[entry.Name]
 		mode := (entry.ExternalAttrs >> 16) & 0xf000
-		if duplicate || !archiveName.MatchString(entry.Name) || (mode != 0 && mode != 0x8000) || entry.Flags&1 != 0 || entry.UncompressedSize64 > archiveFileLimit {
+		if duplicate || !archiveName.MatchString(entry.Name) || (mode != 0 && mode != 0x8000) || entry.Flags&1 != 0 || entry.UncompressedSize64 > uint64(packageFileLimit(entry.Name)) {
 			return Package{}, errors.New("invalid plugin archive entry")
 		}
 		size += entry.UncompressedSize64
@@ -112,7 +112,7 @@ func InspectArchiveBytes(data []byte) (Package, error) {
 		if err != nil {
 			return Package{}, err
 		}
-		bytes, err := boundedRead(stream, archiveFileLimit)
+		bytes, err := boundedRead(stream, packageFileLimit(entry.Name))
 		closeErr := stream.Close()
 		if err != nil {
 			return Package{}, err
@@ -164,11 +164,23 @@ func inspectFiles(read func(string, int) ([]byte, error)) (Package, error) {
 	if strings.HasPrefix(manifest.ID, "aterm.") {
 		return Package{}, errors.New("reserved plugin identifier")
 	}
-	source, err := read("plugin.js", 256*1024)
-	if err != nil {
-		return Package{}, err
+	plugin := Package{Manifest: manifest, BuiltIn: false}
+	if manifest.Runtime == "native" {
+		plugin.Binary, err = read(manifest.Entry, packageFileLimit(manifest.Entry))
+		if err != nil {
+			return Package{}, err
+		}
+		hash := sha256.Sum256(plugin.Binary)
+		if fmt.Sprintf("%x", hash) != manifest.Backend.SHA256 {
+			return Package{}, errors.New("native backend checksum mismatch")
+		}
+	} else {
+		source, err := read("plugin.js", 256*1024)
+		if err != nil {
+			return Package{}, err
+		}
+		plugin.Source = strings.ToValidUTF8(string(source), "\uFFFD")
 	}
-	plugin := Package{Manifest: manifest, Source: strings.ToValidUTF8(string(source), "\uFFFD"), BuiltIn: false}
 	if manifest.I18n != nil {
 		config := manifest.I18n
 		bundle := &Localizations{DefaultLocale: config.DefaultLocale, Messages: map[string]map[string]string{}}
@@ -228,7 +240,12 @@ func packageFiles(plugin Package) (map[string][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	files := map[string][]byte{"manifest.json": data, "plugin.js": []byte(plugin.Source)}
+	files := map[string][]byte{"manifest.json": data}
+	if plugin.Manifest.Runtime == "native" {
+		files[plugin.Manifest.Entry] = plugin.Binary
+	} else {
+		files["plugin.js"] = []byte(plugin.Source)
+	}
 	for name, html := range plugin.Views {
 		files[name] = []byte(html)
 	}
@@ -252,7 +269,8 @@ func packageDigest(plugin Package) (string, error) {
 		Source        string            `json:"source"`
 		Localizations *Localizations    `json:"localizations"`
 		Views         map[string]string `json:"views"`
-	}{plugin.Manifest, plugin.Source, plugin.Localizations, plugin.Views}
+		Binary        []byte            `json:"binary,omitempty"`
+	}{plugin.Manifest, plugin.Source, plugin.Localizations, plugin.Views, plugin.Binary}
 	data, err := marshalJSON(value)
 	if err != nil {
 		return "", err
@@ -351,4 +369,25 @@ func (s *PackageStore) Load(key string) (Package, error) {
 		return Package{}, errors.New("plugin integrity check failed")
 	}
 	return plugin, nil
+}
+
+func packageFileLimit(name string) int {
+	if strings.HasPrefix(name, "backend/") {
+		return 48 * 1024 * 1024
+	}
+	return archiveFileLimit
+}
+func (s *PackageStore) Executable(key string) (string, error) {
+	p, err := s.Load(key)
+	if err != nil {
+		return "", err
+	}
+	if p.Manifest.Runtime != "native" {
+		return "", errors.New("not native")
+	}
+	path := filepath.Join(s.root, filepath.FromSlash(key), filepath.FromSlash(p.Manifest.Entry))
+	if err = os.Chmod(path, 0700); err != nil {
+		return "", err
+	}
+	return path, nil
 }

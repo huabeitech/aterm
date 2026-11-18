@@ -16,8 +16,6 @@ func (a *App) DesktopRequest(ctx context.Context, channel string, args []json.Ra
 		return a.desktopInfo(), nil
 	case "preferences:save":
 		return a.desktopSavePreferences(args)
-	case "tunnels:request":
-		return a.desktopTunnels(ctx, args)
 	case "library:request":
 		return a.desktopLibrary(args)
 	case "confirmation:answer":

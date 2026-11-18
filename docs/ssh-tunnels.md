@@ -2,9 +2,13 @@
 
 Local TCP forwarding connects an application on your computer to a service reachable from a saved SSH host. For example, configure `127.0.0.1:13306` through a bastion host to `db.internal:3306`, start the tunnel, and point a database client at `127.0.0.1:13306`.
 
+## Install
+
+Build or download the SSH tunnels `.aterm-plugin` for your platform and install it through **Settings → Plugins**. Existing tunnel configurations migrate automatically; installation is still required to use them. See [Native plugins](native-plugins.md).
+
 ## Configure and use
 
-1. Select **Tunnels** in the bottom view bar of a saved SSH connection. Use **All tunnels** in the sidebar footer for the global workspace, or **Manage tunnels** in host details.
+1. Select **Tunnels** in the bottom view bar of a saved SSH connection. Use the plugin entry in the sidebar footer for the global workspace, or the plugin action in host details.
 2. Choose **New tunnel**. Enter a name and select a service preset. The selected SSH host is prefilled. Choose **This SSH host** for a local service, or **Another private host** to enter its address. Set the service and local ports; the listen address is under **Advanced**.
 3. Choose **Save** for later use, or **Save and start**. Unlock protected data and complete any SSH authentication or host verification prompts.
 4. Connect an external application to the displayed local address. **Copy local address** copies the address and port.
@@ -20,7 +24,7 @@ Choose **Test connection** in the new or edit dialog to test the current draft w
 
 ## Lifecycle and status
 
-- Tunnels do not require a terminal tab or remote shell. Closing a terminal or the management dialog leaves tunnels running. The sidebar shows active and failed counts.
+- Tunnels do not require a terminal tab or remote shell. Closing a terminal or the management dialog leaves tunnels running. Each plugin page shows live tunnel status.
 - A saved tunnel has at most one running instance. Different tunnels have independent SSH transports.
 - Quitting aTerm stops all tunnels and releases their ports. Closing the last application window normally quits aTerm under its existing window policy. If the application remains running, so do its tunnels.
 - Configurations survive application restarts; tunnels do not automatically start or reconnect.
@@ -57,11 +61,12 @@ python3 scripts/go-macos.py run ./scripts/parity-fixture -tunnels -profile "$ate
 
 Keep the fixture running. It prints the local HTTP endpoint and creates two synthetic SSH hosts, a jump-host tunnel, and an encrypted test vault. Launch a test build with `ATERM_DATA_DIR` set to that profile. The disposable vault password is `fixture-vault-password`. The fixture never uses the real host library or system Keychain.
 
-In another shell, run the native service acceptance test:
+For automated forwarding and lifecycle checks, run:
 
 ```sh
-ATERM_PARITY_FIXTURE_PROFILE="/absolute/path/printed/by/the/fixture" \
-  python3 scripts/go-macos.py test ./internal/service -run TestTunnelParityFixtureThroughJumpHost -v
+go test ./internal/desktop/plugins -run TestNative -v
+go test ./plugins/ssh-tunnels/backend/forward -v
 ```
 
-Keep the native app's tunnel stopped while running that test, since both use the configured local port. Mac App Store entitlements include incoming and outgoing network access; validate the signed sandboxed distribution separately.
+These launch real child processes and loopback targets. Native UI and signed
+sandboxed distributions require separate platform acceptance.

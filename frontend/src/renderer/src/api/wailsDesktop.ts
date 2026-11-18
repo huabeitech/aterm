@@ -2,24 +2,34 @@
  * UI components remain runtime-independent; all Wails transport stays here.
  */
 import * as bindings from '../../../../bindings/ssh-connect/internal/app/app'
-import {Events, Window as WailsWindow} from '@wailsio/runtime'
+import { Events, Window as WailsWindow } from '@wailsio/runtime'
 const windowName = WailsWindow.Name()
-import {createWailsKeyboard, type InputMode} from './wailsKeyboard'
-import type {Command} from '../../../shared/contracts/commands'
-import {channels, type DesktopApi} from '../../../shared/contracts/app'
-import {terminalEvents} from './terminalEvents'
-import {installNativeFileDrop} from './wailsFileDrop'
-import {subscribeTerminalOutput, beginTerminalOutputAttachment, releaseTerminalOutput} from './wailsTerminalOutput'
+import { createWailsKeyboard, type InputMode } from './wailsKeyboard'
+import type { Command } from '../../../shared/contracts/commands'
+import { channels, type DesktopApi } from '../../../shared/contracts/app'
+import { terminalEvents } from './terminalEvents'
+import { installNativeFileDrop } from './wailsFileDrop'
+import {
+  subscribeTerminalOutput,
+  beginTerminalOutputAttachment,
+  releaseTerminalOutput,
+} from './wailsTerminalOutput'
 const keyboardCommands = new Set<(command: Command) => void>()
 const keyboard = createWailsKeyboard(
-  command => {for (const callback of keyboardCommands) callback(command)},
-  () => {void invokeRequest(channels.window, 'close').catch(console.error)}
+  (command) => {
+    for (const callback of keyboardCommands) callback(command)
+  },
+  () => {
+    void invokeRequest(channels.window, 'close').catch(console.error)
+  },
 )
 async function invokeRequest(channel: string, ...args: unknown[]): Promise<any> {
   // Register before invoking Go: live events may arrive before its snapshot
   // response. A close invalidates this ticket so a late response cannot revive it.
-  const attachment = channel === channels.terminalRequest && args[0] === 'attach'
-    ? beginTerminalOutputAttachment(args[1] as string) : undefined
+  const attachment =
+    channel === channels.terminalRequest && args[0] === 'attach'
+      ? beginTerminalOutputAttachment(args[1] as string)
+      : undefined
   let result: any
   try {
     result = await bindings.DesktopRequest(channel, args)
@@ -28,35 +38,55 @@ async function invokeRequest(channel: string, ...args: unknown[]): Promise<any> 
     throw error
   }
   if (channel === channels.bootstrap) {
-    const bootstrap = {...(result as import('../../../shared/contracts/app').Bootstrap), resolvedTheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' as const : 'light' as const}
+    const bootstrap = {
+      ...(result as import('../../../shared/contracts/app').Bootstrap),
+      resolvedTheme: window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? ('dark' as const)
+        : ('light' as const),
+    }
     keyboard.bootstrap(bootstrap)
     if (location.hash === '#file-editor') sendInputMode('editable')
     return bootstrap
   }
-  if (channel === channels.preferences) keyboard.preferences(result as import('../../../shared/contracts/preferences').Preferences)
+  if (channel === channels.preferences)
+    keyboard.preferences(result as import('../../../shared/contracts/preferences').Preferences)
   if (attachment) {
-    try {return attachment.complete(result as {data: string; seq: number})}
-    catch (error) {attachment.cancel(); throw error}
+    try {
+      return attachment.complete(result as { data: string; seq: number })
+    } catch (error) {
+      attachment.cancel()
+      throw error
+    }
   }
-  if (channel === channels.terminalRequest && args[0] === 'close') releaseTerminalOutput(args[1] as string)
+  if (channel === channels.terminalRequest && args[0] === 'close')
+    releaseTerminalOutput(args[1] as string)
   return result
 }
 function subscribe<T>(channel: string, callback: (value: T) => void): () => void {
-  if (channel === channels.terminalEvent) return subscribeTerminalOutput(callback as (event: import('../../../shared/contracts/terminal').TerminalEvent) => void)
+  if (channel === channels.terminalEvent)
+    return subscribeTerminalOutput(
+      callback as (event: import('../../../shared/contracts/terminal').TerminalEvent) => void,
+    )
   return Events.On(channel, (event) => {
-    void windowName.then((name) => {if (!event.sender || event.sender === name) callback(event.data as T)})
+    void windowName.then((name) => {
+      if (!event.sender || event.sender === name) callback(event.data as T)
+    })
   })
 }
 const send = (channel: string, ...args: unknown[]) => {
-  void invokeRequest(channel, ...args.map((value) => value instanceof Uint8Array ? Array.from(value) : value)).catch((error) => console.error('Desktop operation failed', channel, error))
+  void invokeRequest(
+    channel,
+    ...args.map((value) => (value instanceof Uint8Array ? Array.from(value) : value)),
+  ).catch((error) => console.error('Desktop operation failed', channel, error))
 }
 let inputModeWrite = Promise.resolve()
 function sendInputMode(mode: InputMode) {
   keyboard.setMode(mode)
   // Wails invokes bindings concurrently. Serialize focus changes so a slow old
   // request cannot overwrite the mode of the newly focused control.
-  inputModeWrite = inputModeWrite.then(() => invokeRequest(channels.inputMode, mode))
-    .catch(error => console.error('Unable to update input mode', error))
+  inputModeWrite = inputModeWrite
+    .then(() => invokeRequest(channels.inputMode, mode))
+    .catch((error) => console.error('Unable to update input mode', error))
 }
 async function invokeLibrary(operation: string, ...args: unknown[]) {
   try {
@@ -73,8 +103,8 @@ async function invokeIntegration(operation: string, ...args: unknown[]) {
     throw new Error(
       (error instanceof Error ? error.message : 'Operation failed.').replace(
         /^Error invoking remote method '[^']+': (?:Error: )?/,
-        ''
-      )
+        '',
+      ),
     )
   }
 }
@@ -85,8 +115,8 @@ async function invokeFiles(operation: string, ...args: unknown[]) {
     throw new Error(
       (error instanceof Error ? error.message : 'File operation failed.').replace(
         /^Error invoking remote method '[^']+': (?:Error: )?/,
-        ''
-      )
+        '',
+      ),
     )
   }
 }
@@ -97,25 +127,16 @@ async function invokeFileEditor(operation: string, ...args: unknown[]) {
     throw new Error(
       (error instanceof Error ? error.message : 'File operation failed.').replace(
         /^Error invoking remote method '[^']+': (?:Error: )?/,
-        ''
-      )
+        '',
+      ),
     )
   }
 }
 const subscribeTerminal = terminalEvents((dispatch) => subscribe(channels.terminalEvent, dispatch))
 const desktop: DesktopApi = {
-  tunnels: {
-    test: (id, input) => invokeRequest(channels.tunnels, 'test', id, input),
-    list: () => invokeRequest(channels.tunnels, 'list'),
-    save: (id, input) => invokeRequest(channels.tunnels, 'save', id, input),
-    start: (id) => invokeRequest(channels.tunnels, 'start', id),
-    stop: (id) => invokeRequest(channels.tunnels, 'stop', id),
-    delete: (id) => invokeRequest(channels.tunnels, 'delete', id),
-    onChanged: (callback) => subscribe(channels.tunnelsChanged, callback)
-  },
   confirmations: {
     onEvent: (callback) => subscribe(channels.confirmationEvent, callback),
-    answer: (id, choice) => invokeRequest(channels.confirmationAnswer, id, choice)
+    answer: (id, choice) => invokeRequest(channels.confirmationAnswer, id, choice),
   },
   plugins: {
     activity: (id) => invokeRequest(channels.plugins, 'activity', id),
@@ -138,13 +159,13 @@ const desktop: DesktopApi = {
         sessionId,
         consumer,
         visible,
-        passive
+        passive,
       ),
     refresh: (pluginId, sessionId) =>
       invokeRequest(channels.plugins, 'refresh', pluginId, sessionId),
     onChanged: (callback) => subscribe(channels.pluginsChanged, callback),
     onTerminalOpened: (callback) => subscribe(channels.pluginTerminalOpened, callback),
-    onStatus: (callback) => subscribe(channels.pluginStatus, callback)
+    onStatus: (callback) => subscribe(channels.pluginStatus, callback),
   },
   themes: {
     list: () => invokeRequest(channels.themes, 'list'),
@@ -152,7 +173,7 @@ const desktop: DesktopApi = {
     duplicate: (theme) => invokeRequest(channels.themes, 'duplicate', theme),
     remove: (id) => invokeRequest(channels.themes, 'remove', id),
     export: (id) => invokeRequest(channels.themes, 'export', id),
-    onChanged: (callback) => subscribe(channels.themesChanged, callback)
+    onChanged: (callback) => subscribe(channels.themesChanged, callback),
   },
   onLocaleChanged: (callback) => subscribe(channels.locale, callback),
   integration: {
@@ -163,7 +184,7 @@ const desktop: DesktopApi = {
     backup: (...args) => invokeIntegration('backup', ...args),
     restore: (...args) => invokeIntegration('restore', ...args),
     deleteBackup: (...args) => invokeIntegration('deleteBackup', ...args),
-    exportSSH: (...args) => invokeIntegration('exportSSH', ...args)
+    exportSSH: (...args) => invokeIntegration('exportSSH', ...args),
   },
   fileEditor: {
     open: (...args) => invokeFileEditor('open', ...args),
@@ -173,10 +194,11 @@ const desktop: DesktopApi = {
     close: () => invokeFileEditor('close'),
     quit: () => invokeFileEditor('quit'),
     onCloseRequested: (callback) => subscribe(channels.fileEditorClose, callback),
-    onState: (callback) => subscribe(channels.fileEditorState, callback)
+    onState: (callback) => subscribe(channels.fileEditorState, callback),
   },
   files: {
-    pathsForFiles: (files) => files.map((file) => (file as File & {path?: string}).path ?? '').filter(Boolean),
+    pathsForFiles: (files) =>
+      files.map((file) => (file as File & { path?: string }).path ?? '').filter(Boolean),
     image: (...args) => invokeFiles('image', ...args),
     drop: (...args) => invokeFiles('drop', ...args),
     open: (...args) => invokeFiles('open', ...args),
@@ -192,7 +214,7 @@ const desktop: DesktopApi = {
     clearCompleted: (...args) => invokeFiles('clearCompleted', ...args),
     removeTransfer: (...args) => invokeFiles('removeTransfer', ...args),
     reveal: (...args) => invokeFiles('reveal', ...args),
-    onEvent: (callback) => subscribe(channels.filesEvent, callback)
+    onEvent: (callback) => subscribe(channels.filesEvent, callback),
   },
 
   terminal: {
@@ -210,7 +232,7 @@ const desktop: DesktopApi = {
     inputBytes: (...args) => send(channels.terminalBinaryInput, ...args),
     resize: (...args) => send(channels.terminalResize, ...args),
     acknowledge: (...args) => send(channels.terminalAck, ...args),
-    onEvent: subscribeTerminal
+    onEvent: subscribeTerminal,
   },
   library: {
     listHosts: (...args) => invokeLibrary('listHosts', ...args),
@@ -236,7 +258,7 @@ const desktop: DesktopApi = {
     importManagedKey: (...args) => invokeLibrary('importManagedKey', ...args),
     exportManagedKey: (...args) => invokeLibrary('exportManagedKey', ...args),
     addManagedKeyToAgent: (...args) => invokeLibrary('addManagedKeyToAgent', ...args),
-    deleteManagedKey: (...args) => invokeLibrary('deleteManagedKey', ...args)
+    deleteManagedKey: (...args) => invokeLibrary('deleteManagedKey', ...args),
   },
   getAppInfo: () => invokeRequest(channels.info),
   bootstrap: () => invokeRequest(channels.bootstrap),
@@ -249,13 +271,19 @@ const desktop: DesktopApi = {
     const changed = () => callback(media.matches ? 'dark' : 'light')
     media.addEventListener('change', changed)
     const off = subscribe<'light' | 'dark'>(channels.theme, callback)
-    return () => {media.removeEventListener('change', changed); off()}
+    return () => {
+      media.removeEventListener('change', changed)
+      off()
+    }
   },
   onCommand: (callback) => {
     keyboardCommands.add(callback)
     const off = subscribe<Command>(channels.command, callback)
-    return () => {keyboardCommands.delete(callback); off()}
-  }
+    return () => {
+      keyboardCommands.delete(callback)
+      off()
+    }
+  },
 }
 window.desktop = desktop
 installNativeFileDrop()
