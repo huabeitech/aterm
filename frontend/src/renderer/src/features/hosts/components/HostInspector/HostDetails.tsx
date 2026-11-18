@@ -11,18 +11,17 @@ import { ClipboardSetText } from '../../../../api/runtime'
 export function HostDetails({
   host,
   jumpHostName,
-  notes,
   actions,
   onGetHostPassword
 }: {
   host: domain.Host
   jumpHostName?: string
-  notes: ReactNode
   actions?: ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
   const connectionHeadingID = useId()
+  const notesHeadingID = useId()
   const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
     ? `[${host.hostName}]`
     : host.hostName
@@ -56,7 +55,16 @@ export function HostDetails({
           <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
         </dl>
       </section>
-      {notes}
+      {host.remark && (
+        <section aria-labelledby={notesHeadingID} className="min-w-0">
+          <h3 id={notesHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
+            {t('hosts:notes')}
+          </h3>
+          <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap text-[var(--mac-text)]">
+            {host.remark}
+          </p>
+        </section>
+      )}
     </div>
   )
 }

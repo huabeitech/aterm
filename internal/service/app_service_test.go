@@ -1006,16 +1006,6 @@ func (s *memoryHostStore) UpdateHost(id string, input HostInput) (Host, error) {
 	return Host{}, os.ErrNotExist
 }
 
-func (s *memoryHostStore) UpdateHostNotes(id, notes string) (Host, error) {
-	for i := range s.hosts {
-		if s.hosts[i].ID == id {
-			s.hosts[i].Remark = notes
-			return s.hosts[i], nil
-		}
-	}
-	return Host{}, ErrHostNotFound
-}
-
 func (s *memoryHostStore) MoveHosts(ids []string, directoryID string) ([]Host, error) {
 	idSet := make(map[string]bool, len(ids))
 	for _, id := range ids {

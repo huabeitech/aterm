@@ -26,8 +26,6 @@ import {
 import { buildSSHCommand } from '../model/sshCommand'
 import { HostDetailsToolbar } from '../components/HostInspector/HostDetailsToolbar'
 import { HostDetails } from '../components/HostInspector/HostDetails'
-import { HostNotes } from '../components/HostInspector/HostNotes'
-import { useHostNotes } from './useHostNotes'
 import { BatchAddHostsModal } from '../../../components/hosts/BatchAddHostsModal'
 import { desktop } from '../../../api/app'
 import type { BusyAction, EditorMode, FormState, ViewID } from '../../../components/common/types'
@@ -63,7 +61,6 @@ export function useHostWorkbench(
   const { modal, message, notification } = useAppUI()
   const hostRepo = useHostRepository(),
     dirRepo = useDirectoryRepository()
-  const notes = useHostNotes(hostRepo.updateHostNotes)
   const {
     hosts,
     selectedID,
@@ -276,11 +273,9 @@ export function useHostWorkbench(
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
   function renderHostDetails(
     id: string,
-    groupID: string,
     actions: {
       connect: () => void
       openFiles: () => void
-      keepOpen: () => void
       connecting: boolean
     }
   ) {
@@ -305,19 +300,6 @@ export function useHostWorkbench(
             }
             host={host}
             jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
-            notes={
-              <HostNotes
-                notes={host.remark}
-                draft={notes.drafts[groupID]}
-                onEdit={() => {
-                  actions.keepOpen()
-                  notes.begin(groupID, id, host.remark)
-                }}
-                onChange={(value) => notes.change(groupID, value)}
-                onCancel={() => notes.discard(groupID)}
-                onSave={() => notes.save(groupID)}
-              />
-            }
             onGetHostPassword={getPassword}
           />
         </ScrollArea>
@@ -326,7 +308,6 @@ export function useHostWorkbench(
   }
   const overlays = (
     <>
-      {notes.closeDialog}
       <BatchAddHostsModal
         open={batchAddOpen}
         onCancel={() => setBatchAddOpen(false)}
@@ -420,8 +401,6 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
-    confirmCloseHostNotes: notes.confirmClose,
-    discardHostNotes: notes.discard,
     renderHostDetails
   }
 }

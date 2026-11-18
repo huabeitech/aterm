@@ -11,7 +11,6 @@ import {
 } from '../../../api/hosts'
 import type { HostSortScope } from '../../../components/common/types'
 import { applyOptimisticHostDirectoryMove } from '../model/hostMove'
-import { desktop } from '../../../api/app'
 
 export function useHostRepository() {
   const [hosts, setHosts] = useState<domain.Host[]>([])
@@ -28,17 +27,6 @@ export function useHostRepository() {
 
   const createHost = (input: domain.HostInput) => CreateHost(input)
   const updateHost = (id: string, input: domain.HostInput) => UpdateHost(id, input)
-  async function updateHostNotes(id: string, notes: string) {
-    const saved = await desktop.library.updateHostNotes(id, notes)
-    setHosts((current) => current.map((host) => host.id === id
-      ? {
-          ...host,
-          remark: saved.remark,
-          updatedAt: host.updatedAt > saved.updatedAt ? host.updatedAt : saved.updatedAt
-        }
-      : host
-    ))
-  }
   const deleteHost = (id: string) => DeleteHost(id)
   const deleteHosts = (ids: string[]) => DeleteHosts(ids)
   const moveHosts = (ids: string[], directoryID: string) => MoveHosts(ids, directoryID)
@@ -98,7 +86,6 @@ export function useHostRepository() {
     loadHosts,
     createHost,
     updateHost,
-    updateHostNotes,
     deleteHost,
     deleteHosts,
     moveHostsOptimistically,

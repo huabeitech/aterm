@@ -165,22 +165,6 @@ WHERE id = ?;
 	return host, nil
 }
 
-func (s *Store) UpdateHostNotes(id, notes string) (domain.Host, error) {
-	result, err := s.db.Exec(`UPDATE hosts SET remark = ?, updated_at = ? WHERE id = ?;`,
-		notes, formatTime(time.Now()), id)
-	if err != nil {
-		return domain.Host{}, err
-	}
-	count, err := result.RowsAffected()
-	if err != nil {
-		return domain.Host{}, err
-	}
-	if count == 0 {
-		return domain.Host{}, domain.ErrHostNotFound
-	}
-	return s.GetHost(id)
-}
-
 func (s *Store) MoveHosts(ids []string, directoryID string) ([]domain.Host, error) {
 	ids = normalizeIDs(ids)
 	if len(ids) == 0 {

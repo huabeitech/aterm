@@ -3,7 +3,6 @@ export interface LibraryApi {
   listHosts(): Promise<domain.Host[]>
   createHost(input: domain.HostInput): Promise<domain.Host>
   updateHost(id: string, input: domain.HostInput): Promise<domain.Host>
-  updateHostNotes(id: string, notes: string): Promise<domain.Host>
   deleteHosts(ids: string[]): Promise<void>
   moveHosts(ids: string[], directoryID: string): Promise<domain.Host[]>
   reorderHosts(scopeType: string, scopeID: string, ids: string[]): Promise<domain.Host[]>

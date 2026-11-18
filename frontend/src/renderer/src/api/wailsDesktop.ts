@@ -238,7 +238,6 @@ const desktop: DesktopApi = {
     listHosts: (...args) => invokeLibrary('listHosts', ...args),
     createHost: (...args) => invokeLibrary('createHost', ...args),
     updateHost: (...args) => invokeLibrary('updateHost', ...args),
-    updateHostNotes: (...args) => invokeLibrary('updateHostNotes', ...args),
     deleteHosts: (...args) => invokeLibrary('deleteHosts', ...args),
     moveHosts: (...args) => invokeLibrary('moveHosts', ...args),
     reorderHosts: (...args) => invokeLibrary('reorderHosts', ...args),

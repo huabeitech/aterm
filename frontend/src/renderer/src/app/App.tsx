@@ -281,10 +281,9 @@ function Workbench({
     }
   }
   function renderHostDetails(hostID: string, groupID: string) {
-    return library.renderHostDetails(hostID, groupID, {
+    return library.renderHostDetails(hostID, {
       connect: () => void connectHost(hostID, { groupID }),
       openFiles: () => void openFiles(hostID, groupID),
-      keepOpen: () => tabs.keepTabOpen(`terminal:${groupID}`),
       connecting: connectingHostTabs.has(groupID),
     })
   }
@@ -334,14 +333,12 @@ function Workbench({
     if (closingConnections.current.has(id)) return true
     closingConnections.current.add(id)
     try {
-      if (!(await library.confirmCloseHostNotes(id))) return false
       if (terminal.sessionForGroup(id)) {
         if (!(await files.close(id))) return false
         terminal.closeGroup(id)
       } else {
         tabs.removeTabs([`terminal:${id}`])
       }
-      library.discardHostNotes(id)
       setConnectionViews((previous) => {
         const next = { ...previous }
         delete next[id]
