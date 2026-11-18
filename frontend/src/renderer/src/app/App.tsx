@@ -786,7 +786,6 @@ function Workbench({
               activeHostTab?.hostID ??
               (activeConnectionID ? terminal.sessionForGroup(activeConnectionID)?.hostID : undefined)
             }
-            hoverPreviewEnabled={!isSettings && !sidebar.collapsed}
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}

@@ -1,4 +1,3 @@
-import { ConnectionHoverCard } from './ConnectionHoverCard'
 import {
   ChevronDown,
   ChevronRight,
@@ -197,94 +196,80 @@ export function ConnectionTreeNodeRow({
         }
       ]}
     >
-      <ConnectionHoverCard
-        host={host}
-        directoryName={
-          props.directoryTree.find((entry) => entry.directory.id === host.directoryID)?.directory
-            .name ?? t('hosts:rootDirectory')
+      <div
+        role="treeitem"
+        aria-level={node.depth + 1}
+        aria-label={host.name}
+        aria-selected={selected}
+        tabIndex={tabIndex}
+        onFocus={onFocus}
+        draggable={!disabled}
+        className={cn(rowClass, 'group/host host-tree-item')}
+        style={
+          {
+            paddingLeft: rowIndent(node.depth),
+            '--drop-indent': `${rowIndent(node.depth)}px`
+          } as import('react').CSSProperties
         }
-        disabled={
-          disabled ||
-          props.hoverPreviewEnabled === false ||
-          props.draggingHostIDs.length > 0 ||
-          !!props.draggingDirectoryID
-        }
-      >
-        <div
-          role="treeitem"
-          aria-level={node.depth + 1}
-          aria-label={host.name}
-          aria-selected={selected}
-          tabIndex={tabIndex}
-          onFocus={onFocus}
-          draggable={!disabled}
-          className={cn(rowClass, 'group/host host-tree-item')}
-          style={
-            {
-              paddingLeft: rowIndent(node.depth),
-              '--drop-indent': `${rowIndent(node.depth)}px`
-            } as import('react').CSSProperties
+        onClick={(e) => {
+          if (!drag.suppressClick()) select(host.id, e.metaKey || e.ctrlKey, e.shiftKey)
+        }}
+        onDoubleClick={() => {
+          if (!disabled && !drag.suppressClick()) props.onConnectHost(host.id)
+        }}
+        onContextMenu={(e) => {
+          e.stopPropagation()
+          if (!selected) props.onSelectHost(host.id, [host.id])
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !disabled) {
+            e.preventDefault()
+            props.onConnectHost(host.id)
           }
+          if (e.key === ' ') {
+            e.preventDefault()
+            select(host.id, e.metaKey || e.ctrlKey, e.shiftKey)
+          }
+          if (e.key === 'F2' && !disabled) {
+            e.preventDefault()
+            onRename(host)
+          }
+          if (e.key === 'Delete' && !disabled) {
+            e.preventDefault()
+            props.onDeleteHosts(ids)
+          }
+        }}
+        {...dragProps}
+      >
+        <span className="w-3 shrink-0" aria-hidden="true" />
+        <Server size={16} className="connection-node-icon shrink-0 text-muted-foreground" />
+        <span className="truncate">{host.name}</span>
+        <button
+          type="button"
+          aria-label={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
+          title={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
+          aria-pressed={host.favorite}
+          disabled={disabled}
+          draggable={false}
+          className={cn(
+            'ml-auto flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+            !host.favorite &&
+              'opacity-0 group-hover/host:opacity-100 group-focus-within/host:opacity-100'
+          )}
           onClick={(e) => {
-            if (!drag.suppressClick()) select(host.id, e.metaKey || e.ctrlKey, e.shiftKey)
-          }}
-          onDoubleClick={() => {
-            if (!disabled && !drag.suppressClick()) props.onConnectHost(host.id)
-          }}
-          onContextMenu={(e) => {
             e.stopPropagation()
-            if (!selected) props.onSelectHost(host.id, [host.id])
+            props.onToggleFavoriteHost(host.id)
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !disabled) {
-              e.preventDefault()
-              props.onConnectHost(host.id)
-            }
-            if (e.key === ' ') {
-              e.preventDefault()
-              select(host.id, e.metaKey || e.ctrlKey, e.shiftKey)
-            }
-            if (e.key === 'F2' && !disabled) {
-              e.preventDefault()
-              onRename(host)
-            }
-            if (e.key === 'Delete' && !disabled) {
-              e.preventDefault()
-              props.onDeleteHosts(ids)
-            }
-          }}
-          {...dragProps}
+          onDoubleClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
-          <span className="w-3 shrink-0" aria-hidden="true" />
-          <Server size={16} className="connection-node-icon shrink-0 text-muted-foreground" />
-          <span className="truncate">{host.name}</span>
-          <button
-            type="button"
-            aria-label={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
-            title={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
-            aria-pressed={host.favorite}
-            disabled={disabled}
-            draggable={false}
-            className={cn(
-              'ml-auto flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-              !host.favorite &&
-                'opacity-0 group-hover/host:opacity-100 group-focus-within/host:opacity-100'
-            )}
-            onClick={(e) => {
-              e.stopPropagation()
-              props.onToggleFavoriteHost(host.id)
-            }}
-            onDoubleClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            {host.favorite ? (
-              <PinOff size={12} aria-hidden="true" />
-            ) : (
-              <Pin size={12} aria-hidden="true" />
-            )}
-          </button>
-        </div>
-      </ConnectionHoverCard>
+          {host.favorite ? (
+            <PinOff size={12} aria-hidden="true" />
+          ) : (
+            <Pin size={12} aria-hidden="true" />
+          )}
+        </button>
+      </div>
     </TreeMenu>
   )
 }

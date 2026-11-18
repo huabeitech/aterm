@@ -9,7 +9,6 @@ import type {
 
 export interface ConnectionTreeProps {
   currentHostID?: string
-  hoverPreviewEnabled?: boolean
   hosts: domain.Host[]
   loading: boolean
   directoryTree: DirectoryTreeItem[]
