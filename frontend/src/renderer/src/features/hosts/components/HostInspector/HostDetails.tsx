@@ -29,7 +29,7 @@ export function HostDetails({
   const jumpHost = jumpHostName || host.proxyJump
   return (
     <div className="grid w-full min-w-0 gap-4 px-4 pt-4 pb-6 text-[length:var(--app-text-13)] sm:px-6">
-      <header className="flex min-w-0 items-start gap-3">
+      <header className="flex min-w-0 items-center gap-3">
         <div className="grid size-12 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
           <Server size={28} aria-hidden="true" />
         </div>
@@ -37,7 +37,7 @@ export function HostDetails({
           <h2 className="m-0 wrap-anywhere text-2xl leading-tight font-semibold text-[var(--mac-text)]">
             {host.name}
           </h2>
-          <div className="font-mono text-[var(--mac-secondary-text)]">
+          <div className="flex font-mono text-[var(--mac-secondary-text)]">
             <CopyableDetailValue
               value={endpoint}
               copyValue={host.hostName}

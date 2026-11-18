@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Pencil, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,6 @@ import { MdEditor, MdPreview } from 'md-editor-rt'
 import 'md-editor-rt/lib/style.css'
 import './hostNotes.css'
 import { noteToolbars, sanitizeNote } from './markdownNotes'
-import { cn } from '@/lib/utils'
 
 export function HostNotes({
   notes,
@@ -27,11 +26,8 @@ export function HostNotes({
   const headingID = useId()
   const textID = 'host-notes-' + useId().replace(/:/g, '')
   const errorID = useId()
-  const preview = useRef<HTMLDivElement>(null)
   const editButton = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
-  const [expanded, setExpanded] = useState(false)
-  const [overflows, setOverflows] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>
     document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
   )
@@ -51,17 +47,6 @@ export function HostNotes({
     if (!editing && restoreFocus.current) editButton.current?.focus()
     restoreFocus.current = false
   }, [editing])
-
-  useLayoutEffect(() => {
-    const element = preview.current
-    if (!element || expanded) return
-    const measure = () => setOverflows(element.scrollHeight > element.clientHeight + 1)
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(element)
-    if (element.firstElementChild) observer.observe(element.firstElementChild)
-    return () => observer.disconnect()
-  }, [editing, expanded, notes])
 
   async function save() {
     if (!canSave) return
@@ -147,47 +132,27 @@ export function HostNotes({
             </Button>
             <Button type="submit" size="sm" disabled={!canSave}>
               {draft.saving && <Loader2 className="animate-spin" aria-hidden="true" />}
-              {t('saveNotes')}
+              {t('save')}
             </Button>
           </div>
         </form>
       ) : (
         <div className="rounded-md bg-[var(--mac-content)] py-2">
           {notes ? (
-            <>
-              <div
-                id={textID}
-                ref={preview}
-                className={cn('min-w-0', !expanded && 'max-h-48 overflow-hidden')}
-              >
-                <MdPreview
-                  id={textID + '-preview'}
-                  value={notes}
-                  theme={theme}
-                  language={language}
-                  className="host-note-markdown"
-                  noMermaid
-                  noKatex
-                  noEcharts
-                  noHighlight
-                  noImgZoomIn
-                  sanitize={sanitizeNote}
-                />
-              </div>
-              {(overflows || expanded) && (
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="link"
-                  className="mt-1 px-0"
-                  aria-controls={textID}
-                  aria-expanded={expanded}
-                  onClick={() => setExpanded(!expanded)}
-                >
-                  {t(expanded ? 'collapseNotes' : 'expandNotes')}
-                </Button>
-              )}
-            </>
+            <MdPreview
+              id={textID + '-preview'}
+              previewTheme="host-note"
+              value={notes}
+              theme={theme}
+              language={language}
+              className="host-note-markdown"
+              noMermaid
+              noKatex
+              noEcharts
+              noHighlight
+              noImgZoomIn
+              sanitize={sanitizeNote}
+            />
           ) : (
             <p className="m-0 text-[var(--mac-secondary-text)]">{t('noNotes')}</p>
           )}

@@ -100,8 +100,6 @@
   "editNotes": "Modifier les notes",
   "addNotes": "Ajouter des notes",
   "noNotes": "Aucune note pour le moment.",
-  "expandNotes": "Afficher les notes complètes",
-  "collapseNotes": "Afficher moins",
   "saveNotes": "Enregistrer les notes",
   "notesSaved": "Notes enregistrées",
   "notesSaveFailed": "Impossible d’enregistrer les notes. Réessayez.",

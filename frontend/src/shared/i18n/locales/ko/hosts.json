@@ -100,8 +100,6 @@
   "editNotes": "메모 편집",
   "addNotes": "메모 추가",
   "noNotes": "아직 메모가 없습니다.",
-  "expandNotes": "메모 전체 보기",
-  "collapseNotes": "메모 접기",
   "saveNotes": "메모 저장",
   "notesSaved": "메모가 저장되었습니다",
   "notesSaveFailed": "메모를 저장할 수 없습니다. 다시 시도해 주세요.",

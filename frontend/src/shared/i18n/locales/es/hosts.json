@@ -100,8 +100,6 @@
   "editNotes": "Editar notas",
   "addNotes": "Añadir notas",
   "noNotes": "Todavía no hay notas.",
-  "expandNotes": "Ver todas las notas",
-  "collapseNotes": "Mostrar menos",
   "saveNotes": "Guardar notas",
   "notesSaved": "Notas guardadas",
   "notesSaveFailed": "No se pudieron guardar las notas. Inténtalo de nuevo.",

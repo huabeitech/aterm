@@ -100,8 +100,6 @@
   "editNotes": "メモを編集",
   "addNotes": "メモを追加",
   "noNotes": "メモはまだありません。",
-  "expandNotes": "メモをすべて表示",
-  "collapseNotes": "折りたたむ",
   "saveNotes": "メモを保存",
   "notesSaved": "メモを保存しました",
   "notesSaveFailed": "メモを保存できませんでした。もう一度お試しください。",

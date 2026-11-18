@@ -100,8 +100,6 @@
   "editNotes": "編輯備註",
   "addNotes": "新增備註",
   "noNotes": "尚無備註。",
-  "expandNotes": "展開備註",
-  "collapseNotes": "收合備註",
   "saveNotes": "儲存備註",
   "notesSaved": "備註已儲存",
   "notesSaveFailed": "無法儲存備註，請再試一次。",

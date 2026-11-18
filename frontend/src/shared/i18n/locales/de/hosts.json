@@ -100,8 +100,6 @@
   "editNotes": "Notizen bearbeiten",
   "addNotes": "Notizen hinzufügen",
   "noNotes": "Noch keine Notizen.",
-  "expandNotes": "Ganze Notizen anzeigen",
-  "collapseNotes": "Weniger anzeigen",
   "saveNotes": "Notizen speichern",
   "notesSaved": "Notizen gespeichert",
   "notesSaveFailed": "Die Notizen konnten nicht gespeichert werden. Versuche es erneut.",

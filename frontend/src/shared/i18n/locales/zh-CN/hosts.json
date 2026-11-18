@@ -100,8 +100,6 @@
   "editNotes": "编辑备注",
   "addNotes": "添加备注",
   "noNotes": "暂无备注。",
-  "expandNotes": "展开备注",
-  "collapseNotes": "收起备注",
   "saveNotes": "保存备注",
   "notesSaved": "备注已保存",
   "notesSaveFailed": "无法保存备注，请重试。",
