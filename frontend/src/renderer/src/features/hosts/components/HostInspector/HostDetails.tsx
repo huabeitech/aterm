@@ -1,6 +1,6 @@
 import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
 import { Copy, Eye, EyeOff, Server } from 'lucide-react'
@@ -22,6 +22,7 @@ export function HostDetails({
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
+  const connectionHeadingID = useId()
   const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
     ? `[${host.hostName}]`
     : host.hostName
@@ -47,10 +48,15 @@ export function HostDetails({
         </div>
       </header>
       {actions}
-      <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-3 py-2">
-        <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
-      </dl>
-      <div className="min-w-0 pt-3">{notes}</div>
+      <section aria-labelledby={connectionHeadingID} className="min-w-0">
+        <h3 id={connectionHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
+          {t('hosts:connection')}
+        </h3>
+        <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-2">
+          <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
+        </dl>
+      </section>
+      {notes}
     </div>
   )
 }
@@ -259,9 +265,9 @@ function CopyableDetailValue({
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 content-start gap-2 rounded-lg bg-muted/50 px-4 py-3">
+    <div className="grid min-w-0 content-start gap-1 rounded-lg bg-muted/50 px-3 py-2">
       <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
-      <dd className="min-h-6 min-w-0 wrap-anywhere text-left text-[var(--mac-text)]">
+      <dd className="flex min-h-6 min-w-0 items-center wrap-anywhere text-[var(--mac-text)]">
         {children}
       </dd>
     </div>

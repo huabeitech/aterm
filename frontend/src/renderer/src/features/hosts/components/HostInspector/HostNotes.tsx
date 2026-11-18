@@ -55,9 +55,9 @@ export function HostNotes({
   }
 
   return (
-    <section aria-labelledby={headingID} className="min-w-0">
-      <div className="mb-2 flex min-h-6 flex-wrap items-center gap-x-2">
-        <h3 id={headingID} className="m-0 font-semibold text-[var(--mac-text)]">{t('notes')}</h3>
+    <section aria-labelledby={headingID} className="mt-2 min-w-0">
+      <div className="mb-2 flex min-h-6 flex-wrap items-center justify-between gap-x-2">
+        <h3 id={headingID} className="m-0 text-sm font-semibold text-[var(--mac-text)]">{t('notes')}</h3>
         {!draft && (
           <Button
             ref={editButton}
@@ -137,7 +137,7 @@ export function HostNotes({
           </div>
         </form>
       ) : (
-        <div className="rounded-md bg-[var(--mac-content)] py-2">
+        <div className="rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] px-3 py-3">
           {notes ? (
             <MdPreview
               id={textID + '-preview'}
