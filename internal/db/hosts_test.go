@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"testing"
 
+	"ssh-connect/internal/domain"
 	"ssh-connect/internal/service"
 )
 
@@ -77,6 +79,40 @@ func TestHostCRUD(t *testing.T) {
 	}
 	if len(hosts) != 0 {
 		t.Fatalf("ListHosts() len after delete = %d, want 0", len(hosts))
+	}
+}
+
+func TestUpdateHostNotesOnlyChangesRemarkAndTimestamp(t *testing.T) {
+	store := openTestStore(t)
+	host, err := store.CreateHost(service.HostInput{
+		Name: "gateway", Alias: "prod-gateway", HostName: "192.0.2.1",
+		User: "deploy", Port: 2222, ProxyJump: "bastion",
+		PasswordAuth: true, Favorite: true, Remark: "Old note",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, err = store.MarkHostUsed(host.ID, "2026-01-01T00:00:00Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, notes := range []string{"First line\nSecond line", ""} {
+		saved, err := store.UpdateHostNotes(host.ID, notes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if saved.UpdatedAt <= host.UpdatedAt {
+			t.Fatalf("UpdatedAt = %q, want after %q", saved.UpdatedAt, host.UpdatedAt)
+		}
+		expected := host
+		expected.Remark = notes
+		expected.UpdatedAt = saved.UpdatedAt
+		if !reflect.DeepEqual(saved, expected) {
+			t.Fatalf("saved host = %+v, want %+v", saved, expected)
+		}
+	}
+	if _, err := store.UpdateHostNotes("missing", "Notes"); !errors.Is(err, domain.ErrHostNotFound) {
+		t.Fatalf("UpdateHostNotes(missing) error = %v, want host not found", err)
 	}
 }
 

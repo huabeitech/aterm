@@ -26,6 +26,7 @@ type HostStore interface {
 	CountHosts() (int, error)
 	CreateHost(input HostInput) (Host, error)
 	UpdateHost(id string, input HostInput) (Host, error)
+	UpdateHostNotes(id, notes string) (Host, error)
 	MoveHosts(ids []string, directoryID string) ([]Host, error)
 	ReorderHosts(scopeType string, scopeID string, ids []string) ([]Host, error)
 	MarkHostUsed(id string, usedAt string) (Host, error)

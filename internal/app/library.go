@@ -41,6 +41,20 @@ func (a *App) desktopLibrary(raw []json.RawMessage) (any, error) {
 			return nil, err
 		}
 		return a.UpdateHost(id, input)
+	case "updateHostNotes":
+		id, err := argument[string](args, 0)
+		if err != nil {
+			return nil, err
+		}
+		notes, err := argument[string](args, 1)
+		if err != nil {
+			return nil, err
+		}
+		svc, err := a.service()
+		if err != nil {
+			return nil, err
+		}
+		return svc.UpdateHostNotes(a.ctx, id, notes)
 	case "deleteHosts":
 		ids, err := argument[[]string](args, 0)
 		if err != nil {

@@ -84,6 +84,13 @@ func (s *HostService) UpdateHost(ctx context.Context, id string, input HostInput
 	return host, nil
 }
 
+func (s *HostService) UpdateHostNotes(ctx context.Context, id, notes string) (Host, error) {
+	if err := ctx.Err(); err != nil {
+		return Host{}, err
+	}
+	return s.store.UpdateHostNotes(id, strings.TrimSpace(notes))
+}
+
 func (s *HostService) MoveHosts(ctx context.Context, ids []string, directoryID string) ([]Host, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err

@@ -41,7 +41,7 @@ export function HostDetailsToolbar({
   )
   return (
     <header
-      className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[var(--mac-separator)] bg-[var(--workspace-background)] px-6 py-2 [-webkit-app-region:no-drag]"
+      className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 py-0 [-webkit-app-region:no-drag]"
       role="toolbar"
       aria-label={t('hosts:hostActions')}
     >

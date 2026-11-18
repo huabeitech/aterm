@@ -281,9 +281,10 @@ function Workbench({
     }
   }
   function renderHostDetails(hostID: string, groupID: string) {
-    return library.renderHostDetails(hostID, {
+    return library.renderHostDetails(hostID, groupID, {
       connect: () => void connectHost(hostID, { groupID }),
       openFiles: () => void openFiles(hostID, groupID),
+      keepOpen: () => tabs.keepTabOpen(`terminal:${groupID}`),
       connecting: connectingHostTabs.has(groupID),
     })
   }
@@ -330,20 +331,23 @@ function Workbench({
     await openHostSession(target, id, 'files')
   }
   async function closeConnection(id: string) {
-    if (closingConnections.current.has(id)) return
+    if (closingConnections.current.has(id)) return true
     closingConnections.current.add(id)
     try {
+      if (!(await library.confirmCloseHostNotes(id))) return false
       if (terminal.sessionForGroup(id)) {
-        if (!(await files.close(id))) return
+        if (!(await files.close(id))) return false
         terminal.closeGroup(id)
       } else {
         tabs.removeTabs([`terminal:${id}`])
       }
+      library.discardHostNotes(id)
       setConnectionViews((previous) => {
         const next = { ...previous }
         delete next[id]
         return next
       })
+      return true
     } finally {
       closingConnections.current.delete(id)
     }
@@ -401,8 +405,10 @@ function Workbench({
     if (activeView === 'settings') setActiveView('all')
     tabs.removeTabs(['settings'])
   }
-  function closeTabs(ids: (typeof tabs.activeWorkspaceTab)[]) {
-    for (const id of ids) if (id.startsWith('terminal:')) void closeConnection(id.slice(9))
+  async function closeTabs(ids: (typeof tabs.activeWorkspaceTab)[]) {
+    for (const id of ids) {
+      if (id.startsWith('terminal:') && !(await closeConnection(id.slice(9)))) return
+    }
     tabs.removeTabs(ids.filter((id) => !id.startsWith('terminal:')))
     if (ids.includes('settings') && activeView === 'settings') setActiveView('all')
   }

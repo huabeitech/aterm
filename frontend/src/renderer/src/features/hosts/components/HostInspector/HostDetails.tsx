@@ -1,87 +1,146 @@
 import { t, i18n } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
-import { Copy, Eye, EyeOff } from 'lucide-react'
+import { Clock3, Copy, Eye, EyeOff, Folder, Server } from 'lucide-react'
 import { domain } from '../../../../api/types'
+import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
 
 export function HostDetails({
   host,
   directoryName,
+  jumpHostName,
+  notes,
+  actions,
   onGetHostPassword
 }: {
   host: domain.Host
   directoryName: string
+  jumpHostName?: string
+  notes: ReactNode
+  actions?: ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   useTranslation()
+  const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
+    ? `[${host.hostName}]`
+    : host.hostName
+  const endpoint = `${host.user ? `${host.user}@` : ''}${address}:${host.port || 22}`
+  const jumpHost = jumpHostName || host.proxyJump
   return (
-    <div className="grid w-full max-w-3xl gap-5 px-6 pt-5 pb-8 text-[length:var(--app-text-13)]">
-      <h2 className="m-0 wrap-anywhere text-lg font-semibold text-[var(--mac-text)]">
-        {host.name}
-      </h2>
-      <DetailGroup title={t('hosts:connection')}>
-        <DetailRow label={t('hosts:directory')}>{directoryName}</DetailRow>
-        {host.alias && (
-          <DetailRow label={t('hosts:hostAlias')}>
-            <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
-          </DetailRow>
-        )}
-        <DetailRow label={t('hosts:address')}>
-          <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
-        </DetailRow>
-        <DetailRow label={t('hosts:username')}>
-          <CopyableDetailValue value={host.user} label={t('hosts:username')} fallback="-" />
-        </DetailRow>
-        <DetailRow label={t('hosts:port')}>{String(host.port || 22)}</DetailRow>
-        <DetailRow label={t('hosts:jumpHost')}>
-          {host.proxyJump || t('hosts:directConnection')}
-        </DetailRow>
-      </DetailGroup>
-      <DetailGroup title={t('hosts:metadata')}>
-        <DetailRow label={t('hosts:notes')} multiline>
-          {host.remark || '-'}
-        </DetailRow>
-        <DetailRow label={t('hosts:updated')}>{formatDate(host.updatedAt)}</DetailRow>
-      </DetailGroup>
-      <DetailGroup title={t('hosts:authentication')}>
-        <DetailRow label={t('hosts:method')}>
-          {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
-        </DetailRow>
-        {host.passwordAuth ? (
-          <DetailRow label={t('hosts:password')}>
-            <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
-          </DetailRow>
-        ) : (
-          <>
-            <DetailRow label={t('hosts:privateKeyFile')}>
-              {host.identityFile || t('hosts:defaultSshKeys')}
-            </DetailRow>
-            <DetailRow label={t('hosts:agentForwarding')}>
-              {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-            </DetailRow>
-          </>
-        )}
-        <DetailRow label={t('hosts:compression')}>
-          {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-        </DetailRow>
-      </DetailGroup>
-      <DetailGroup title={t('hosts:reliability')}>
-        <DetailRow label={t('hosts:keepaliveInterval')}>
-          {secondsLabel(host.serverAliveInterval)}
-        </DetailRow>
-        <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
-          {host.serverAliveCountMax > 0 ? String(host.serverAliveCountMax) : t('hosts:default')}
-        </DetailRow>
-        <DetailRow label={t('hosts:connectionTimeout')}>
-          {secondsLabel(host.connectTimeout)}
-        </DetailRow>
-      </DetailGroup>
+    <div className="grid w-full min-w-0 gap-4 px-4 pt-4 pb-6 text-[length:var(--app-text-13)] sm:px-6">
+      <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+        <Folder size={14} aria-hidden="true" />
+        <span className="wrap-anywhere">{directoryName}</span>
+      </div>
+      <header className="flex min-w-0 items-start gap-3">
+        <div className="grid size-12 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
+          <Server size={28} aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="m-0 wrap-anywhere text-2xl leading-tight font-semibold text-[var(--mac-text)]">
+            {host.name}
+          </h2>
+          <div className="font-mono text-[var(--mac-secondary-text)]">
+            <CopyableDetailValue
+              value={endpoint}
+              copyValue={host.hostName}
+              label={t('hosts:address')}
+            />
+          </div>
+        </div>
+      </header>
+      {actions}
+      <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-x-8 gap-y-6 py-2">
+        <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
+      </dl>
+      <div className="min-w-0 pt-3">{notes}</div>
+      <footer className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <Clock3 size={13} aria-hidden="true" />
+        <span>{t('hosts:updated')}</span>
+        <span>{formatDate(host.updatedAt)}</span>
+      </footer>
     </div>
   )
+}
+
+function FullHostDetails({
+  host,
+  jumpHost,
+  onGetHostPassword
+}: {
+  host: domain.Host
+  jumpHost: string
+  onGetHostPassword: (id: string) => Promise<string | null>
+}) {
+  return (
+    <>
+      <DetailRow label={t('hosts:address')}>
+        <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
+      </DetailRow>
+      <DetailRow label={t('hosts:username')}>
+        <CopyableDetailValue value={host.user} label={t('hosts:username')} fallback="-" />
+      </DetailRow>
+      <DetailRow label={t('hosts:port')}>{String(host.port || 22)}</DetailRow>
+      {host.alias && (
+        <DetailRow label={t('hosts:hostAlias')}>
+          <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+        </DetailRow>
+      )}
+      <DetailRow label={t('hosts:jumpHost')}>
+        {jumpHost || t('hosts:directConnection')}
+      </DetailRow>
+      <DetailRow label={t('hosts:authentication')}>
+        {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
+      </DetailRow>
+      {host.passwordAuth ? (
+        <DetailRow label={t('hosts:password')}>
+          <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
+        </DetailRow>
+      ) : (
+        <>
+          <DetailRow label={t('hosts:privateKeyFile')}>
+            <IdentityDetailValue identityFile={host.identityFile} />
+          </DetailRow>
+          <DetailRow label={t('hosts:agentForwarding')}>
+            {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
+          </DetailRow>
+        </>
+      )}
+      <DetailRow label={t('hosts:compression')}>
+        {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+      </DetailRow>
+    </>
+  )
+}
+
+function IdentityDetailValue({ identityFile }: { identityFile: string }) {
+  const [keyName, setKeyName] = useState<{ identity: string; name: string } | null>(null)
+  const managed = identityFile.startsWith('aterm-key://')
+
+  useEffect(() => {
+    if (!managed) return
+    let active = true
+    void (async () => {
+      try {
+        const status = await desktop.library.vaultStatus()
+        if (!active || !status.unlocked) return
+        const keys = await desktop.library.listManagedKeys()
+        const key = keys.find((item) => identityFile === `aterm-key://${item.id}`)
+        if (active && key) setKeyName({ identity: identityFile, name: key.name })
+      } catch {
+        // The localized key source remains available when the vault is locked.
+      }
+    })()
+    return () => { active = false }
+  }, [identityFile, managed])
+
+  const value = managed
+    ? (keyName?.identity === identityFile ? keyName.name : t('hosts:managedSshKey'))
+    : identityFile || t('hosts:defaultSshKeys')
+  return <span className="block truncate" title={identityFile || value}>{value}</span>
 }
 
 function PasswordDetailValue({
@@ -100,7 +159,9 @@ function PasswordDetailValue({
   useEffect(() => {
     setPassword(null)
     setVisible(false)
-    if (hideTimer.current) window.clearTimeout(hideTimer.current)
+    return () => {
+      if (hideTimer.current) window.clearTimeout(hideTimer.current)
+    }
   }, [host.id])
 
   function scheduleHide() {
@@ -170,42 +231,43 @@ function PasswordDetailValue({
 
 function CopyableDetailValue({
   value,
+  copyValue = value,
   label,
   fallback
 }: {
   value?: string
+  copyValue?: string
   label: string
   fallback?: string
 }) {
   useTranslation()
   if (!value) return <>{fallback ?? '-'}</>
-  async function copyValue(event: React.MouseEvent<HTMLButtonElement>) {
+  async function copy(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
+    if (!copyValue) return
     try {
-      await ClipboardSetText(value!)
+      await ClipboardSetText(copyValue)
     } catch {
-      await navigator.clipboard?.writeText(value!)
+      await navigator.clipboard?.writeText(copyValue)
     }
     toast.add({ title: t('hosts:copied'), type: 'success' })
   }
   return (
-    <span className="inline-flex max-w-full items-center gap-1">
-      <span className="min-w-0 wrap-anywhere">
+    <span className="group/copy inline-flex max-w-full items-center gap-1">
+      <span className="min-w-0 truncate" title={value}>
         {value}
       </span>
       <IconButton
-        className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+        className="size-6 shrink-0 text-muted-foreground opacity-40 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 group-hover/copy:opacity-100 group-focus-within/copy:opacity-100 [@media(hover:none)]:opacity-100"
         icon={<Copy size={13} />}
         title={t('hosts:copyField', { label })}
         aria-label={t('hosts:copyField', { label })}
-        onClick={copyValue}
+        onClick={copy}
       />
     </span>
   )
 }
 
-const secondsLabel = (value: number) =>
-  value > 0 ? t('hosts:seconds', { count: value }) : t('hosts:default')
 function formatDate(value: string) {
   if (!value) return '-'
   const date = new Date(value)
@@ -217,36 +279,11 @@ function formatDate(value: string) {
       }).format(date)
 }
 
-function DetailGroup({ title, children }: { title: string; children: ReactNode }) {
+function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="min-w-0">
-      <h3 className="mb-2 px-3 text-xs font-semibold text-[var(--mac-secondary-text)]">{title}</h3>
-      <dl className="overflow-hidden rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)]">
-        {children}
-      </dl>
-    </section>
-  )
-}
-
-function DetailRow({
-  label,
-  children,
-  multiline = false
-}: {
-  label: string
-  children: ReactNode
-  multiline?: boolean
-}) {
-  return (
-    <div className={cn(
-      'grid min-h-11 items-center gap-y-1 border-b border-[var(--mac-separator)] px-3 py-2 last:border-b-0',
-      !multiline && 'grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4'
-    )}>
-      <dt className="min-w-0 wrap-anywhere">{label}</dt>
-      <dd className={cn(
-        'min-w-0 wrap-anywhere text-[var(--mac-secondary-text)]',
-        multiline ? 'whitespace-pre-wrap' : 'flex items-center justify-end text-right'
-      )}>
+    <div className="grid min-w-0 content-start gap-1.5">
+      <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
+      <dd className="min-h-6 min-w-0 wrap-anywhere text-left text-[var(--mac-text)]">
         {children}
       </dd>
     </div>

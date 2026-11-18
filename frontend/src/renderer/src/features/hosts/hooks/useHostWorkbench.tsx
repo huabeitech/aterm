@@ -27,6 +27,8 @@ import {
 import { buildSSHCommand } from '../model/sshCommand'
 import { HostDetailsToolbar } from '../components/HostInspector/HostDetailsToolbar'
 import { HostDetails } from '../components/HostInspector/HostDetails'
+import { HostNotes } from '../components/HostInspector/HostNotes'
+import { useHostNotes } from './useHostNotes'
 import { BatchAddHostsModal } from '../../../components/hosts/BatchAddHostsModal'
 import { desktop } from '../../../api/app'
 import type { BusyAction, EditorMode, FormState, ViewID } from '../../../components/common/types'
@@ -62,6 +64,7 @@ export function useHostWorkbench(
   const { modal, message, notification } = useAppUI()
   const hostRepo = useHostRepository(),
     dirRepo = useDirectoryRepository()
+  const notes = useHostNotes(hostRepo.updateHostNotes)
   const {
     hosts,
     selectedID,
@@ -274,27 +277,49 @@ export function useHostWorkbench(
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
   function renderHostDetails(
     id: string,
-    actions: { connect: () => void; openFiles: () => void; connecting: boolean }
+    groupID: string,
+    actions: {
+      connect: () => void
+      openFiles: () => void
+      keepOpen: () => void
+      connecting: boolean
+    }
   ) {
     const host = hosts.find((item) => item.id === id)
     if (!host) return <p className="p-4 text-muted-foreground">{t('hosts:thisHostNoLongerExists')}</p>
     return (
-      <div key={id} className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)]">
-        <HostDetailsToolbar
-          favorite={host.favorite}
-          disabled={!!busyAction || actions.connecting}
-          connecting={actions.connecting}
-          pluginActions={renderPluginActions(id)}
-          onConnect={actions.connect}
-          onEdit={() => editor.startEditHost(id)}
-          onOpenFiles={actions.openFiles}
-          onCopy={() => void copySSHCommand(id)}
-          onFavorite={() => void editor.toggleFavoriteHost(id)}
-        />
-        <ScrollArea className="min-h-0">
+      <div key={id} className="h-full min-h-0 min-w-0">
+        <ScrollArea className="h-full min-h-0">
           <HostDetails
+            actions={
+              <HostDetailsToolbar
+                favorite={host.favorite}
+                disabled={!!busyAction || actions.connecting}
+                connecting={actions.connecting}
+                pluginActions={renderPluginActions(id)}
+                onConnect={actions.connect}
+                onEdit={() => editor.startEditHost(id)}
+                onOpenFiles={actions.openFiles}
+                onCopy={() => void copySSHCommand(id)}
+                onFavorite={() => void editor.toggleFavoriteHost(id)}
+              />
+            }
             host={host}
             directoryName={directoryLabel(host.directoryID, directories)}
+            jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
+            notes={
+              <HostNotes
+                notes={host.remark}
+                draft={notes.drafts[groupID]}
+                onEdit={() => {
+                  actions.keepOpen()
+                  notes.begin(groupID, id, host.remark)
+                }}
+                onChange={(value) => notes.change(groupID, value)}
+                onCancel={() => notes.discard(groupID)}
+                onSave={() => notes.save(groupID)}
+              />
+            }
             onGetHostPassword={getPassword}
           />
         </ScrollArea>
@@ -303,6 +328,7 @@ export function useHostWorkbench(
   }
   const overlays = (
     <>
+      {notes.closeDialog}
       <BatchAddHostsModal
         open={batchAddOpen}
         onCancel={() => setBatchAddOpen(false)}
@@ -396,6 +422,8 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
+    confirmCloseHostNotes: notes.confirmClose,
+    discardHostNotes: notes.discard,
     renderHostDetails
   }
 }
