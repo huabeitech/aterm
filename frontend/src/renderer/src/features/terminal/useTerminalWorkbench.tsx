@@ -54,7 +54,7 @@ export function useTerminalWorkbench(
   unlock: () => Promise<boolean>,
   onConnected: () => void,
   onOpenFiles: (id: FileTarget, groupID: string) => void,
-  onOpenHost: (id: string) => void,
+  onOpenHost: (id: string, groupID: string) => void,
   connectionViews: Record<string, ConnectionView>,
   renderConnection: (
     id: string,
@@ -104,7 +104,7 @@ export function useTerminalWorkbench(
     for (const session of Object.values(sessions)) {
       if (session.state !== 'exited') continue
       const group = current.current.groups.find((g) => paneIDs(g.root).includes(session.id))
-      // A connection that has used files must survive its SSH process exiting.
+      // Keep saved Host workspaces and file views available after their shell exits.
       if (group && !(session.kind === 'ssh' && connectionViews[group.id]))
         closePane(group.id, session.id)
     }
@@ -117,26 +117,47 @@ export function useTerminalWorkbench(
     )
       return null
     const session = await desktop.terminal.open(request)
-    setSessions((previous) => ({ ...previous, [session.id]: session }))
+    current.current.sessions = {
+      ...current.current.sessions,
+      [session.id]: current.current.sessions[session.id] ?? session
+    }
+    setSessions((previous) =>
+      previous[session.id] ? previous : { ...previous, [session.id]: session }
+    )
     return session
   }
-  async function open(request: TerminalRequest, onCreated?: (id: string) => void) {
+  async function open(request: TerminalRequest, workspaceID?: string) {
     try {
       const session = await create(request)
       if (!session) return
-      onCreated?.(session.id)
+      const id = workspaceID ?? session.id
+      const tab = `terminal:${id}` as const
+      if (workspaceID && !tabs.findRecentTab((item) => item.id === tab)) {
+        try {
+          await desktop.terminal.close(session.id)
+        } finally {
+          setSessions((previous) => {
+            const next = { ...previous }
+            delete next[session.id]
+            return next
+          })
+        }
+        return
+      }
       updateGroups((previous) => [
         ...previous,
         {
-          id: session.id,
+          id,
           root: leaf(session.id),
           focused: session.id,
           localNumber: session.localNumber
         }
       ])
-      tabs.openWorkspaceTab(`terminal:${session.id}`)
-      tabs.setActiveWorkspaceTab(`terminal:${session.id}`)
-      return session.id
+      if (!workspaceID) {
+        tabs.openWorkspaceTab(tab)
+        tabs.setActiveWorkspaceTab(tab)
+      }
+      return id
     } catch (error) {
       report(error)
     }
@@ -347,7 +368,7 @@ export function useTerminalWorkbench(
               key: 'details',
               icon: <Info size={14} />,
               label: t('terminal:hostConnectionDetails'),
-              onClick: () => onOpenHost(session.hostID!)
+              onClick: () => onOpenHost(session.hostID!, groupID)
             }
           ]
         : []),

@@ -46,6 +46,16 @@ export function HostDetails({
           </DetailRow>
         </dl>
       </DetailSection>
+      <DetailSection title={t('hosts:metadata')}>
+        <dl className="host-details-table overflow-hidden rounded-md border border-border">
+          <DetailRow label={t('hosts:notes')}>
+            <div className="remark-content max-w-full wrap-anywhere whitespace-pre-wrap [word-break:break-word]">
+              {host.remark || '-'}
+            </div>
+          </DetailRow>
+          <DetailRow label={t('hosts:updated')}>{formatDate(host.updatedAt)}</DetailRow>
+        </dl>
+      </DetailSection>
       {pluginActions}
       <DetailSection title={t('hosts:authentication')}>
         <dl className="host-details-table overflow-hidden rounded-md border border-border">
@@ -90,16 +100,6 @@ export function HostDetails({
           <DetailRow label={t('hosts:connectionTimeout')}>
             {secondsLabel(host.connectTimeout)}
           </DetailRow>
-        </dl>
-      </DetailSection>
-      <DetailSection title={t('hosts:metadata')}>
-        <dl className="host-details-table overflow-hidden rounded-md border border-border">
-          <DetailRow label={t('hosts:notes')}>
-            <div className="remark-content max-w-full wrap-anywhere whitespace-pre-wrap [word-break:break-word]">
-              {host.remark || '-'}
-            </div>
-          </DetailRow>
-          <DetailRow label={t('hosts:updated')}>{formatDate(host.updatedAt)}</DetailRow>
         </dl>
       </DetailSection>
     </div>

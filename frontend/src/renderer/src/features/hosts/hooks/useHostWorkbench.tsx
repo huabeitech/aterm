@@ -25,7 +25,8 @@ import {
   directoryLabel
 } from '../../directories/model/directoryModel'
 import { buildSSHCommand } from '../model/sshCommand'
-import { HostInspectorPanel } from '../../../components/hosts/HostInspector'
+import { HostDetailsToolbar } from '../components/HostInspector/HostDetailsToolbar'
+import { HostDetails } from '../components/HostInspector/HostDetails'
 import { BatchAddHostsModal } from '../../../components/hosts/BatchAddHostsModal'
 import { desktop } from '../../../api/app'
 import type { BusyAction, EditorMode, FormState, ViewID } from '../../../components/common/types'
@@ -54,6 +55,7 @@ const emptyForm: FormState = {
 export function useHostWorkbench(
   connectHost: (id: string) => void,
   openFiles: (id: string) => void,
+  openHost: (id: string) => void,
   renderPluginActions: (id: string) => import("react").ReactNode
 ) {
   useTranslation()
@@ -81,7 +83,6 @@ export function useHostWorkbench(
   const [inspectorOpen, setInspectorOpen] = useState(false)
   const [batchAddOpen, setBatchAddOpen] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
-  const detailsDialogRef = useRef<HTMLDivElement>(null)
   const { ensureSecureDataUnlocked } = useSecureData(setBusyAction)
   const selected = hosts.find((h) => h.id === selectedID) ?? null
   const visibleSelectedIDs = selectedHostIDs.filter((id) => hosts.some((h) => h.id === id))
@@ -216,7 +217,7 @@ export function useHostWorkbench(
     onCreateHost: editor.startCreate,
     onEditHost: editor.startEditHost,
     onRenameHost: editor.renameHost,
-    onOpenHost: (id: string) => editor.openHost(id),
+    onOpenHost: openHost,
     onConnectHost: connectHost,
     onOpenFiles: openFiles,
     onDeleteHosts: editor.confirmDeleteHosts,
@@ -271,50 +272,39 @@ export function useHostWorkbench(
   }, [inspectorOpen, editorMode, busyAction, editor.saveHost])
   const editorOpen =
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
-  const detailsOpen = inspectorOpen && editorMode === 'view' && !!selected
-  function renderInspector(host: typeof selected, mode: EditorMode) {
+  function renderHostDetails(
+    id: string,
+    actions: { connect: () => void; openFiles: () => void; connecting: boolean }
+  ) {
+    const host = hosts.find((item) => item.id === id)
+    if (!host) return <p className="p-4 text-muted-foreground">{t('hosts:thisHostNoLongerExists')}</p>
     return (
-      <HostInspectorPanel
-        mode={mode}
-        key={host?.id ?? 'empty'}
-        host={host}
-        directoryName={
-          host ? directoryLabel(host.directoryID, directories) : t('hosts:rootDirectory')
-        }
-        directories={directoryOptions}
-        hosts={hosts}
-        form={form}
-        errors={formErrors}
-        busyAction={busyAction}
-        connectDisabledReason={host ? null : t('hosts:selectAHost')}
-        connectionFeaturesAvailable
-        copySSHCommandAvailable={!!host}
-        onChange={(next) => {
-          setForm(next)
-          setFormErrors({})
-        }}
-        onCancel={editor.cancelInspectorEdit}
-        onSave={editor.saveHost}
-        onStartEdit={() => host && editor.startEditHost(host.id)}
-        onConnect={() => {
-          if (host) {
-            setInspectorOpen(false)
-            connectHost(host.id)
-          }
-        }}
-        fileFeaturesAvailable
-        onOpenFiles={() => {
-          if (host) {
-            setInspectorOpen(false)
-            openFiles(host.id)
-          }
-        }}
-        onCopySSHCommand={() => host && void copySSHCommand(host.id)}
-        onToggleFavorite={() => host && void editor.toggleFavoriteHost(host.id)}
-        onStartCreate={editor.startCreate}
-        pluginActions={host?renderPluginActions(host.id):null}
-        onGetHostPassword={getPassword}
-      />
+      <div key={id} className="host-inspector grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+        <HostDetailsToolbar
+          favorite={host.favorite}
+          disabled={!!busyAction || actions.connecting}
+          connecting={actions.connecting}
+          connectDisabledReason={null}
+          canConnect
+          canOpenFiles
+          canCopy
+          onConnect={actions.connect}
+          onEdit={() => editor.startEditHost(id)}
+          onOpenFiles={actions.openFiles}
+          onCopy={() => void copySSHCommand(id)}
+          onFavorite={() => void editor.toggleFavoriteHost(id)}
+        />
+        <ScrollArea className="min-h-0 overflow-auto p-4">
+          <div className="mx-auto max-w-3xl">
+            <HostDetails
+              host={host}
+              directoryName={directoryLabel(host.directoryID, directories)}
+              pluginActions={renderPluginActions(id)}
+              onGetHostPassword={getPassword}
+            />
+          </div>
+        </ScrollArea>
+      </div>
     )
   }
   const overlays = (
@@ -390,42 +380,6 @@ export function useHostWorkbench(
           </DialogContent>
         </Dialog>
       )}
-      {detailsOpen && (
-        <Dialog
-          open
-          onOpenChange={(open) => {
-            if (!open) editor.closeInspector()
-          }}
-        >
-          <DialogContent
-            onOpenAutoFocus={(event) => {
-              // Focus the dialog instead of opening the first action's tooltip.
-              event.preventDefault()
-              detailsDialogRef.current?.focus()
-            }}
-            onKeyDownCapture={(event) => {
-              if (event.key === 'Escape') {
-                event.preventDefault()
-                event.stopPropagation()
-                editor.closeInspector()
-              }
-            }}
-            className="host-details-modal flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(calc(100vw-2rem),calc(640px*var(--app-layout-scale)))]"
-            aria-describedby={undefined}
-          >
-            <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">
-              <DialogTitle>{t('hosts:hostDetails')}</DialogTitle>
-            </DialogHeader>
-            <div
-              ref={detailsDialogRef}
-              tabIndex={-1}
-              className="host-inspector grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[var(--inspector-background)] outline-none"
-            >
-              {renderInspector(selected, editorMode)}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </>
   )
   function prepareSettings() {
@@ -439,7 +393,7 @@ export function useHostWorkbench(
     unlockForData: () => ensureSecureDataUnlocked(),
     refresh: () => void refreshAll().catch((error) => reportError(String(error))),
     prepareSettings,
-    overlayOpen: detailsOpen || editorOpen || batchAddOpen,
+    overlayOpen: editorOpen || batchAddOpen,
     hosts,
     activeView,
     setActiveView,
@@ -448,6 +402,6 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
-    openHost: editor.openHost
+    renderHostDetails
   }
 }

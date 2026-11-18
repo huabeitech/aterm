@@ -95,19 +95,6 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     setInspectorOpen(false)
   }
 
-  function openHost(id: string) {
-    if (!options.hosts.some((host) => host.id === id)) {
-      options.reportError(t('hosts:thisHostNoLongerExists'))
-      return
-    }
-    options.setSelectedID(id)
-    options.setSelectedHostIDs([id])
-    options.setSelectionAnchorID(id)
-    setEditorMode('view')
-    setFormErrors({})
-    setInspectorOpen(true)
-  }
-
   function startCreate(directoryID?: string) {
     setForm({
       ...emptyForm,
@@ -311,7 +298,6 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     batchAddOpen,
     setBatchAddOpen,
     selectHost,
-    openHost,
     startCreate,
     openBatchAdd,
     startEdit,

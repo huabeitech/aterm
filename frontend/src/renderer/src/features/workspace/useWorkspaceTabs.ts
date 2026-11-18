@@ -12,7 +12,9 @@ import {
   adjacentWorkspaceTab,
   createFilesWorkspaceTab,
   createWorkspaceTab,
+  keepWorkspaceTabOpen,
   nextWorkspaceTabAfterClose,
+  openHostWorkspaceTab,
   removeWorkspaceTabs,
   reorderWorkspaceTabs,
   type WorkspaceTab,
@@ -38,17 +40,15 @@ export function useWorkspaceTabs() {
   const tabHistoryRef = useRef<WorkspaceTabID[]>([])
 
   const setActiveWorkspaceTab = useCallback((tab: SetStateAction<WorkspaceTabID>) => {
-    setActiveWorkspaceTabState((current) => {
-      const next = typeof tab === 'function' ? tab(current) : tab
-      if (next !== current) {
-        tabHistoryRef.current = [
-          current,
-          ...tabHistoryRef.current.filter((item) => item !== current && item !== next)
-        ]
-      }
-      activeWorkspaceTabRef.current = next
-      return next
-    })
+    const current = activeWorkspaceTabRef.current
+    const next = typeof tab === 'function' ? tab(current) : tab
+    if (next === current) return
+    tabHistoryRef.current = [
+      current,
+      ...tabHistoryRef.current.filter((item) => item !== current && item !== next)
+    ]
+    activeWorkspaceTabRef.current = next
+    setActiveWorkspaceTabState(next)
   }, [])
 
   const setTabs = useCallback((next: WorkspaceTab[]) => {
@@ -59,6 +59,30 @@ export function useWorkspaceTabs() {
   function openWorkspaceTab(tab: WorkspaceTabID) {
     if (tab === 'home') return
     setTabs(addWorkspaceTab(workspaceTabsStateRef.current, createWorkspaceTab(tab)))
+  }
+
+  function openHostTab(hostID: string, preview: boolean) {
+    const current = workspaceTabsStateRef.current
+    const { tabs, tab } = openHostWorkspaceTab(current, hostID, preview)
+    setTabs(tabs)
+    setActiveWorkspaceTab(tab.id)
+    tabHistoryRef.current = tabHistoryRef.current.filter((id) => tabs.some((item) => item.id === id))
+    return tab
+  }
+
+  function keepTabOpen(id: WorkspaceTabID) {
+    const current = workspaceTabsStateRef.current
+    const next = keepWorkspaceTabOpen(current, id)
+    if (next !== current) setTabs(next)
+  }
+
+  function findRecentTab(predicate: (tab: WorkspaceTab) => boolean) {
+    const candidates = workspaceTabsStateRef.current.filter(predicate)
+    for (const id of [activeWorkspaceTabRef.current, ...tabHistoryRef.current]) {
+      const match = candidates.find((tab) => tab.id === id)
+      if (match) return match
+    }
+    return candidates[0]
   }
 
   function openFilesWorkspaceTab(hostID: string, afterTab?: WorkspaceTabID) {
@@ -217,6 +241,9 @@ export function useWorkspaceTabs() {
     setTabScrollState,
     workspaceTabsRef,
     openWorkspaceTab,
+    openHostTab,
+    keepTabOpen,
+    findRecentTab,
     openFilesWorkspaceTab,
     removeTabs,
     updateTabScrollState,

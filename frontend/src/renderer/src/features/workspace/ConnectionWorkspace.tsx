@@ -6,14 +6,24 @@ import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { FolderOpen, Terminal, Columns2, ArrowDownUp } from 'lucide-react'
+import { FolderOpen, Terminal, Columns2, ArrowDownUp, Info } from 'lucide-react'
 import { SplitLayout } from '@/components/ui/split-layout'
 import { ActionButton } from '@/components/ui/workbench-controls'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
 import type { FileSession, FileTransfer } from '../../../../shared/contracts/files'
 import './connection.css'
 
-export type ConnectionView = 'terminal' | 'files' | 'split' | `plugin:${string}:${string}`
+export type ConnectionView = 'details' | 'terminal' | 'files' | 'split' | `plugin:${string}:${string}`
+
+export function ConnectionDetailsTab({ active, onSelect }: { active: boolean; onSelect?: () => void }) {
+  const { t } = useTranslation('hosts')
+  return (
+    <button type="button" aria-pressed={active} onClick={onSelect}>
+      <Info size={14} aria-hidden="true" />
+      <span>{t('details')}</span>
+    </button>
+  )
+}
 type Props = {
   cycleViewRef: Ref<() => void>
   active: boolean
@@ -23,6 +33,7 @@ type Props = {
   transfers: FileTransfer[]
   unlock: () => Promise<boolean>
   terminal: ReactNode
+  details?: ReactNode
   renderFiles: (target: HTMLElement | null, transferRequest: number) => ReactNode
   onReconnectSSH: () => void
   onReconnectSFTP: () => void
@@ -37,6 +48,7 @@ export function ConnectionWorkspace({
   fileSession,
   transfers,
   terminal,
+  details,
   unlock,
   renderFiles,
   onReconnectSSH,
@@ -72,7 +84,7 @@ export function ConnectionWorkspace({
   if (selectedPlugin) openedPlugins.current.add(selectedPlugin.key)
   const remote = hasRemoteConnection(session)
   useImperativeHandle(active ? cycleViewRef : null, () => () => {
-    const order: ConnectionView[] = ['terminal']
+    const order: ConnectionView[] = details ? ['details', 'terminal'] : ['terminal']
     if (remote) order.push('files')
     for (const item of views) order.push(item.key)
     if (order.length < 2) return
@@ -82,10 +94,11 @@ export function ConnectionWorkspace({
   })
   useEffect(() => {
     if (pluginSelected && !selectedPlugin) onViewChange('terminal')
-  }, [pluginSelected, !!selectedPlugin])
+    if (view === 'details' && !details) onViewChange('terminal')
+  }, [pluginSelected, !!selectedPlugin, view, !!details])
   const workspaceRef = useRef<HTMLElement>(null)
   useEffect(() => {
-    if (!active || view === 'split' || pluginSelected) return
+    if (!active || view === 'details' || view === 'split' || pluginSelected) return
     const frame = requestAnimationFrame(() => {
       if (document.querySelector('[role="dialog"]')) return
       workspaceRef.current
@@ -98,8 +111,8 @@ export function ConnectionWorkspace({
     })
     return () => cancelAnimationFrame(frame)
   }, [active, view, fileSession?.state])
-  const terminalOpened = useRef(view !== 'files')
-  if (view !== 'files') terminalOpened.current = true
+  const terminalOpened = useRef(view === 'terminal' || view === 'split')
+  if (view === 'terminal' || view === 'split') terminalOpened.current = true
   const [statusTarget, setStatusTarget] = useState<HTMLDivElement | null>(null)
   const [transferRequest, setTransferRequest] = useState(0)
   const [size, setSize] = useState<number | string>('50%')
@@ -157,6 +170,7 @@ export function ConnectionWorkspace({
       aria-label={t('terminal:hostConnection', { host: session.title })}
     >
       <div className="connection-content" data-view={view}>
+        {active && view === 'details' && details}
         {views
           .filter((item) => openedPlugins.current.has(item.key))
           .map((item) => (
@@ -184,7 +198,7 @@ export function ConnectionWorkspace({
               )}
             </div>
           ))}
-        <div style={{ display: pluginSelected ? 'none' : 'contents' }}>
+        <div style={{ display: pluginSelected || view === 'details' ? 'none' : 'contents' }}>
           <SplitLayout
             className="connection-split h-full min-h-0"
             size={size}
@@ -211,6 +225,9 @@ export function ConnectionWorkspace({
         aria-label={t('terminal:connectionStatusAndViews')}
       >
         <div className="connection-views" role="group" aria-label={t('terminal:connectionView')}>
+          {details && (
+            <ConnectionDetailsTab active={view === 'details'} onSelect={() => onViewChange('details')} />
+          )}
           <button
             type="button"
             aria-pressed={view === 'terminal' || view === 'split'}

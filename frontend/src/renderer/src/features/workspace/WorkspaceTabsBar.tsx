@@ -46,6 +46,7 @@ interface WorkspaceTabsBarProps {
   onOpenSettings: () => void
   onCloseSettings: () => void
   onActivateTab: (tab: WorkspaceTabID) => void
+  onKeepTabOpen: (tab: WorkspaceTabID) => void
   onActivateTerminal: (id: string) => void
   terminalActions: (id: string) => MenuAction[]
   onRenameTerminal: (id: string) => void
@@ -159,33 +160,29 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
             ) : null
           }
           const session = props.sessions.find((item) => `terminal:${item.id}` === tab)
-          return session ? (
+          const hostID = workspaceTab.hostID ?? session?.hostID
+          const host = props.hosts.find((item) => item.id === hostID)
+          return session || workspaceTab.hostID ? (
             <WorkspaceTab
               key={tab}
               tab={tab}
-              actions={props.terminalActions(session.id)}
-              label={session.title}
-              number={session.localNumber}
-              onRename={session.localNumber ? () => props.onRenameTerminal(session.id) : undefined}
+              actions={session ? props.terminalActions(session.id) : undefined}
+              label={(workspaceTab.hostID && host?.name) || session?.title || t('hosts:hostDetails')}
+              number={session?.localNumber}
+              onKeepOpen={workspaceTab.preview ? () => props.onKeepTabOpen(tab) : undefined}
+              onRename={session?.localNumber ? () => props.onRenameTerminal(session.id) : undefined}
               onResetName={
-                session.customTitle ? () => props.onResetTerminalName(session.id) : undefined
+                session?.customTitle ? () => props.onResetTerminalName(session.id) : undefined
               }
               tooltip={
-                <TerminalTabDetails
-                  session={session}
-                  host={
-                    session.hostID
-                      ? (props.hosts.find((host) => host.id === session.hostID) ?? null)
-                      : null
-                  }
-                />
+                session ? <TerminalTabDetails session={session} host={host ?? null} /> : undefined
               }
-              icon={hasRemoteConnection(session) ? <Server size={14} /> : <Terminal size={14} />}
+              icon={hostID || (session && hasRemoteConnection(session)) ? <Server size={14} /> : <Terminal size={14} />}
               active={props.activeTab === tab}
               dragging={props.draggingTab === tab}
               dropPosition={dropPosition(props, tab)}
-              onActivate={() => props.onActivateTerminal(session.id)}
-              onClose={() => props.onCloseTerminal(session.id)}
+              onActivate={() => session ? props.onActivateTerminal(session.id) : props.onActivateTab(tab)}
+              onClose={() => session ? props.onCloseTerminal(session.id) : props.onCloseFiles(tab)}
               onCloseAll={props.onCloseAll}
               onCloseOther={props.onCloseOther}
               onCloseToRight={props.onCloseToRight}
@@ -298,7 +295,7 @@ function TerminalTabDetails({
     ? [
         [t('terminal:type'), 'SSH'],
         ...(host?.alias ? [[t('hosts:hostAlias'), host.alias]] : []),
-        ['Host', session.remote?.host || host?.hostName || t('terminal:unavailable')],
+        [t('hosts:address'), session.remote?.host || host?.hostName || t('terminal:unavailable')],
         [
           t('terminal:port'),
           session.remote
