@@ -79,11 +79,28 @@ func (h *nativePluginHost) Call(ctx context.Context, method string, raw json.Raw
 		return nil, err
 	}
 	switch method {
+	case "process.execute", "process.stream.start", "process.stream.stop", "process.stream.ack", "terminal.create", "status.publish":
+		out, err := h.app.desktopPluginManager.Request(ctx, h.id, method, raw)
+		return sdk.JSON(out), err
 	case "secrets.get", "secrets.set", "secrets.delete":
 		value, err := svc.PluginSecret(ctx, h.id, p.Key, strings.TrimPrefix(method, "secrets."), p.Secret)
 		return sdk.JSON(value), err
 	case "storage.get":
-		return svc.PluginData(ctx, h.id, p.Key)
+		value, err := svc.PluginData(ctx, h.id, p.Key)
+		if err == nil && string(value) == "null" && h.app.desktopPluginManager != nil {
+			legacy, e := h.app.desktopPluginManager.Request(ctx, h.id, "storage.get", raw)
+			if e != nil {
+				return nil, e
+			}
+			data := sdk.JSON(legacy)
+			if string(data) != "null" {
+				if e = svc.SavePluginData(ctx, domain.PluginData{PluginID: h.id, Key: p.Key, Value: data}); e != nil {
+					return nil, e
+				}
+				value = data
+			}
+		}
+		return value, err
 	case "storage.set":
 		return sdk.JSON(nil), svc.SavePluginData(ctx, domain.PluginData{PluginID: h.id, Key: p.Key, Value: p.Value, HostIDs: p.HostIDs})
 	case "terminal.open":

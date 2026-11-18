@@ -11,8 +11,10 @@ Existing sandbox JavaScript plugins remain supported.
 - Each plugin ID has one persistent supervisor slot. Concurrent acquisitions share
   startup. Registry replacement, disable, rollback and uninstall drain the old
   process before committing changes. A generation identifies each instance.
-- Pages are consumers, not processes. Business tasks live in the backend and
-  survive closing pages and terminal sessions. Commands also hold a request lease.
+- Pages are consumers, not processes. Independent business tasks live in the backend and
+  survive closing pages and terminal sessions. Session-bound plugins instead
+  release sampling and log streams when their last active surface closes;
+  interactive child terminals are released when the source terminal closes. Commands also hold a request lease.
 - With no consumers or requests, the supervisor checks `runtime.status`. A backend
   with no tasks is stopped after 30 seconds. Hidden views must stop polling.
 - Crashes invalidate the backend and release its host resources. They require an
@@ -121,3 +123,57 @@ replacement, idle collection, crash/lease loss, binary modification, forwarding
 and half-close behavior. Database/service tests cover migration, generic host
 references and encrypted backup of plugin configuration and secrets.
 Platform compilation alone is not native UI or process-cleanup acceptance.
+
+## Session-bound native plugins
+
+Docker (2.0.0) and resource-monitor (3.0.0) use `plugin.ServeSession(factory)`.
+Their Go backends implement `SessionProgram`; their existing React views use the
+same view bridge. A terminal status bar or a `terminal.workspace` /
+`terminal.sidePanel` contribution selects the generic session adapter. No plugin
+ID or business operation is embedded in that adapter.
+
+The host issues a fresh token after execution permission is granted for a local
+or SSH session. `runtime.refresh` supplies that token, host key, session label,
+interval and localization bundle. `runtime.command` uses the same lease;
+`runtime.stream` delivers bounded execution output. `runtime.release` cancels
+in-flight sampling and commands before releasing plugin state. Late refreshes
+cannot resurrect a released token. Visible sessions hold consumer leases on the
+single supervised process; multiple terminals share it. After all leases and
+tasks end, normal idle collection applies. The next refresh restores the current
+locale and bundle even if the worker was collected in between.
+
+Native session host services reuse the existing authorization, audit, execution
+limits and local/SSH transport:
+
+| Method | Arguments / result |
+| --- | --- |
+| `process.execute` | `{token,request}` → `{stdout,stderr,exitCode,truncated}` |
+| `process.stream.start` | `{token,id,request}` → bounded output events |
+| `process.stream.ack` / `stop` | `{token,id}` |
+| `terminal.create` | `{token,request}` → `{terminalSessionId}` |
+| `status.publish` | `{token,state,items,data,views}` |
+
+Process requests require `process.execute`; interactive requests require
+`terminal.create`. The manifest's execution policy still declares programs,
+targets and environment overrides. Releasing a session or a crashed worker
+revokes its tokens and host-owned resources. Native execution remains trusted
+code, rather than an OS sandbox.
+
+Both plugins are packaged through `scripts/build-native-plugin.mjs`, also used by
+SSH tunnels. A macOS build without `GOARCH` emits both Apple Silicon and Intel
+packages. CI packages all three plugins for macOS, Linux and Windows on amd64 and
+arm64. Node.js is a build dependency only. The Go backend and inline React HTML
+are shipped in each archive; no JavaScript backend or Node runtime is shipped.
+Install the matching platform archive to update an existing script plugin; the
+native-code installation confirmation is required. Execution grants are evaluated
+against the new manifest policy. Monitor preferences are copied on first read
+from the legacy per-plugin JSON store into `plugin_data`; no host credentials are
+moved into the plugin. Five-minute monitor history is transient.
+
+`go test ./packages/plugin-go ./internal/desktop/plugins ./plugins/...` covers
+native process sharing, crash cleanup, idle restart and English/Chinese status
+updates, session cancellation, Docker negotiation and engine identity, bounded
+log streams, image usage, and Linux resource parsing. The opt-in Docker acceptance
+test uses `ATERM_NATIVE_DOCKER_FIXTURE_IMAGE=<cached image with sh and sleep>` and
+changes only its uniquely named disposable container. Platform packaging and
+these tests do not establish native UI or Windows/Linux device acceptance.

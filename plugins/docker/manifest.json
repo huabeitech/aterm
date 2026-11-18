@@ -2,13 +2,17 @@
   "schemaVersion": 1,
   "id": "huabei.docker",
   "name": "Docker",
-  "version": "1.8.0",
-  "runtime": "sandbox",
-  "entry": "plugin.js",
+  "version": "2.0.0",
+  "runtime": "native",
+  "entry": "backend/darwin-arm64/plugin",
   "engines": {
     "hostApi": 1
   },
-  "permissions": ["process.execute", "terminal.create"],
+  "permissions": [
+    "native.execute",
+    "process.execute",
+    "terminal.create"
+  ],
   "contributes": {
     "commands": [
       {
@@ -31,10 +35,20 @@
     ]
   },
   "execution": {
-    "programs": ["docker"],
-    "env": ["DOCKER_API_VERSION"],
-    "targets": ["local", "ssh"],
-    "unsetEnv": ["DOCKER_HOST", "DOCKER_CONTEXT"]
+    "programs": [
+      "docker"
+    ],
+    "env": [
+      "DOCKER_API_VERSION"
+    ],
+    "targets": [
+      "local",
+      "ssh"
+    ],
+    "unsetEnv": [
+      "DOCKER_HOST",
+      "DOCKER_CONTEXT"
+    ]
   },
   "i18n": {
     "defaultLocale": "en",
@@ -43,5 +57,9 @@
       "zh-CN": "locales/zh-CN.json",
       "zh-TW": "locales/zh-TW.json"
     }
+  },
+  "backend": {
+    "platform": "darwin-arm64",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
   }
 }

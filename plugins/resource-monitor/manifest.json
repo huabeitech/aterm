@@ -2,10 +2,13 @@
   "schemaVersion": 1,
   "id": "huabei.resource-monitor",
   "name": "Server resources",
-  "version": "2.1.0",
-  "runtime": "sandbox",
-  "entry": "plugin.js",
-  "permissions": ["process.execute"],
+  "version": "3.0.0",
+  "runtime": "native",
+  "entry": "backend/darwin-arm64/plugin",
+  "permissions": [
+    "native.execute",
+    "process.execute"
+  ],
   "contributes": {
     "terminalStatusBar": {
       "id": "huabei.resource-monitor.status"
@@ -98,7 +101,15 @@
     "hostApi": 1
   },
   "execution": {
-    "programs": ["sh"],
-    "targets": ["ssh"]
+    "programs": [
+      "sh"
+    ],
+    "targets": [
+      "ssh"
+    ]
+  },
+  "backend": {
+    "platform": "darwin-arm64",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
   }
 }

@@ -25,6 +25,7 @@ type NativeOptions struct {
 	Registry    *Registry
 	Host        func(context.Context, string, Manifest) (NativeHost, error)
 	Changed     func()
+	Failed      func(string, uint64, string)
 	IdleTimeout time.Duration
 }
 type nativeSlot struct {
@@ -85,6 +86,7 @@ func (m *NativeManager) start(s *nativeSlot, id string) error {
 		if s.client.Exited() {
 			m.stop(s)
 			m.options.Registry.SetRuntimeState(id, g, "failed", "Plugin process exited")
+			m.failed(id, s.generation, "Plugin process exited")
 			if m.options.Changed != nil {
 				m.options.Changed()
 			}
@@ -151,6 +153,7 @@ func (m *NativeManager) start(s *nativeSlot, id string) error {
 		terminateNativeTree(cmd)
 		s.rpc = nil
 		m.options.Registry.SetRuntimeState(id, g, "failed", err.Error())
+		m.failed(id, g, err.Error())
 		if m.options.Changed != nil {
 			m.options.Changed()
 		}
@@ -182,6 +185,7 @@ func (m *NativeManager) watch(s *nativeSlot, id string, c *hp.Client, ctx contex
 			if c.Exited() {
 				m.stop(s)
 				m.options.Registry.SetRuntimeState(id, s.generation, "failed", "Plugin process exited")
+				m.failed(id, s.generation, "Plugin process exited")
 				s.op.Unlock()
 				if m.options.Changed != nil {
 					m.options.Changed()
@@ -225,6 +229,9 @@ func (m *NativeManager) stop(s *nativeSlot) {
 	s.cancel = nil
 }
 func (m *NativeManager) Call(ctx context.Context, id, command string, args json.RawMessage) (json.RawMessage, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	m.workspace.RLock()
 	ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
@@ -242,7 +249,10 @@ func (m *NativeManager) Call(ctx context.Context, id, command string, args json.
 		m.workspace.RUnlock()
 		return nil, errors.New("plugin manager is closed")
 	}
-	if err = m.start(s, id); err != nil {
+	if err = ctx.Err(); err == nil {
+		err = m.start(s, id)
+	}
+	if err != nil {
 		s.op.Unlock()
 		m.workspace.RUnlock()
 		return nil, err
@@ -281,6 +291,7 @@ func (m *NativeManager) schedule(s *nativeSlot, id string) {
 		if s.client.Exited() {
 			m.stop(s)
 			m.options.Registry.SetRuntimeState(id, s.generation, "failed", "Plugin process exited")
+			m.failed(id, s.generation, "Plugin process exited")
 			if m.options.Changed != nil {
 				m.options.Changed()
 			}
@@ -299,6 +310,7 @@ func (m *NativeManager) schedule(s *nativeSlot, id string) {
 		if err != nil || state.Tasks < 0 {
 			m.stop(s)
 			m.options.Registry.SetRuntimeState(id, s.generation, "failed", "Plugin status request failed")
+			m.failed(id, s.generation, "Plugin status request failed")
 			if m.options.Changed != nil {
 				m.options.Changed()
 			}
@@ -371,4 +383,26 @@ func (m *NativeManager) Pause() func() {
 	m.Reset()
 	var once sync.Once
 	return func() { once.Do(m.workspace.Unlock) }
+}
+
+func (m *NativeManager) CallRunning(ctx context.Context, id, method string, args json.RawMessage) (json.RawMessage, error) {
+	s, err := m.slot(id)
+	if err != nil {
+		return nil, err
+	}
+	s.op.Lock()
+	rpc := s.rpc
+	s.op.Unlock()
+	if rpc == nil {
+		return nil, errors.New("plugin is not running")
+	}
+	var out json.RawMessage
+	err = rpc.Call(ctx, method, args, &out)
+	return out, err
+}
+
+func (m *NativeManager) failed(id string, generation uint64, reason string) {
+	if m.options.Failed != nil {
+		go m.options.Failed(id, generation, reason)
+	}
 }

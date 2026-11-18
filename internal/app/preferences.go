@@ -96,7 +96,11 @@ func (a *App) desktopSavePreferences(args []json.RawMessage) (any, error) {
 	}
 	if a.desktopPluginRuntime != nil {
 		locale, _ := preferences["language"].(string)
-		a.desktopPluginRuntime.SetLocale(locale)
+		if a.desktopSessionRuntime != nil {
+			a.desktopSessionRuntime.SetLocale(locale)
+		} else {
+			a.desktopPluginRuntime.SetLocale(locale)
+		}
 	}
 	a.emitEvent("locale:changed", desktopLocale(preferences, revision))
 	a.installDesktopMenu(preferences)

@@ -77,5 +77,8 @@
   "description": "Monitor CPU, memory, disks and network on remote Linux servers, with a compact overview and detailed trends.",
   "pluginsDiskHelp": "Filesystem capacity by mount point. Capacity values use GiB.",
   "monitorChartWindow": "5분",
-  "monitorChartNow": "지금"
+  "monitorChartNow": "지금",
+  "monitorMemoryOverview": "{{used}} · 사용 가능 {{available}}",
+  "monitorDiskOverview": "{{used}} · 여유 {{free}}",
+  "monitorDiskOverviewHelp": "{{mount}} · inode {{inodes}} · 여유 {{free}}"
 }

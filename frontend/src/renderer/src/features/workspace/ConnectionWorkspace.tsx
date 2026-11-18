@@ -164,7 +164,7 @@ export function ConnectionWorkspace({
               key={`${session.id}:${item.key}`}
               style={{ display: view === item.key ? 'block' : 'none', height: '100%' }}
             >
-              {item.plugin.manifest.runtime === 'native' ? (
+              {item.view.placement === 'app.workspace' ? (
                 <NativeWorkspace
                   plugin={item.plugin}
                   view={item.view}

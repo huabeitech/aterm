@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func sshExecFixture(t *testing.T) *ssh.Client {
+func sshExecFixture(t *testing.T, factories ...func(context.Context, string) *exec.Cmd) *ssh.Client {
 	t.Helper()
 	_, private, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -76,6 +76,9 @@ func sshExecFixture(t *testing.T) *ssh.Client {
 					go func(commandText string) {
 						defer close(done)
 						command := exec.CommandContext(ctx, "/bin/sh", "-c", commandText)
+						if len(factories) > 0 {
+							command = factories[0](ctx, commandText)
+						}
 						cleanupProcess := configureProcess(command)
 						defer cleanupProcess()
 						command.Stdout = channel

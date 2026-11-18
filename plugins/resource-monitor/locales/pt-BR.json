@@ -80,5 +80,8 @@
   "description": "Monitor CPU, memory, disks and network on remote Linux servers, with a compact overview and detailed trends.",
   "pluginsDiskHelp": "Filesystem capacity by mount point. Capacity values use GiB.",
   "monitorChartWindow": "5 min",
-  "monitorChartNow": "Agora"
+  "monitorChartNow": "Agora",
+  "monitorMemoryOverview": "{{used}} · {{available}} disponíveis",
+  "monitorDiskOverview": "{{used}} · {{free}} livres",
+  "monitorDiskOverviewHelp": "{{mount}} · {{inodes}} inodes · {{free}} livres"
 }

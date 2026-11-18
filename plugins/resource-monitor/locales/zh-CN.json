@@ -77,5 +77,8 @@
   "description": "查看远程 Linux 服务器的 CPU、内存、磁盘与网络资源，支持单行概览和详细趋势。",
   "pluginsDiskHelp": "按挂载点读取文件系统容量，容量单位为 GiB。",
   "monitorChartWindow": "5 分钟",
-  "monitorChartNow": "现在"
+  "monitorChartNow": "现在",
+  "monitorMemoryOverview": "{{used}} · 可用 {{available}}",
+  "monitorDiskOverview": "{{used}} · 剩余 {{free}}",
+  "monitorDiskOverviewHelp": "{{mount}} · inode {{inodes}} · 剩余 {{free}}"
 }

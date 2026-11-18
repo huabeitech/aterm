@@ -72,7 +72,7 @@ func (a *App) desktopPlugins(ctx context.Context, raw []json.RawMessage) (any, e
 
 	owner := window.ID()
 	current, _, currentGeneration, lookupErr := registry.Describe(id)
-	native := lookupErr == nil && current.Manifest.Runtime == "native"
+	native := lookupErr == nil && current.Manifest.Runtime == "native" && !desktopplugins.SessionScoped(current.Manifest)
 	if native {
 		switch op {
 		case "visibility":

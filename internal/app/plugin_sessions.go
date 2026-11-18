@@ -89,18 +89,23 @@ func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {
 		return err
 	}
 	a.desktopPluginRegistry = registry
-	a.desktopNativePlugins = desktopplugins.NewNativeManager(desktopplugins.NativeOptions{LogRoot: filepath.Join(root, "logs"), Registry: registry, Host: a.newNativePluginHost, Changed: func() { a.emitEvent("plugins:changed", nil) }})
+	a.desktopNativePlugins = desktopplugins.NewNativeManager(desktopplugins.NativeOptions{LogRoot: filepath.Join(root, "logs"), Registry: registry, Host: a.newNativePluginHost, Failed: func(id string, generation uint64, reason string) {
+		if a.desktopPluginManager != nil {
+			a.desktopPluginManager.RuntimeFailed(id, generation, reason)
+		}
+	}, Changed: func() { a.emitEvent("plugins:changed", nil) }})
 	a.desktopPluginViews = desktopplugins.NewViewHost()
 	a.desktopPluginRuntime = desktopplugins.NewNativeRuntime(a.requestPluginCapability)
+	a.desktopSessionRuntime = desktopplugins.NewSessionRuntime(a.desktopPluginRuntime, a.desktopNativePlugins)
 	if preferences, err := a.desktopPreferences(); err == nil {
 		locale, _ := preferences["language"].(string)
-		a.desktopPluginRuntime.SetLocale(locale)
+		a.desktopSessionRuntime.SetLocale(locale)
 	}
 	a.desktopPluginExecutor = desktopplugins.NewExecutor(desktopplugins.ExecutionOptions{
 		Audit: desktopplugins.NewAudit(filepath.Join(root, "execution-audit.json")),
 		Run:   a.runPluginProcess,
 		StreamEvent: func(id string, event desktopplugins.StreamEvent) error {
-			return a.desktopPluginRuntime.StreamEvent(id, event)
+			return a.desktopSessionRuntime.StreamEvent(id, event)
 		},
 		CloseTerminal: a.closePluginTerminal,
 		OpenTerminal:  a.openPluginTerminal,
@@ -116,7 +121,7 @@ func (a *App) initializeDesktopPlugins(ctx context.Context, root string) error {
 
 func (a *App) newDesktopPluginManager(ctx context.Context, root string, authorize func(context.Context, desktopplugins.PermissionRequest) bool) *desktopplugins.Manager {
 	return desktopplugins.NewManager(desktopplugins.ManagerOptions{
-		Context: ctx, Registry: a.desktopPluginRegistry, Runtime: a.desktopPluginRuntime,
+		Context: ctx, Registry: a.desktopPluginRegistry, Runtime: a.sessionPluginRuntime(),
 		Storage:        desktopplugins.NewStorage(filepath.Join(root, "data")),
 		Views:          a.desktopPluginViews,
 		ResolveSession: a.resolvePluginSession, Authorize: authorize,
@@ -145,4 +150,11 @@ func pluginHostTarget(host service.Host) desktopplugins.GrantTarget {
 		}
 	}
 	return target
+}
+
+func (a *App) sessionPluginRuntime() desktopplugins.Runtime {
+	if a.desktopSessionRuntime != nil {
+		return a.desktopSessionRuntime
+	}
+	return a.desktopPluginRuntime
 }

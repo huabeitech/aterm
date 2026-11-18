@@ -130,7 +130,7 @@ func (m *Manager) scheduleLocked(job *pluginJob, delay time.Duration) {
 	job.timer = time.AfterFunc(delay, func() { m.poll(job) })
 }
 func (m *Manager) ExecuteCommand(ctx context.Context, owner uint, id, sessionID, commandID string, args json.RawMessage) (any, error) {
-	plugin, _, _, err := m.options.Registry.Package(id)
+	plugin, _, _, err := m.options.Registry.Describe(id)
 	if err != nil || !m.available(id) {
 		return nil, errors.New("plugin unavailable")
 	}
@@ -207,7 +207,7 @@ func (m *Manager) ExecuteCommand(ctx context.Context, owner uint, id, sessionID,
 // Revocation is not a new implicit permission request. Keep matching demands
 // denied until the user explicitly retries authorization.
 func (m *Manager) Revoked(id, grantID string) {
-	plugin, _, _, err := m.options.Registry.Package(id)
+	plugin, _, _, err := m.options.Registry.Describe(id)
 	if err != nil {
 		return
 	}
@@ -253,7 +253,7 @@ func (m *Manager) OpenView(owner uint, id, sessionID, viewID string) (ViewDocume
 	m.mu.Lock()
 	epoch := m.epoch
 	m.mu.Unlock()
-	plugin, _, generation, err := m.options.Registry.Package(id)
+	plugin, _, generation, err := m.options.Registry.Describe(id)
 	if err != nil || !m.available(id) {
 		return ViewDocument{}, errors.New("plugin unavailable")
 	}
@@ -273,7 +273,7 @@ func (m *Manager) OpenView(owner uint, id, sessionID, viewID string) (ViewDocume
 			if err != nil {
 				return ViewDocument{}, err
 			}
-			_, _, currentGeneration, currentErr := m.options.Registry.Package(id)
+			_, _, currentGeneration, currentErr := m.options.Registry.Describe(id)
 			m.mu.Lock()
 			currentEpoch := m.epoch
 			m.mu.Unlock()

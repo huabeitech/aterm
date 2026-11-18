@@ -167,6 +167,8 @@ tasks:
     cmds:
       - npm run typecheck
       - node node_modules/typescript/bin/tsc --noEmit -p ../plugins/ssh-tunnels/tsconfig.json
+      - node node_modules/typescript/bin/tsc --noEmit -p ../plugins/docker/tsconfig.json
+      - node node_modules/typescript/bin/tsc --noEmit -p ../plugins/resource-monitor/tsconfig.json
 
   frontend:boundaries:
     desc: Verifies frontend module dependency boundaries.

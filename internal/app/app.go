@@ -51,6 +51,7 @@ type App struct {
 	desktopThemesStore          *desktopthemes.Store
 	desktopNativePlugins        *desktopplugins.NativeManager
 	desktopPluginRegistry       *desktopplugins.Registry
+	desktopSessionRuntime       *desktopplugins.SessionRuntime
 	desktopPluginRuntime        *desktopplugins.RuntimeHost
 	desktopPluginManager        *desktopplugins.Manager
 	desktopPluginViews          *desktopplugins.ViewHost

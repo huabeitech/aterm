@@ -131,7 +131,7 @@ func (m *Manager) send(owner uint, status Status) {
 	}
 }
 func (m *Manager) Visibility(owner uint, pluginID, sessionID, consumer string, visible, passive bool) error {
-	if _, _, _, err := m.options.Registry.Package(pluginID); err != nil {
+	if _, _, _, err := m.options.Registry.Describe(pluginID); err != nil {
 		return err
 	}
 	if !consumerID.MatchString(consumer) {
@@ -264,7 +264,7 @@ func (m *Manager) reconcile() {
 		if m.ctx.Err() != nil {
 			return
 		}
-		plugin, config, generation, err := m.options.Registry.Package(key.pluginID)
+		plugin, config, generation, err := m.options.Registry.Describe(key.pluginID)
 		if err != nil || !m.available(key.pluginID) {
 			continue
 		}
@@ -374,6 +374,9 @@ func (m *Manager) cancelJobLocked(key demandKey) {
 	}
 	delete(m.jobs, key)
 	delete(m.tokens, job.token)
+	if scopes, ok := m.options.Runtime.(interface{ ReleaseScope(string, string) }); ok {
+		scopes.ReleaseScope(job.runtimeID, job.token)
+	}
 	job.cancel()
 	if job.timer != nil {
 		job.timer.Stop()
@@ -383,7 +386,7 @@ func (m *Manager) cancelJobLocked(key demandKey) {
 	}
 }
 func (m *Manager) validJob(job *pluginJob) (Package, Config, Session, bool) {
-	plugin, config, generation, err := m.options.Registry.Package(job.key.pluginID)
+	plugin, config, generation, err := m.options.Registry.Describe(job.key.pluginID)
 	if err != nil || generation != job.generation || !m.available(job.key.pluginID) {
 		return plugin, config, Session{}, false
 	}
@@ -486,7 +489,7 @@ func (m *Manager) stopPlugin(id string, clearDenied bool, deny map[demandKey]boo
 	if record != nil && record.instanceID != "" {
 		m.options.Runtime.Stop(record.instanceID)
 	}
-	if _, _, generation, err := m.options.Registry.Package(id); err == nil {
+	if _, _, generation, err := m.options.Registry.Describe(id); err == nil {
 		m.options.Registry.SetRuntimeState(id, generation, "inactive", "")
 	}
 	if m.options.Capabilities != nil {
@@ -606,4 +609,15 @@ func (m *Manager) Reset() {
 
 func (m *Manager) available(id string) bool {
 	return m.ctx.Err() == nil && m.options.Registry.Available(id)
+}
+
+// RuntimeFailed revokes session capabilities when the supervised process exits.
+func (m *Manager) RuntimeFailed(id string, generation uint64, reason string) {
+	m.mu.Lock()
+	record := m.runtimes[id]
+	if record != nil && record.generation != generation {
+		record = nil
+	}
+	m.mu.Unlock()
+	m.fail(id, record, reason)
 }
