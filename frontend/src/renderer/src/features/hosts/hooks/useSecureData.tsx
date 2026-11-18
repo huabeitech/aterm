@@ -1,3 +1,8 @@
+import {
+  encryptionPasswordCopy,
+  encryptionPasswordError,
+  type EncryptionPasswordValidation
+} from '../../../../../shared/security/passwordPrompts'
 import { i18n, t } from '../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useId } from 'react'
@@ -16,22 +21,20 @@ export function useSecureData(
   const loadSyncStatus = () => desktop.library.vaultStatus()
   const SetUpSecureData = (password: string) => desktop.library.unlockVault(password, true)
   const UnlockSecureData = (password: string) => desktop.library.unlockVault(password, false)
-  async function ensureSecureDataUnlocked(
-    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
-  ) {
+  async function ensureSecureDataUnlocked() {
     const status = await loadSyncStatus()
     if (status.unlocked) return true
-    return promptSecureDataUnlock(status, reason)
+    return promptSecureDataUnlock(status)
   }
   function promptSecureDataUnlock(
-    status: Pick<domain.EncryptedSyncStatus, 'localVaultAvailable' | 'unlocked'>,
-    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
+    status: Pick<domain.EncryptedSyncStatus, 'localVaultAvailable' | 'unlocked'>
   ) {
     return new Promise<boolean>((resolve) => {
       const needsSetup = status.localVaultAvailable === false
       let password = ''
       let confirmation = ''
-      let errorMessage = ''
+      let error: unknown = null
+      let validationKey: EncryptionPasswordValidation | null = null
       let submitting = false
       let settled = false
       let passwordDialog: ReturnType<typeof options.modal.confirm>
@@ -44,24 +47,25 @@ export function useSecureData(
       }
 
       const submit = async () => {
-        if (submitting) return Promise.reject(new Error(t('hosts:unlockingSecureData')))
+        if (submitting) return Promise.reject(new Error(t('security:unlockTitle')))
         if (needsSetup && password.length < 8) {
-          errorMessage = t('hosts:useAtLeast8CharactersForYourEncryptionPassword')
+          validationKey = 'encryptionPasswordTooShort'
           updateDialog()
-          return Promise.reject(new Error(errorMessage))
+          return Promise.reject(new Error(renderError()))
         }
         if (!needsSetup && !password.trim()) {
-          errorMessage = t('hosts:enterYourEncryptionPassword')
+          validationKey = 'enterEncryptionPassword'
           updateDialog()
-          return Promise.reject(new Error(errorMessage))
+          return Promise.reject(new Error(renderError()))
         }
         if (needsSetup && password !== confirmation) {
-          errorMessage = t('hosts:theEncryptionPasswordsDoNotMatch')
+          validationKey = 'encryptionPasswordsDoNotMatch'
           updateDialog()
-          return Promise.reject(new Error(errorMessage))
+          return Promise.reject(new Error(renderError()))
         }
         submitting = true
-        errorMessage = ''
+        error = null
+        validationKey = null
         updateDialog()
         options.setBusyAction('sync')
         try {
@@ -73,10 +77,10 @@ export function useSecureData(
           await loadSyncStatus()
           passwordDialog.destroy()
           finish(true)
-        } catch (error) {
-          errorMessage = readableEncryptedSyncError(error)
+        } catch (cause) {
+          error = cause
           updateDialog()
-          throw error
+          throw cause
         } finally {
           submitting = false
           options.setBusyAction(null)
@@ -84,26 +88,32 @@ export function useSecureData(
         }
       }
 
+      const renderError = () =>
+        validationKey
+          ? t(`security:${validationKey}`)
+          : error ? encryptionPasswordError(error) : ''
+
       const renderContent = () => (
         <div className="sync-password-dialog">
           <p id={`${id}-description`} className="secure-data-description">
-            {secureDataPromptCopy(needsSetup, reason).description}
+            {encryptionPasswordCopy(needsSetup ? 'setup' : 'unlock').description}
           </p>
           <div className="sync-password-dialog-fields">
             <div className="secure-data-field">
-              <label htmlFor={`${id}-password`}>{t('hosts:encryptionPassword')}</label>
+              <label htmlFor={`${id}-password`}>{t('security:encryptionPassword')}</label>
               <PasswordInput
                 id={`${id}-password`}
                 autoFocus
-                aria-invalid={!!errorMessage}
-                aria-describedby={errorMessage ? `${id}-error` : undefined}
+                aria-invalid={!!(validationKey || error)}
+                aria-describedby={validationKey || error ? `${id}-error` : undefined}
                 autoComplete={needsSetup ? 'new-password' : 'current-password'}
                 defaultValue={password}
                 disabled={submitting}
                 onChange={(event) => {
                   password = event.target.value
-                  if (errorMessage) {
-                    errorMessage = ''
+                  if (validationKey || error) {
+                    error = null
+                    validationKey = null
                     updateDialog()
                   }
                 }}
@@ -111,18 +121,19 @@ export function useSecureData(
             </div>
             {needsSetup && (
               <div className="secure-data-field">
-                <label htmlFor={`${id}-confirmation`}>{t('hosts:confirmEncryptionPassword')}</label>
+                <label htmlFor={`${id}-confirmation`}>{t('security:confirmEncryptionPassword')}</label>
                 <PasswordInput
                   id={`${id}-confirmation`}
-                  aria-invalid={!!errorMessage}
-                  aria-describedby={errorMessage ? `${id}-error` : `${id}-note`}
+                  aria-invalid={!!(validationKey || error)}
+                  aria-describedby={validationKey || error ? `${id}-error` : undefined}
                   autoComplete="new-password"
                   defaultValue={confirmation}
                   disabled={submitting}
                   onChange={(event) => {
                     confirmation = event.target.value
-                    if (errorMessage) {
-                      errorMessage = ''
+                    if (validationKey || error) {
+                      error = null
+                      validationKey = null
                       updateDialog()
                     }
                   }}
@@ -130,14 +141,9 @@ export function useSecureData(
               </div>
             )}
           </div>
-          {needsSetup && (
-            <p id={`${id}-note`} className="sync-dialog-note">
-              {t('hosts:encryptionPasswordRecoveryWarning')}
-            </p>
-          )}
-          {errorMessage && (
+          {!!(validationKey || error) && (
             <div id={`${id}-error`} className="sync-dialog-error" role="alert">
-              {errorMessage}
+              {renderError()}
             </div>
           )}
         </div>
@@ -145,7 +151,7 @@ export function useSecureData(
 
       const updateDialog = () => {
         if (settled) return
-        const copy = secureDataPromptCopy(needsSetup, reason)
+        const copy = encryptionPasswordCopy(needsSetup ? 'setup' : 'unlock')
         passwordDialog.update({
           title: copy.title,
           okText: copy.okText,
@@ -154,7 +160,7 @@ export function useSecureData(
         })
       }
 
-      const copy = secureDataPromptCopy(needsSetup, reason)
+      const copy = encryptionPasswordCopy(needsSetup ? 'setup' : 'unlock')
       passwordDialog = options.modal.confirm({
         className: 'secure-data-alert',
         overlayClassName: 'secure-data-overlay',
@@ -174,51 +180,3 @@ export function useSecureData(
 
   return { ensureSecureDataUnlocked }
 }
-function secureDataPromptCopy(
-  needsSetup: boolean,
-  reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
-) {
-  if (needsSetup) {
-    return {
-      title: t('hosts:createEncryptionPassword'),
-      okText: t('hosts:createPassword'),
-      description: t('hosts:createEncryptionPasswordDescription')
-    }
-  }
-  if (reason === 'connect') {
-    return {
-      title: t('hosts:unlockToConnect'),
-      okText: t('hosts:unlockAndConnect'),
-      description: t('hosts:unlockConnectionCredentialsDescription')
-    }
-  }
-  if (reason === 'ssh-keys') {
-    return {
-      title: t('hosts:unlockManagedSshKeys'),
-      okText: t('hosts:unlock'),
-      description: t('hosts:unlockManagedSshKeysDescription')
-    }
-  }
-  if (reason === 'reveal-password') {
-    return {
-      title: t('hosts:unlockSavedPasswords'),
-      okText: t('hosts:unlock'),
-      description: t('hosts:enterYourEncryptionPasswordToViewOrCopySavedSshPasswordsOnThisMac')
-    }
-  }
-  if (reason === 'save-password') {
-    return {
-      title: t('hosts:unlockSecureData'),
-      okText: t('hosts:unlock'),
-      description: t('hosts:enterYourEncryptionPasswordToSaveThisSshPasswordInProtectedData')
-    }
-  }
-  return {
-    title: t('hosts:unlockSecureData'),
-    okText: t('hosts:unlock'),
-    description: t('hosts:enterYourEncryptionPasswordToContinue')
-  }
-}
-
-const readableEncryptedSyncError = (error: unknown) =>
-  error instanceof Error ? error.message : t('hosts:unableToUnlockSecureData')

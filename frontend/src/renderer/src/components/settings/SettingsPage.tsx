@@ -368,7 +368,7 @@ export function SettingsPage({
                           disabled={busy || !syncStatus?.localVaultAvailable}
                           onClick={onChangeEncryptionPassword}
                         >
-                          {t('settings:changePassword')}
+                          {t('security:changeAction')}
                         </ActionButton>
                       </SettingRow>
                     </SettingsGroup>

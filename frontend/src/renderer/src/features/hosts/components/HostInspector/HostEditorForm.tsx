@@ -64,7 +64,7 @@ export function HostEditorForm({
   }, [message])
   async function unlockManagedKeys() {
     try {
-      if (!(await ensureSecureDataUnlocked('ssh-keys'))) return
+      if (!(await ensureSecureDataUnlocked())) return
       const keys = await desktop.library.listManagedKeys()
       setManagedKeys(keys)
       setKeysLocked(false)
@@ -294,7 +294,7 @@ export function HostEditorForm({
               >
                 {keysLocked ? (
                   <Button size="sm" disabled={!!keysBusy} onClick={() => void unlockManagedKeys()}>
-                    {t('hosts:unlockManagedSshKeys')}
+                    {t('security:unlockAction')}
                   </Button>
                 ) : (
                   <SearchSelect

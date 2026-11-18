@@ -1,3 +1,4 @@
+import { sshPrivateKeyPromptCopy } from '../../../../shared/security/passwordPrompts'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
@@ -27,6 +28,7 @@ export function TerminalPromptDialog({ prompt }: { prompt: TerminalPrompt }) {
     }
   }
 
+  const privateKey = sshPrivateKeyPromptCopy(prompt)
   const actionLabel = {
     'host-key': t('trustAndConnect'),
     'host-key-changed': t('replaceKeyAndConnect'),
@@ -35,15 +37,17 @@ export function TerminalPromptDialog({ prompt }: { prompt: TerminalPrompt }) {
 
   return (
     <ConfirmationDialog
-      title={prompt.title}
-      okText={actionLabel}
+      title={privateKey?.title ?? prompt.title}
+      okText={privateKey?.okText ?? actionLabel}
       submitOnEnter={prompt.kind === 'credentials'}
       pending={pending}
       onConfirm={() => void answer(true)}
       onCancel={() => void answer(false)}
       content={
         <div className="min-w-0 [&_[data-slot=input-group-addon]]:mr-0">
-          <p className="whitespace-pre-wrap wrap-anywhere leading-[1.6]">{prompt.message}</p>
+          <p className="whitespace-pre-wrap wrap-anywhere leading-[1.6]">
+            {privateKey?.description ?? prompt.message}
+          </p>
           {prompt.fields.map((field, index) => {
             const Input = field.secret ? PasswordInput : TextField
             return (
@@ -51,7 +55,7 @@ export function TerminalPromptDialog({ prompt }: { prompt: TerminalPrompt }) {
                 key={index}
                 className="mt-3.5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5 p-1"
               >
-                <span className="wrap-anywhere">{field.label}</span>
+                <span className="wrap-anywhere">{privateKey?.fieldLabel ?? field.label}</span>
                 <Input
                   autoFocus={index === 0}
                   autoComplete="off"

@@ -194,7 +194,7 @@ export function useHostWorkbench(
   }
   async function getPassword(id: string) {
     try {
-      if (!(await ensureSecureDataUnlocked('reveal-password'))) return null
+      if (!(await ensureSecureDataUnlocked())) return null
       return await desktop.library.getHostPassword(id)
     } catch (error) {
       reportError(String(error), t('hosts:savedPassword'))
@@ -433,8 +433,8 @@ export function useHostWorkbench(
     setInspectorOpen(false)
   }
   return {
-    unlockForConnection: () => ensureSecureDataUnlocked('connect'),
-    unlockForData: () => ensureSecureDataUnlocked('sync'),
+    unlockForConnection: () => ensureSecureDataUnlocked(),
+    unlockForData: () => ensureSecureDataUnlocked(),
     refresh: () => void refreshAll().catch((error) => reportError(String(error))),
     prepareSettings,
     overlayOpen: detailsOpen || editorOpen || batchAddOpen,

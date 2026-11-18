@@ -214,7 +214,7 @@ export function ManagedKeysSection({
           <div className="settings-key-empty">
             {unlocked
               ? t('settings:noSshKeysImportAnExistingKeyOrCreateOne')
-              : 'Unlock protected data in Security settings to view and manage SSH keys.'}
+              : t('security:lockedDescription')}
           </div>
         ) : (
           keys.map((key) => (
@@ -291,7 +291,7 @@ export function ManagedKeysSection({
           ))
         )}
       </div>
-      <p className="settings-footnote">{t('settings:managedKeysDescription')}</p>
+      <p className="settings-footnote">{t('security:privateKeyHelp')}</p>
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
@@ -332,8 +332,8 @@ export function ManagedKeysSection({
                 setDraft={setDraft}
                 passphraseLabel={
                   selected.requiresPassphrase
-                    ? t('settings:privateKeyPassphrase')
-                    : t('settings:passphraseIfThisKeyIsProtected')
+                    ? t('security:privateKeyPassphrase')
+                    : t('security:optionalPrivateKeyPassphrase')
                 }
               />
             </>
@@ -376,9 +376,9 @@ export function ManagedKeysSection({
               </p>
               {agentKey.passphraseProtected && (
                 <label className="grid gap-1 text-sm font-medium">
-                  {t('settings:privateKeyPassphrase')}
+                  {t('security:privateKeyPassphrase')}
                   <TextField
-                    aria-label={t('settings:sshAgentPrivateKeyPassphrase')}
+                    aria-label={t('security:privateKeyPassphrase')}
                     type="password"
                     autoFocus
                     value={agentPassphrase}
@@ -431,7 +431,7 @@ function KeyForm({
   draft,
   setDraft,
   algorithm = false,
-  passphraseLabel = t('settings:optionalPrivateKeyPassphrase'),
+  passphraseLabel = t('security:optionalPrivateKeyPassphrase'),
   error = ''
 }: {
   draft: Draft
@@ -482,7 +482,7 @@ function KeyForm({
       <label className="grid gap-1 text-sm font-medium">
         {passphraseLabel}
         <TextField
-          aria-label={t('settings:sshKeyPassphrase')}
+          aria-label={t('security:privateKeyPassphrase')}
           type="password"
           value={draft.passphrase}
           onChange={(e) => update('passphrase', e.target.value)}
@@ -490,9 +490,9 @@ function KeyForm({
       </label>
       {algorithm && (
         <label className="grid gap-1 text-sm font-medium">
-          {t('settings:confirmPassphrase')}
+          {t('security:confirmPrivateKeyPassphrase')}
           <TextField
-            aria-label={t('settings:confirmSshKeyPassphrase')}
+            aria-label={t('security:confirmPrivateKeyPassphrase')}
             type="password"
             value={draft.confirmation}
             onChange={(e) => update('confirmation', e.target.value)}
@@ -502,7 +502,7 @@ function KeyForm({
       )}
       <p className="flex gap-1 text-xs text-muted-foreground">
         <LockKeyhole size={13} />
-        {t('settings:keyPassphraseHelp')}
+        {t('security:privateKeyHelp')}
       </p>
     </div>
   )

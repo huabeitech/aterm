@@ -1,3 +1,8 @@
+import {
+  encryptionPasswordCopy,
+  encryptionPasswordError,
+  type EncryptionPasswordValidation
+} from '../../../../shared/security/passwordPrompts'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { PasswordInput } from '@/components/ui/desktop'
@@ -40,24 +45,27 @@ export function useIntegration(unlock: () => Promise<boolean>, afterRestore: () 
     let password = '',
       next = '',
       confirmation = ''
-    modal.confirm({
-      submitOnEnter: kind === 'restore',
-      title:
-        kind === 'restore'
-          ? file
-            ? t('native:restoreEncryptedBackup')
-            : t('security:restoreFromIcloud')
-          : t('security:changeEncryptionPassword'),
-      okText: kind === 'restore' ? t('security:continue') : t('security:changePassword'),
-      content: (
+    let validationKey: EncryptionPasswordValidation | '' = ''
+    let failure: unknown = null
+    let closed = false
+    let dialog: ReturnType<typeof modal.confirm>
+    const close = () => {
+      closed = true
+      i18n.off('languageChanged', updateDialog)
+      password = next = confirmation = ''
+    }
+    const renderContent = () => (
+      <div className="sync-password-dialog">
+        <p className="secure-data-description">{encryptionPasswordCopy(kind).description}</p>
         <div className="sync-password-dialog-fields grid gap-3 [&_label]:grid [&_label]:gap-1.5 [&_span]:text-[rgba(60,_60,_67,_0.78)] [&_span]:text-xs [&_span]:font-semibold [&_span]:leading-[calc(1rem*var(--app-font-scale))]">
           <label>
             <span>
-              {kind === 'restore' ? t('security:backupPassword') : t('security:currentPassword')}
+              {t(kind === 'restore' ? 'security:encryptionPassword' : 'security:currentEncryptionPassword')}
             </span>
             <PasswordInput
               autoFocus
-              autoComplete="off"
+              autoComplete="current-password"
+              defaultValue={password}
               onChange={(e) => {
                 password = e.target.value
               }}
@@ -66,18 +74,20 @@ export function useIntegration(unlock: () => Promise<boolean>, afterRestore: () 
           {kind === 'change' && (
             <>
               <label>
-                <span>{t('security:newPassword')}</span>
+                <span>{t('security:newEncryptionPassword')}</span>
                 <PasswordInput
                   autoComplete="new-password"
+                  defaultValue={next}
                   onChange={(e) => {
                     next = e.target.value
                   }}
                 />
               </label>
               <label>
-                <span>{t('security:confirmNewPassword')}</span>
+                <span>{t('security:confirmNewEncryptionPassword')}</span>
                 <PasswordInput
                   autoComplete="new-password"
+                  defaultValue={confirmation}
                   onChange={(e) => {
                     confirmation = e.target.value
                   }}
@@ -86,11 +96,35 @@ export function useIntegration(unlock: () => Promise<boolean>, afterRestore: () 
             </>
           )}
         </div>
-      ),
+        {(validationKey || !!failure) && (
+          <div className="sync-dialog-error" role="alert">
+            {validationKey ? t(`security:${validationKey}`) : encryptionPasswordError(failure)}
+          </div>
+        )}
+      </div>
+    )
+    const updateDialog = () => {
+      if (!closed) dialog.update({ ...encryptionPasswordCopy(kind), content: renderContent() })
+    }
+    const rejectValidation = (key: EncryptionPasswordValidation) => {
+      validationKey = key
+      updateDialog()
+      throw Error(t(`security:${key}`))
+    }
+    dialog = modal.confirm({
+      ...encryptionPasswordCopy(kind),
+      submitOnEnter: kind === 'restore',
+      content: renderContent(),
+      onCancel: close,
       onOk: async () => {
+        validationKey = ''
+        failure = null
+        if (!password.trim()) rejectValidation('enterEncryptionPassword')
+        if (kind === 'change' && next.length < 8) rejectValidation('encryptionPasswordTooShort')
+        if (kind === 'change' && next !== confirmation)
+          rejectValidation('newEncryptionPasswordsDoNotMatch')
+        updateDialog()
         try {
-          if (kind === 'change' && (next !== confirmation || next.length < 8))
-            throw Error(t('security:passwordsMustMatchAndContainAtLeast8Characters'))
           const previous = await desktop.integration.status()
           const result =
             kind === 'restore'
@@ -99,16 +133,17 @@ export function useIntegration(unlock: () => Promise<boolean>, afterRestore: () 
           setStatus(result)
           if (kind === 'restore' && result.sync.lastDownload !== previous.sync.lastDownload)
             await afterRestore()
-          password = ''
-          next = ''
-          confirmation = ''
+          close()
         } catch (error) {
-          void message.error(error instanceof Error ? error.message : t('security:operationFailed'))
+          failure = error
+          updateDialog()
           throw error
         }
       }
     })
+    i18n.on('languageChanged', updateDialog)
   }
+
   return {
     status,
     busy,

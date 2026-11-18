@@ -60,9 +60,7 @@ interface HostEditorActionsOptions {
   refreshAll: (selectedID?: string | null) => Promise<void>
   reportSuccess: (text: string) => void
   reportError: (text: string, title?: string) => void
-  ensureSecureDataUnlocked: (
-    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync'
-  ) => Promise<boolean>
+  ensureSecureDataUnlocked: () => Promise<boolean>
 }
 
 export function useHostEditorActions(options: HostEditorActionsOptions) {
@@ -163,7 +161,7 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
       return
     }
     if (saveRequiresSecureDataUnlock(editorMode, form, options.selected)) {
-      const unlocked = await options.ensureSecureDataUnlocked('save-password')
+      const unlocked = await options.ensureSecureDataUnlocked()
       if (!unlocked) return
     }
     options.setBusyAction('save')
@@ -203,7 +201,7 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
       okButtonProps: { danger: true },
       onOk: async () => {
         if (host.passwordAuth) {
-          const unlocked = await options.ensureSecureDataUnlocked('save-password')
+          const unlocked = await options.ensureSecureDataUnlocked()
           if (!unlocked) return
         }
         options.setBusyAction('delete')
@@ -235,7 +233,7 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
       okButtonProps: { danger: true },
       onOk: async () => {
         if (options.hosts.some((host) => deletingIDs.includes(host.id) && host.passwordAuth)) {
-          const unlocked = await options.ensureSecureDataUnlocked('save-password')
+          const unlocked = await options.ensureSecureDataUnlocked()
           if (!unlocked) return
         }
         options.setBusyAction('delete')
