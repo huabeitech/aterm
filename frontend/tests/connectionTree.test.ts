@@ -9,6 +9,7 @@ const directory = (id: string, parentID = '') => ({
 const host = (id: string, directoryID = '', extra: Partial<domain.Host> = {}): domain.Host => ({
   id,
   directoryID,
+  name: id,
   alias: id,
   hostName: `${id}.example.com`,
   user: 'root',

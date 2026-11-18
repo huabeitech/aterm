@@ -1,4 +1,6 @@
 {
+  "hostDisplayNameRequired": "請輸入名稱。",
+  "hostDisplayNameInvalid": "名稱不能包含控制字元。",
   "sftpIsNotConnected": "SFTP 尚未連線。",
   "noFileEditorBelongsToThisWindow": "此視窗沒有開啟的檔案編輯器。",
   "invalidFileContents": "檔案內容無效。",

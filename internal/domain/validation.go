@@ -10,6 +10,8 @@ import (
 const MaxDirectoryNameLength = 50
 
 var (
+	ErrHostDisplayNameRequired        = errors.New("host display name is required")
+	ErrHostDisplayNameInvalid         = errors.New("host display name cannot contain control characters")
 	ErrAliasRequired                  = errors.New("alias is required")
 	ErrAliasWhitespace                = errors.New("alias cannot contain whitespace")
 	ErrHostNameRequired               = errors.New("host name is required")
@@ -24,6 +26,7 @@ var (
 
 func NormalizeHostInput(input HostInput) HostInput {
 	input.DirectoryID = strings.TrimSpace(input.DirectoryID)
+	input.Name = strings.TrimSpace(input.Name)
 	input.Alias = strings.TrimSpace(input.Alias)
 	input.HostName = strings.TrimSpace(input.HostName)
 	input.User = strings.TrimSpace(input.User)
@@ -38,8 +41,11 @@ func NormalizeHostInput(input HostInput) HostInput {
 
 func ValidateHostInput(input HostInput) error {
 	input = NormalizeHostInput(input)
-	if input.Alias == "" {
-		return ErrAliasRequired
+	if input.Name == "" {
+		return ErrHostDisplayNameRequired
+	}
+	if containsControlCharacter(input.Name) {
+		return ErrHostDisplayNameInvalid
 	}
 	if strings.ContainsAny(input.Alias, " \t\r\n") {
 		return ErrAliasWhitespace

@@ -14,6 +14,7 @@ import { desktop } from '../../../../api/app'
 import type { BusyAction, FormState } from '../../../../components/common/types'
 import { useSecureData } from '../../hooks/useSecureData'
 import { useAppUI } from '@/components/ui/confirm-provider'
+import { validateForm } from '../../model/hostModel'
 import { DetailSection } from './DetailSection'
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group'
 
@@ -23,7 +24,8 @@ export function HostEditorForm({
   directories,
   hosts,
   errors,
-  aliasInputRef,
+  nameInputRef,
+  hostID,
   onChange
 }: {
   mode: 'create' | 'edit'
@@ -31,7 +33,8 @@ export function HostEditorForm({
   directories: { id: string; label: string }[]
   hosts: domain.Host[]
   errors: Partial<Record<keyof FormState, string>>
-  aliasInputRef?: Ref<HTMLInputElement>
+  nameInputRef?: Ref<HTMLInputElement>
+  hostID?: string
   onChange: (next: FormState) => void
 }) {
   useTranslation()
@@ -85,6 +88,7 @@ export function HostEditorForm({
   useEffect(() => {
     if (advancedError) setAdvancedOpen(true)
   }, [advancedError])
+  const validation = errors.name || errors.alias ? validateForm(form) : {}
   const passwordMode = form.passwordAuth
   const managedIdentity = form.keySource === 'managed'
   const legacyIdentity = !!form.identityFile && !form.identityFile.startsWith('aterm-key://')
@@ -115,15 +119,26 @@ export function HostEditorForm({
       <DetailSection title={t('hosts:connection')}>
         <div className="host-editor-connection-grid grid grid-cols-[repeat(auto-fit,minmax(min(100%,16em),1fr))] gap-[10px_16px] max-[560px]:grid-cols-[minmax(0,_1fr)]">
           <Field
-            label={t('hosts:hostAlias')}
-            tooltip={t('hosts:hostAliasHelp')}
+            label={t('hosts:hostDisplayName')}
             required
-            help={errors.alias}
+            help={errors.name && validation.name}
           >
             <Input
-              ref={aliasInputRef}
+              ref={nameInputRef}
               autoFocus
               aria-required
+              aria-label={t('hosts:hostDisplayName')}
+              aria-invalid={!!errors.name}
+              value={form.name}
+              onChange={(event) => update('name', event.target.value)}
+            />
+          </Field>
+          <Field
+            label={t('hosts:hostAlias')}
+            tooltip={t('hosts:hostAliasHelp')}
+            help={errors.alias && (validation.alias ?? t('errors:hostAliasAlreadyExists'))}
+          >
+            <Input
               aria-label={t('hosts:hostAlias')}
               aria-invalid={!!errors.alias}
               value={form.alias}
@@ -364,10 +379,10 @@ export function HostEditorForm({
                   })
                 }}
                 options={hosts
-                  .filter((host) => host.alias !== form.alias)
+                  .filter((host) => host.id !== hostID)
                   .map((host) => ({
                     value: host.id,
-                    label: `${host.alias} — ${host.user ? `${host.user}@` : ''}${host.hostName}`
+                    label: `${host.name} — ${host.user ? `${host.user}@` : ''}${host.hostName}`
                   }))}
               />
             </Field>

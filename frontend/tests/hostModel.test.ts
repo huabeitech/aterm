@@ -5,6 +5,7 @@ import type { FormState } from '../src/renderer/src/components/common/types'
 
 const form = (overrides: Partial<FormState> = {}): FormState => ({
   directoryID: '',
+  name: 'production',
   alias: 'production',
   hostName: 'server.example',
   user: 'deploy',
@@ -75,8 +76,9 @@ test('directory scope and counts include all descendants without leaking sibling
   )
 })
 
-test('host aliases are required and use the exportable character set', () => {
-  assert.equal(validateForm(form({ alias: '  ' })).alias, 'Host Alias is required.')
+test('host names are required and optional aliases use the exportable character set', () => {
+  assert.equal(validateForm(form({ name: '  ' })).name, 'Enter a name.')
+  assert.equal(validateForm(form({ alias: '  ' })).alias, undefined)
   for (const alias of ['prod-api', 'dev_01', 'api.example', 'Prod2', ' prod-api ']) {
     assert.equal(validateForm(form({ alias })).alias, undefined, alias)
   }
@@ -86,5 +88,22 @@ test('host aliases are required and use the exportable character set', () => {
       'Host Alias can only contain letters, numbers, dots, underscores, or hyphens.',
       alias
     )
+  }
+})
+
+test('the host editor name and export hint follow the selected language', async () => {
+  const { i18n, t } = await import('../src/shared/i18n')
+  try {
+    const input = form({ name: ' ', alias: '' })
+    assert.equal(t('hosts:hostDisplayName'), 'Name')
+    assert.equal(validateForm(input).name, 'Enter a name.')
+    assert.match(t('hosts:hostAliasHelp'), /Hosts without an alias are skipped/)
+    await i18n.changeLanguage('zh-CN')
+    assert.equal(t('hosts:hostDisplayName'), '名称')
+    assert.equal(validateForm(input).name, '请输入名称。')
+    assert.match(t('hosts:hostAliasHelp'), /跳过未填写别名的主机/)
+    assert.deepEqual(validateForm(form({ name: '生产环境 · API', alias: '' })), {})
+  } finally {
+    await i18n.changeLanguage('en')
   }
 })

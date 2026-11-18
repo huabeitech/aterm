@@ -21,6 +21,7 @@ var migrations = []migration{
 	{version: 6, up: migration_version_6},
 	{version: 7, up: migration_version_7},
 	{version: 8, up: migration_version_8},
+	{version: 9, up: migration_version_9},
 }
 
 // migrate applies only migrations that are not yet recorded as successful.

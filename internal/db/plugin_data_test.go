@@ -14,7 +14,7 @@ func TestPluginDataSnapshotAndReferences(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	host, err := s.CreateHost(domain.HostInput{Alias: "fixture", HostName: "localhost", Port: 22})
+	host, err := s.CreateHost(domain.HostInput{Name: "fixture", Alias: "fixture", HostName: "localhost", Port: 22})
 	if err != nil {
 		t.Fatal(err)
 	}

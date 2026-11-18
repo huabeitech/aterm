@@ -93,7 +93,7 @@ func TestDesktopLibraryRoutesTypedPayloadAndReportsInvalidArguments(t *testing.T
 		t.Fatal(err)
 	}
 	directory := raw.(service.Directory)
-	raw, err = app.DesktopRequest(context.Background(), "library:request", bridgeArguments(t, "createHost", service.HostInput{DirectoryID: directory.ID, Alias: "test-host", HostName: "127.0.0.1", User: "test", Port: 22}))
+	raw, err = app.DesktopRequest(context.Background(), "library:request", bridgeArguments(t, "createHost", service.HostInput{DirectoryID: directory.ID, Name: "test-host", Alias: "test-host", HostName: "127.0.0.1", User: "test", Port: 22}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +188,7 @@ func TestManagedKeyCannotBeDeletedWhileReferencedByAHost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	host, err := app.CreateHost(service.HostInput{Alias: "referenced", HostName: "server.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID})
+	host, err := app.CreateHost(service.HostInput{Name: "referenced", Alias: "referenced", HostName: "server.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -333,5 +333,23 @@ func TestDesktopLanguagePersistsAndBootstraps(t *testing.T) {
 	saved, err := app.desktopPreferences()
 	if err != nil || saved["language"] != "en" {
 		t.Fatalf("invalid save changed preferences: %v %v", saved, err)
+	}
+}
+
+func TestDesktopOpensAliasFreeHostByID(t *testing.T) {
+	app := bridgeFixture(t)
+	defer app.terminal.CloseAll()
+	host, err := app.CreateHost(service.HostInput{Name: "生产环境 · API", HostName: "127.0.0.1", Port: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := map[string]string{"kind": "ssh", "hostID": host.ID}
+	raw, err := app.DesktopRequest(context.Background(), "terminal:request", bridgeArguments(t, "open", request))
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := raw.(map[string]any)
+	if session["hostID"] != host.ID || session["title"] != host.Name {
+		t.Fatalf("unexpected terminal session: %+v", session)
 	}
 }

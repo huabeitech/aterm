@@ -144,7 +144,7 @@ SELECT id
 FROM host_sort_orders
 JOIN hosts ON hosts.id = host_sort_orders.host_id
 WHERE scope_type = ? AND scope_id = ?
-ORDER BY host_sort_orders.sort_order ASC, hosts.alias ASC;
+ORDER BY host_sort_orders.sort_order ASC, hosts.name ASC;
 `, scopeType, scopeID)
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func sortHostsByScope(hosts []domain.Host, scopeType string, scopeID string) {
 		if iOK != jOK {
 			return iOK
 		}
-		return hosts[i].Alias < hosts[j].Alias
+		return hosts[i].DisplayName() < hosts[j].DisplayName()
 	})
 }
 

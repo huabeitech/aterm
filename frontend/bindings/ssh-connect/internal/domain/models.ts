@@ -129,6 +129,7 @@ export interface EncryptedSyncStatus {
 export interface Host {
     "id": string;
     "directoryID": string;
+    "name": string;
     "alias": string;
     "hostName": string;
     "user": string;
@@ -155,6 +156,7 @@ export interface Host {
  */
 export interface HostInput {
     "directoryID": string;
+    "name": string;
     "alias": string;
     "hostName": string;
     "user": string;

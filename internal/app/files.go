@@ -74,7 +74,7 @@ func (a *App) openDesktopFiles(args []json.RawMessage) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		client, _, err = svc.OpenNativeSSHWithInteraction(a.ctx, host.Alias, a.hostKeyConfirmer("files:"+hostID), a.credentialPrompter("files:"+hostID))
+		client, _, err = svc.OpenNativeSSHHostWithInteraction(a.ctx, host, a.hostKeyConfirmer("files:"+hostID), a.credentialPrompter("files:"+hostID))
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func (a *App) openDesktopFiles(args []json.RawMessage) (any, error) {
 		}
 		return nil, err
 	}
-	info, err := a.fileManager().Add(files, owner, desktopfiles.SessionInfo{HostID: hostID, Target: target, Title: host.Alias, InitialPath: initialPath})
+	info, err := a.fileManager().Add(files, owner, desktopfiles.SessionInfo{HostID: hostID, Target: target, Title: host.DisplayName(), InitialPath: initialPath})
 	if err == nil {
 		a.emitEvent("files:event", map[string]any{"type": "session", "session": info})
 	}

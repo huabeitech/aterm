@@ -40,7 +40,7 @@ export function ConnectionWelcome({
     .filter((host) => !host.favorite && Number.isFinite(Date.parse(host.lastUsedAt)))
     .sort(
       (a, b) =>
-        Date.parse(b.lastUsedAt) - Date.parse(a.lastUsedAt) || a.alias.localeCompare(b.alias)
+        Date.parse(b.lastUsedAt) - Date.parse(a.lastUsedAt) || a.name.localeCompare(b.name)
     )
     .slice(0, 9)
 
@@ -91,11 +91,11 @@ export function ConnectionWelcome({
           data-launchpad-nav
           className="h-auto w-full min-w-0 flex-col items-start justify-start gap-1 rounded-md px-3 py-3 text-left font-normal hover:bg-transparent hover:text-[var(--theme-tab-text)]"
           onClick={() => onConnect(host.id)}
-          title={`${host.alias} · ${host.user}@${host.hostName}:${host.port}`}
+          title={`${host.name} · ${host.user}@${host.hostName}:${host.port}`}
         >
           <span className="flex w-full min-w-0 items-center gap-2 pr-8">
             <Terminal className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="truncate text-sm font-medium">{host.alias}</span>
+            <span className="truncate text-sm font-medium">{host.name}</span>
           </span>
           <span className="w-full truncate text-xs text-muted-foreground">
             {host.user}@{host.hostName}
@@ -107,7 +107,7 @@ export function ConnectionWelcome({
           size="icon-sm"
           disabled={pinBusy}
           className="absolute right-2 top-2 text-muted-foreground hover:bg-[var(--theme-tab-active)] hover:text-[var(--theme-tab-text)]"
-          aria-label={`${t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')} · ${host.alias}`}
+          aria-label={`${t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')} · ${host.name}`}
           title={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
           onClick={(event) => {
             const row = event.currentTarget.closest('li')

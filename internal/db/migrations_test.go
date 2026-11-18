@@ -84,7 +84,12 @@ func TestOpenMigratesAndRecordsExistingDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open raw database: %v", err)
 	}
-	if _, err := raw.Exec(`CREATE TABLE hosts (id TEXT PRIMARY KEY);`); err != nil {
+	seedVersionOneSchema(t, raw)
+	if _, err := raw.Exec(`
+DROP TABLE directories;
+INSERT INTO hosts (id, alias, host_name, created_at, updated_at)
+VALUES ('test-id', 'old-alias', 'test.example', '2026-01-01', '2026-01-01');
+`); err != nil {
 		t.Fatalf("create existing hosts table: %v", err)
 	}
 	if err := raw.Close(); err != nil {
@@ -106,6 +111,25 @@ func TestOpenMigratesAndRecordsExistingDatabase(t *testing.T) {
 	if err := store.db.QueryRow(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'directories'`).Scan(&directoriesTable); err != nil {
 		t.Fatalf("initial migration should create directories: %v", err)
 	}
+	host, err := store.GetHost("test-id")
+	if err != nil || host.Name != "old-alias" || host.Alias != "old-alias" {
+		t.Fatalf("legacy host after migration: %+v, %v", host, err)
+	}
+}
+
+func seedVersionOneSchema(t *testing.T, raw *sql.DB) {
+	t.Helper()
+	tx, err := raw.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if err := migration_version_1(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestOpenAppliesSecondMigrationToVersionOneDatabase(t *testing.T) {
@@ -114,14 +138,11 @@ func TestOpenAppliesSecondMigrationToVersionOneDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open raw database: %v", err)
 	}
+	seedVersionOneSchema(t, raw)
 	_, err = raw.Exec(`
 CREATE TABLE migrations (version INTEGER PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP);
 INSERT INTO migrations (version) VALUES (1);
-CREATE TABLE hosts (id TEXT PRIMARY KEY);
-CREATE TABLE app_settings (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
-  theme TEXT NOT NULL DEFAULT 'system'
-);`)
+`)
 	if err != nil {
 		t.Fatalf("seed version one database: %v", err)
 	}

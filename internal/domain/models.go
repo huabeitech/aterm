@@ -4,6 +4,7 @@ package domain
 type Host struct {
 	ID                  string         `json:"id"`
 	DirectoryID         string         `json:"directoryID"`
+	Name                string         `json:"name"`
 	Alias               string         `json:"alias"`
 	HostName            string         `json:"hostName"`
 	User                string         `json:"user"`
@@ -25,9 +26,21 @@ type Host struct {
 	UpdatedAt           string         `json:"updatedAt"`
 }
 
+// DisplayName returns the host label, including for legacy records.
+func (h Host) DisplayName() string {
+	if h.Name != "" {
+		return h.Name
+	}
+	if h.Alias != "" {
+		return h.Alias
+	}
+	return h.HostName
+}
+
 // HostInput is the frontend payload for creating or updating a host.
 type HostInput struct {
 	DirectoryID         string `json:"directoryID"`
+	Name                string `json:"name"`
 	Alias               string `json:"alias"`
 	HostName            string `json:"hostName"`
 	User                string `json:"user"`

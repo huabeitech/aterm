@@ -184,7 +184,7 @@ export function ConnectionTree(props: ConnectionTreeProps) {
       {renaming && (
         <RenameConnectionDialog
           key={renaming.id}
-          alias={renaming.alias}
+          initialName={renaming.name}
           onSave={(name) => props.onRenameHost(renaming.id, name)}
           onClose={() => setRenaming(null)}
         />

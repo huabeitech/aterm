@@ -10,7 +10,7 @@ import (
 
 func (s *Store) ListHosts() ([]domain.Host, error) {
 	rows, err := s.db.Query(`
-SELECT id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
        remark, favorite, last_used_at, created_at, updated_at
 FROM hosts
@@ -65,12 +65,12 @@ func (s *Store) CreateHost(input domain.HostInput) (domain.Host, error) {
 	}()
 	_, err = tx.Exec(`
 INSERT INTO hosts (
-  id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+  id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
   compression, server_alive_interval, server_alive_count_max, connect_timeout,
   remark, favorite, last_used_at, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 `,
-		host.ID, host.DirectoryID, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
+		host.ID, host.DirectoryID, host.Name, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 		boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
 		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
 		host.LastUsedAt, host.CreatedAt, host.UpdatedAt,
@@ -120,12 +120,12 @@ func (s *Store) UpdateHost(id string, input domain.HostInput) (domain.Host, erro
 	}()
 	_, err = tx.Exec(`
 UPDATE hosts
-SET directory_id = ?, alias = ?, host_name = ?, user = ?, port = ?, identity_file = ?, password_auth = ?, proxy_jump = ?, jump_host_id = ?,
+SET directory_id = ?, name = ?, alias = NULLIF(?, ''), host_name = ?, user = ?, port = ?, identity_file = ?, password_auth = ?, proxy_jump = ?, jump_host_id = ?,
     forward_agent = ?, compression = ?, server_alive_interval = ?, server_alive_count_max = ?,
     connect_timeout = ?, remark = ?, favorite = ?, updated_at = ?
 WHERE id = ?;
 `,
-		host.DirectoryID, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
+		host.DirectoryID, host.Name, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 		boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
 		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
 		host.UpdatedAt, host.ID,
@@ -283,7 +283,7 @@ ON CONFLICT(scope_type, scope_id, host_id) DO UPDATE SET
 
 func (s *Store) GetHost(id string) (domain.Host, error) {
 	row := s.db.QueryRow(`
-SELECT id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
        remark, favorite, last_used_at, created_at, updated_at
 FROM hosts
@@ -338,6 +338,7 @@ func hostFromInput(id string, input domain.HostInput, createdAt, updatedAt strin
 	return domain.Host{
 		ID:                  id,
 		DirectoryID:         input.DirectoryID,
+		Name:                input.Name,
 		Alias:               input.Alias,
 		HostName:            input.HostName,
 		User:                input.User,
@@ -368,7 +369,7 @@ func (s *Store) listHostsByIDs(ids []string) ([]domain.Host, error) {
 		args = append(args, id)
 	}
 	rows, err := s.db.Query(fmt.Sprintf(`
-SELECT id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
        remark, favorite, last_used_at, created_at, updated_at
 FROM hosts

@@ -1,4 +1,6 @@
 {
+  "hostDisplayNameRequired": "名前を入力してください。",
+  "hostDisplayNameInvalid": "名前に制御文字は使用できません。",
   "sftpIsNotConnected": "SFTP に接続されていません。",
   "noFileEditorBelongsToThisWindow": "このウィンドウに対応するファイルエディターがありません。",
   "invalidFileContents": "ファイルの内容が無効です。",

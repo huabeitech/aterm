@@ -7,12 +7,14 @@ export type HostSearchResult = {
 }
 
 export type HostSearchMatches = {
+  name: number[]
   alias: number[]
   hostName: number[]
   remark: number[]
 }
 
 const fieldWeights = {
+  name: 1000,
   alias: 1000,
   hostName: 700,
   remark: 300
@@ -38,7 +40,7 @@ export function searchHosts(hosts: service.Host[], query: string): HostSearchRes
         : { host, score: ranked.score - index / 10000, matches: ranked.matches }
     })
     .filter((result): result is HostSearchResult => Boolean(result))
-    .sort((a, b) => b.score - a.score || a.host.alias.localeCompare(b.host.alias))
+    .sort((a, b) => b.score - a.score || a.host.name.localeCompare(b.host.name))
 }
 
 function recentFirstHosts(hosts: service.Host[]): service.Host[] {
@@ -60,6 +62,7 @@ function timestampValue(value: string) {
 export function rankHost(host: service.Host, compactQuery: string, tokens: string[]) {
   const fields = [
     { name: 'alias' as const, value: normalize(host.alias) },
+    { name: 'name' as const, value: normalize(host.name) },
     { name: 'hostName' as const, value: normalize(host.hostName) },
     { name: 'remark' as const, value: normalize(host.remark) }
   ]
@@ -160,7 +163,7 @@ function fuzzyMatch(value: string, query: string): { score: number; indices: num
 }
 
 function emptyMatches(): HostSearchMatches {
-  return { alias: [], hostName: [], remark: [] }
+  return { name: [], alias: [], hostName: [], remark: [] }
 }
 
 function mergeMatches(

@@ -447,7 +447,7 @@ func openAcceptanceSession(ctx context.Context, a *App, port int) (terminal.Sess
 		return a.OpenLocalTerminal()
 	}
 	alias := fmt.Sprintf("linux-plugin-fixture-%d", time.Now().UnixNano())
-	host, err := a.CreateHost(service.HostInput{Alias: alias, HostName: os.Getenv("ATERM_FIXTURE_HOST"), User: "probe", Port: port, IdentityFile: os.Getenv("ATERM_FIXTURE_KEY")})
+	host, err := a.CreateHost(service.HostInput{Name: alias, Alias: alias, HostName: os.Getenv("ATERM_FIXTURE_HOST"), User: "probe", Port: port, IdentityFile: os.Getenv("ATERM_FIXTURE_KEY")})
 	if err != nil {
 		return terminal.Session{}, err
 	}

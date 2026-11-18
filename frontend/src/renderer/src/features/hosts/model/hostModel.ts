@@ -6,6 +6,7 @@ import type { FormState, HostSortScope, ViewID } from '../../../components/commo
 export function formFromHost(host: domain.Host): FormState {
   return {
     directoryID: host.directoryID,
+    name: host.name,
     alias: host.alias,
     hostName: host.hostName,
     user: host.user,
@@ -30,6 +31,7 @@ export function formFromHost(host: domain.Host): FormState {
 export function formToInput(form: FormState): domain.HostInput {
   return {
     directoryID: form.directoryID,
+    name: form.name,
     alias: form.alias,
     hostName: form.hostName,
     user: form.user,
@@ -77,7 +79,7 @@ export function compareHostsInScope(a: domain.Host, b: domain.Host, scope: HostS
   const key = hostSortScopeKey(scope)
   const aOrder = a.sortOrders?.[key] ?? Number.MAX_SAFE_INTEGER
   const bOrder = b.sortOrders?.[key] ?? Number.MAX_SAFE_INTEGER
-  return aOrder - bOrder || a.alias.localeCompare(b.alias)
+  return aOrder - bOrder || a.name.localeCompare(b.name)
 }
 
 export function hostSortScopeKey(scope: HostSortScope): string {
@@ -87,7 +89,7 @@ export function hostSortScopeKey(scope: HostSortScope): string {
 export function compareAllHosts(a: domain.Host, b: domain.Host) {
   if (a.favorite !== b.favorite) return a.favorite ? -1 : 1
   const recentDifference = timestampValue(b.lastUsedAt) - timestampValue(a.lastUsedAt)
-  return recentDifference || a.alias.localeCompare(b.alias)
+  return recentDifference || a.name.localeCompare(b.name)
 }
 
 export function validateForm(form: FormState): Partial<Record<keyof FormState, string>> {
@@ -95,8 +97,9 @@ export function validateForm(form: FormState): Partial<Record<keyof FormState, s
   const alias = form.alias.trim()
   const hostName = form.hostName.trim()
   const port = Number(form.port.trim() || '22')
-  if (!alias) errors.alias = t('hosts:hostAliasIsRequired')
-  else if (!isValidHostAlias(alias)) errors.alias = t('errors:hostAliasFormat')
+  if (!form.name.trim()) errors.name = t('errors:hostDisplayNameRequired')
+  else if (/[\p{Cc}]/u.test(form.name.trim())) errors.name = t('errors:hostDisplayNameInvalid')
+  if (alias && !isValidHostAlias(alias)) errors.alias = t('errors:hostAliasFormat')
   if (!hostName) errors.hostName = t('hosts:hostnameOrIpAddressIsRequired')
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     errors.port = t('hosts:portMustBeBetween1And65535')

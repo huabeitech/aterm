@@ -35,10 +35,10 @@ func TestVaultPayloadIncludesManagedKeyAndPreservesPortableIdentity(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.CreateHost(HostInput{Alias: "portable", HostName: "server.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID}); err != nil {
+	if _, err := store.CreateHost(HostInput{Name: "portable", Alias: "portable", HostName: "server.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.CreateHost(HostInput{Alias: "device", HostName: "server.test", Port: 22, IdentityFile: "/device/id_rsa"}); err != nil {
+	if _, err := store.CreateHost(HostInput{Name: "device", Alias: "device", HostName: "server.test", Port: 22, IdentityFile: "/device/id_rsa"}); err != nil {
 		t.Fatal(err)
 	}
 	payload, _, err := service.buildVaultPayload()

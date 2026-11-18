@@ -142,7 +142,7 @@ func (h *nativePluginHost) Call(ctx context.Context, method string, raw json.Raw
 		}
 		out := []map[string]string{}
 		for _, host := range hosts {
-			out = append(out, map[string]string{"id": host.ID, "alias": host.Alias, "hostName": host.HostName, "user": host.User})
+			out = append(out, map[string]string{"id": host.ID, "alias": host.Alias, "name": host.DisplayName(), "hostName": host.HostName, "user": host.User})
 		}
 		return sdk.JSON(out), nil
 	case "ssh.open":
@@ -186,11 +186,11 @@ func (h *nativePluginHost) Call(ctx context.Context, method string, raw json.Raw
 			}
 		}
 		if !approved {
-			if !h.app.confirmAction(ctx, windowConfirmation{Title: h.manifest.Name, Message: target.Alias, TitleKey: "nativePlugin.hostTitle", MessageKey: "nativePlugin.hostMessage", ConfirmKey: "nativePlugin.allow", CancelKey: "nativePlugin.cancel", Parameters: map[string]string{"plugin": h.manifest.Name, "host": target.Alias}}) {
+			if !h.app.confirmAction(ctx, windowConfirmation{Title: h.manifest.Name, Message: target.DisplayName(), TitleKey: "nativePlugin.hostTitle", MessageKey: "nativePlugin.hostMessage", ConfirmKey: "nativePlugin.allow", CancelKey: "nativePlugin.cancel", Parameters: map[string]string{"plugin": h.manifest.Name, "host": target.DisplayName()}}) {
 				return nil, errors.New("permission denied")
 			}
 			if registry := h.app.desktopPluginRegistry; registry != nil {
-				if err := registry.Grant(h.id, plugins.Grant{ID: grant, Label: target.Alias + " (SSH)"}, generation); err != nil {
+				if err := registry.Grant(h.id, plugins.Grant{ID: grant, Label: target.DisplayName() + " (SSH)"}, generation); err != nil {
 					return nil, err
 				}
 				h.app.emitEvent("plugins:changed", nil)

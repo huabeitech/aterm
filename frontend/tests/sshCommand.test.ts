@@ -6,6 +6,7 @@ import type { domain } from '../src/shared/contracts/domain'
 const host = (identityFile: string): domain.Host => ({
   id: 'production',
   directoryID: '',
+  name: 'production',
   alias: 'production',
   hostName: 'server.example',
   user: 'deploy',

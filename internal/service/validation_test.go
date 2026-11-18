@@ -4,6 +4,7 @@ import "testing"
 
 func TestValidateHostInputAcceptsValidHost(t *testing.T) {
 	input := HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		User:     "ubuntu",
@@ -21,7 +22,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 		input HostInput
 	}{
 		{
-			name: "empty alias",
+			name: "empty display name",
 			input: HostInput{
 				HostName: "example.com",
 				Port:     22,
@@ -30,6 +31,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 		{
 			name: "alias with whitespace",
 			input: HostInput{
+				Name:     "prod api",
 				Alias:    "prod api",
 				HostName: "example.com",
 				Port:     22,
@@ -38,6 +40,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 		{
 			name: "empty host name",
 			input: HostInput{
+				Name:  "prod-api",
 				Alias: "prod-api",
 				Port:  22,
 			},
@@ -45,6 +48,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 		{
 			name: "port below range",
 			input: HostInput{
+				Name:     "prod-api",
 				Alias:    "prod-api",
 				HostName: "example.com",
 				Port:     -1,
@@ -53,6 +57,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 		{
 			name: "port above range",
 			input: HostInput{
+				Name:     "prod-api",
 				Alias:    "prod-api",
 				HostName: "example.com",
 				Port:     65536,
@@ -71,6 +76,7 @@ func TestValidateHostInputRejectsInvalidValues(t *testing.T) {
 
 func TestNormalizeHostInput(t *testing.T) {
 	input := HostInput{
+		Name:         "  prod-api  ",
 		Alias:        "  prod-api  ",
 		HostName:     "  example.com  ",
 		User:         "  root  ",

@@ -197,7 +197,7 @@ func (s *HostService) ensureJumpHostsNotInUse(ids []string) error {
 	}
 	for _, host := range hosts {
 		if host.JumpHostID != "" && deleted[host.JumpHostID] && !deleted[host.ID] {
-			return fmt.Errorf("%s is used as a jump host by %s", byID[host.JumpHostID].Alias, host.Alias)
+			return fmt.Errorf("%s is used as a jump host by %s", byID[host.JumpHostID].DisplayName(), host.DisplayName())
 		}
 	}
 	return nil

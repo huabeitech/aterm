@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +29,11 @@ func (s *SSHConfigService) ExportOpenSSHConfig(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	rendered := sshconfig.RenderConfig(toSSHHosts(hosts))
+	exportable, err := toSSHHosts(hosts)
+	if err != nil {
+		return err
+	}
+	rendered := sshconfig.RenderConfig(exportable)
 	return s.withSSHDirectory(ctx, func(paths sshPaths) error {
 		if err := ensureSSHPaths(paths); err != nil {
 			return err
@@ -328,20 +336,27 @@ func normalizeIncludeLine(config string) string {
 	return strings.TrimRight(strings.Join(out, "\n"), "\n") + "\n"
 }
 
-func toSSHHosts(hosts []Host) []sshconfig.Host {
-	aliases := make(map[string]string, len(hosts))
+func toSSHHosts(hosts []Host) ([]sshconfig.Host, error) {
+	byID := make(map[string]Host, len(hosts))
 	for _, host := range hosts {
-		aliases[host.ID] = host.Alias
+		byID[host.ID] = host
 	}
 	out := make([]sshconfig.Host, 0, len(hosts))
 	for _, host := range hosts {
+		if host.Alias == "" {
+			continue
+		}
+		proxyJump, err := resolvedProxyJump(host, byID)
+		if err != nil {
+			return nil, err
+		}
 		out = append(out, sshconfig.Host{
 			Alias:               host.Alias,
 			HostName:            host.HostName,
 			User:                host.User,
 			Port:                host.Port,
 			IdentityFile:        host.IdentityFile,
-			ProxyJump:           resolvedProxyJump(host, aliases),
+			ProxyJump:           proxyJump,
 			ForwardAgent:        host.ForwardAgent,
 			Compression:         host.Compression,
 			ServerAliveInterval: host.ServerAliveInterval,
@@ -349,12 +364,44 @@ func toSSHHosts(hosts []Host) []sshconfig.Host {
 			ConnectTimeout:      host.ConnectTimeout,
 		})
 	}
-	return out
+	return out, nil
 }
 
-func resolvedProxyJump(host Host, aliases map[string]string) string {
-	if alias := aliases[host.JumpHostID]; alias != "" {
-		return alias
+var jumpEndpointToken = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$`)
+
+func resolvedProxyJump(host Host, byID map[string]Host) (string, error) {
+	jumps := []string{}
+	seen := map[string]bool{host.ID: true}
+	current := host
+	for {
+		jump, ok := byID[current.JumpHostID]
+		if !ok {
+			if current.ProxyJump != "" {
+				jumps = append(jumps, current.ProxyJump)
+			}
+			break
+		}
+		if seen[jump.ID] {
+			return "", fmt.Errorf("OpenSSH ProxyJump cycle for %q", host.DisplayName())
+		}
+		if jump.Alias != "" {
+			jumps = append(jumps, jump.Alias)
+			break
+		}
+		seen[jump.ID] = true
+		address := strings.Trim(jump.HostName, "[]")
+		if (!jumpEndpointToken.MatchString(address) && net.ParseIP(address) == nil) ||
+			(jump.User != "" && !jumpEndpointToken.MatchString(jump.User)) {
+			return "", fmt.Errorf("invalid OpenSSH ProxyJump endpoint for %q", jump.DisplayName())
+		}
+		endpoint := net.JoinHostPort(address, strconv.Itoa(resolvedSSHPort(jump.Port)))
+		if jump.User != "" {
+			endpoint = jump.User + "@" + endpoint
+		}
+		jumps = append(jumps, endpoint)
+		current = jump
 	}
-	return host.ProxyJump
+	// ProxyJump lists the outermost jump first.
+	slices.Reverse(jumps)
+	return strings.Join(jumps, ","), nil
 }

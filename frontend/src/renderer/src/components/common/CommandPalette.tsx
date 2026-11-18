@@ -310,18 +310,24 @@ export function CommandPalette({
                         className="host-command-palette-result"
                         onSelect={() => select(host.id)}
                         aria-label={t('commands:openHost', {
-                          host: host.alias,
+                          host: host.name,
                           protocol: files ? 'SFTP' : 'SSH'
                         })}
                       >
                         <span className="host-command-palette-content">
                           <strong className="host-command-palette-title">
-                            {highlightText(host.alias, matches.alias)}
+                            {highlightText(host.name, host.name === host.alias ? matches.alias : matches.name)}
                           </strong>
                           <span className="host-command-palette-details">
                             <span className="host-command-palette-endpoint">
                               {highlightEndpoint(host, matches)}
                             </span>
+                            {host.alias && host.alias !== host.name && matches.alias.length > 0 && (
+                              <>
+                                <span className="host-command-palette-dot" aria-hidden="true">·</span>
+                                <span>{highlightText(host.alias, matches.alias)}</span>
+                              </>
+                            )}
                             {host.remark && (
                               <>
                                 <span className="host-command-palette-dot" aria-hidden="true">

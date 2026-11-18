@@ -12,16 +12,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export function RenameConnectionDialog({
-  alias,
+  initialName,
   onSave,
   onClose
 }: {
-  alias: string
+  initialName: string
   onSave: (name: string) => Promise<string | null>
   onClose: () => void
 }) {
   useTranslation()
-  const [name, setName] = useState(alias)
+  const [name, setName] = useState(initialName)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   async function save() {
@@ -63,7 +63,7 @@ export function RenameConnectionDialog({
         >
           <Input
             autoFocus
-            aria-label={t('hosts:hostAlias')}
+            aria-label={t('hosts:hostDisplayName')}
             value={name}
             disabled={saving}
             aria-invalid={!!error}

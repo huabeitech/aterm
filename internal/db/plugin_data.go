@@ -14,7 +14,9 @@ import (
 type PluginData = domain.PluginData
 
 const pluginDataSchema = `CREATE TABLE plugin_data(plugin_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, host_ids TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(plugin_id,key));
-CREATE TRIGGER plugin_host_delete BEFORE DELETE ON hosts WHEN EXISTS(SELECT 1 FROM plugin_data p, json_each(p.host_ids) r WHERE r.value=OLD.id) BEGIN SELECT RAISE(ABORT,'the host is referenced by plugin configurations'); END;`
+` + pluginHostDeleteTrigger
+
+const pluginHostDeleteTrigger = `CREATE TRIGGER plugin_host_delete BEFORE DELETE ON hosts WHEN EXISTS(SELECT 1 FROM plugin_data p, json_each(p.host_ids) r WHERE r.value=OLD.id) BEGIN SELECT RAISE(ABORT,'the host is referenced by plugin configurations'); END;`
 
 var pluginDataID = regexp.MustCompile(`^[a-z][a-z0-9-]*\.[a-z][a-z0-9.-]{0,98}$`)
 var pluginDataKey = regexp.MustCompile(`^[a-zA-Z0-9.-]{1,100}$`)

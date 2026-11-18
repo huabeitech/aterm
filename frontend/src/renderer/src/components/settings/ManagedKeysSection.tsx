@@ -420,7 +420,7 @@ export function ManagedKeysSection({
 }
 function BlockedKeyDeletionMessage({ hosts }: { hosts: domain.Host[] }) {
   useTranslation()
-  const shown = hosts.slice(0, 3).map((host) => `“${host.alias}”`)
+  const shown = hosts.slice(0, 3).map((host) => `“${host.name}”`)
   return (
     <p className="text-[length:var(--app-text-13)] leading-relaxed text-muted-foreground">
       {t('settings:keyInUse', { hosts: shown.join(', '), count: hosts.length })}

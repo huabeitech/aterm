@@ -28,6 +28,7 @@ func TestHostCRUD(t *testing.T) {
 	store := openTestStore(t)
 
 	created, err := store.CreateHost(service.HostInput{
+		Name:         "prod-api",
 		Alias:        "prod-api",
 		HostName:     "10.0.0.12",
 		User:         "ubuntu",
@@ -54,6 +55,7 @@ func TestHostCRUD(t *testing.T) {
 	}
 
 	updated, err := store.UpdateHost(created.ID, service.HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.13",
 		User:     "root",
@@ -81,6 +83,7 @@ func TestHostCRUD(t *testing.T) {
 func TestCreateHostRejectsDuplicateAlias(t *testing.T) {
 	store := openTestStore(t)
 	input := service.HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		Port:     22,
@@ -105,11 +108,11 @@ func TestMoveHostsAppendsToTargetDirectoryOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateDirectory(B) error = %v", err)
 	}
-	_, err = store.CreateHost(service.HostInput{Alias: "target-existing", HostName: "10.0.1.1", Port: 22, DirectoryID: dirB.ID})
+	_, err = store.CreateHost(service.HostInput{Name: "target-existing", Alias: "target-existing", HostName: "10.0.1.1", Port: 22, DirectoryID: dirB.ID})
 	if err != nil {
 		t.Fatalf("CreateHost(target) error = %v", err)
 	}
-	source, err := store.CreateHost(service.HostInput{Alias: "source", HostName: "10.0.0.1", Port: 22, DirectoryID: dirA.ID})
+	source, err := store.CreateHost(service.HostInput{Name: "source", Alias: "source", HostName: "10.0.0.1", Port: 22, DirectoryID: dirA.ID})
 	if err != nil {
 		t.Fatalf("CreateHost(source) error = %v", err)
 	}
@@ -127,6 +130,7 @@ func TestHostFavoritePersistsAcrossCreateListAndUpdate(t *testing.T) {
 	store := openTestStore(t)
 
 	created, err := store.CreateHost(service.HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		Port:     22,
@@ -148,6 +152,7 @@ func TestHostFavoritePersistsAcrossCreateListAndUpdate(t *testing.T) {
 	}
 
 	updated, err := store.UpdateHost(created.ID, service.HostInput{
+		Name:     created.Alias,
 		Alias:    created.Alias,
 		HostName: created.HostName,
 		Port:     created.Port,
@@ -225,6 +230,7 @@ func TestMarkHostUsedPersistsLastUsedAt(t *testing.T) {
 	store := openTestStore(t)
 
 	created, err := store.CreateHost(service.HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		Port:     22,
@@ -508,6 +514,7 @@ func TestExportHostConfigSnapshotExcludesSettingsAndIncludesHostUsage(t *testing
 		t.Fatalf("CreateDirectory() error = %v", err)
 	}
 	host, err := store.CreateHost(service.HostInput{
+		Name:        "prod-api",
 		Alias:       "prod-api",
 		HostName:    "10.0.0.12",
 		User:        "ubuntu",
@@ -571,6 +578,7 @@ func TestImportHostConfigSnapshotReplacesHostsAndDirectoriesOnly(t *testing.T) {
 		t.Fatalf("source CreateDirectory() error = %v", err)
 	}
 	host, err := source.CreateHost(service.HostInput{
+		Name:        "cloud-api",
 		Alias:       "cloud-api",
 		HostName:    "10.0.0.20",
 		Port:        22,
@@ -593,6 +601,7 @@ func TestImportHostConfigSnapshotReplacesHostsAndDirectoriesOnly(t *testing.T) {
 		t.Fatalf("target UpdateSettings() error = %v", err)
 	}
 	if _, err := target.CreateHost(service.HostInput{
+		Name:     "local-only",
 		Alias:    "local-only",
 		HostName: "127.0.0.1",
 		Port:     22,
@@ -652,6 +661,7 @@ func TestDirectoryCRUDAndHostAssignment(t *testing.T) {
 	}
 
 	host, err := store.CreateHost(service.HostInput{
+		Name:        "prod-api",
 		Alias:       "prod-api",
 		HostName:    "10.0.0.12",
 		Port:        22,
@@ -692,6 +702,7 @@ func TestDeleteDirectoryClearsAssignedHosts(t *testing.T) {
 		t.Fatalf("CreateDirectory() error = %v", err)
 	}
 	host, err := store.CreateHost(service.HostInput{
+		Name:        "legacy-db",
 		Alias:       "legacy-db",
 		HostName:    "10.9.2.8",
 		Port:        22,
@@ -937,6 +948,7 @@ func TestDeleteDirectoryClearsDescendantHosts(t *testing.T) {
 		t.Fatalf("CreateDirectory() child error = %v", err)
 	}
 	host, err := store.CreateHost(service.HostInput{
+		Name:        "child-host",
 		Alias:       "child-host",
 		HostName:    "10.0.0.10",
 		Port:        22,
@@ -965,5 +977,44 @@ func TestDeleteDirectoryClearsDescendantHosts(t *testing.T) {
 	}
 	if len(directories) != 0 {
 		t.Fatalf("ListDirectories() len after parent delete = %d, want 0", len(directories))
+	}
+}
+
+func TestOptionalHostAliasesSurviveSnapshotRestore(t *testing.T) {
+	source, err := Open(filepath.Join(t.TempDir(), "source.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	firstInput := service.HostInput{Name: "生产环境 · API", HostName: "api.example", Alias: "production", Port: 22}
+	first, err := source.CreateHost(firstInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := source.CreateHost(firstInput); !errors.Is(err, ErrDuplicateAlias) {
+		t.Fatalf("duplicate alias error = %v", err)
+	}
+	firstInput.Alias = ""
+	if _, err := source.UpdateHost(first.ID, firstInput); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := source.CreateHost(service.HostInput{Name: firstInput.Name, HostName: "second.example"}); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := filepath.Join(t.TempDir(), "hosts.db")
+	if _, err := source.ExportHostConfigSnapshot(snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := source.ImportHostConfigSnapshot(snapshot); err != nil {
+		t.Fatal(err)
+	}
+	hosts, err := source.ListHosts()
+	if err != nil || len(hosts) != 2 {
+		t.Fatalf("restored hosts = %+v, %v", hosts, err)
+	}
+	for _, host := range hosts {
+		if host.Name != firstInput.Name || host.Alias != "" {
+			t.Fatalf("restored name or alias differs: %+v", host)
+		}
 	}
 }

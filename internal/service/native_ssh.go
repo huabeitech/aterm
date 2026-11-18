@@ -106,7 +106,7 @@ func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string
 		if err != nil {
 			return nil, fmt.Errorf("resolve ProxyJump %q: %w", jumpAlias, err)
 		}
-		jumpAlias = jump.Alias
+		jumpAlias = jump.DisplayName()
 		proxy, err := s.dialNativeSSH(ctx, jump, sshDir, confirmer, depth+1, options)
 		if err != nil {
 			return nil, fmt.Errorf("connect ProxyJump %q: %w", jumpAlias, err)
@@ -132,7 +132,7 @@ func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string
 		if proxyClient != nil {
 			proxyClient.Close()
 		}
-		return nil, fmt.Errorf("SSH handshake with %s: %w", host.Alias, err)
+		return nil, fmt.Errorf("SSH handshake with %s: %w", host.DisplayName(), err)
 	}
 	forwarding, err := nativeSSHAgentForwarding(ctx, client, host)
 	if err != nil {
@@ -417,11 +417,7 @@ func matchesNativePasswordChallenge(question string) bool {
 }
 
 func nativeAuthenticationTitle(host Host) string {
-	alias := host.Alias
-	if alias == "" {
-		alias = host.HostName
-	}
-	return "Authenticate " + alias
+	return "Authenticate " + host.DisplayName()
 }
 func interactiveSSHAuth(ctx context.Context, host Host, prompt CredentialPrompter, password string) ssh.AuthMethod {
 	return ssh.KeyboardInteractive(func(_ string, instruction string, questions []string, echo []bool) ([]string, error) {

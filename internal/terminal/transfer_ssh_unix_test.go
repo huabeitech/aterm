@@ -176,7 +176,7 @@ func TestTerminalZmodemLrzszOverNativeSSH(t *testing.T) {
 			port, _ := strconv.Atoi(portString)
 			svc := sshServiceFixture(t)
 			alias := "zmodem-fixture"
-			_, err = svc.CreateHost(ctx, service.HostInput{Alias: alias, HostName: hostname, Port: port, User: "fixture", IdentityFile: identity})
+			_, err = svc.CreateHost(ctx, service.HostInput{Name: alias, Alias: alias, HostName: hostname, Port: port, User: "fixture", IdentityFile: identity})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -207,7 +207,7 @@ export function ConnectionTreeNodeRow({
         <div
           role="treeitem"
           aria-level={node.depth + 1}
-          aria-label={host.alias}
+          aria-label={host.name}
           aria-selected={selected}
           tabIndex={tabIndex}
           onFocus={onFocus}
@@ -251,7 +251,7 @@ export function ConnectionTreeNodeRow({
         >
           <span className="w-3 shrink-0" aria-hidden="true" />
           <Server size={16} className="connection-node-icon shrink-0 text-muted-foreground" />
-          <span className="truncate">{host.alias}</span>
+          <span className="truncate">{host.name}</span>
           <button
             type="button"
             aria-label={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}

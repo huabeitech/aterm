@@ -21,7 +21,7 @@ func makeFileBackup(t *testing.T) (*AppService, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = store.CreateHost(HostInput{Alias: "file-backup", HostName: "fixture.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID}); err != nil {
+	if _, err = store.CreateHost(HostInput{Name: "file-backup", Alias: "file-backup", HostName: "fixture.test", Port: 22, IdentityFile: desktopkeys.Prefix + key.ID}); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "vault.enc")

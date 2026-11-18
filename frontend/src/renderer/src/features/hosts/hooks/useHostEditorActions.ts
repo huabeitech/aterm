@@ -9,6 +9,7 @@ import { formFromHost, formToInput, hostToInput, validateForm } from '../model/h
 
 const emptyForm: FormState = {
   directoryID: '',
+  name: '',
   alias: '',
   hostName: '',
   user: '',
@@ -195,7 +196,7 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     const host = options.hosts.find((item) => item.id === id)
     if (!host) return
     options.modal.confirm({
-      title: t('hosts:deleteHostConfirm', { name: host.alias }),
+      title: t('hosts:deleteHostConfirm', { name: host.name }),
       content: t('hosts:thisOnlyRemovesItFromAterm'),
       okText: t('hosts:delete'),
       okButtonProps: { danger: true },
@@ -256,14 +257,14 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     })
   }
 
-  async function renameHost(id: string, alias: string): Promise<string | null> {
+  async function renameHost(id: string, name: string): Promise<string | null> {
     const host = options.hosts.find((item) => item.id === id)
     if (!host) return t('hosts:thisHostNoLongerExists')
-    const errors = validateForm({ ...formFromHost(host), alias })
-    if (errors.alias) return errors.alias
+    const errors = validateForm({ ...formFromHost(host), name })
+    if (errors.name) return errors.name
     options.setBusyAction('save')
     try {
-      await options.updateHost(id, { ...hostToInput(host), alias })
+      await options.updateHost(id, { ...hostToInput(host), name })
       await options.refreshAll(id)
       options.reportSuccess(t('hosts:hostUpdated'))
       return null
@@ -347,17 +348,29 @@ function readableHostError(error: unknown): {
   fieldErrors: Partial<Record<keyof FormState, string>>
 } {
   const text = errorText(error)
-  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
+  const backendCodes = {
+    'host display name is required': 'hostDisplayNameRequired',
+    'host display name cannot contain control characters': 'hostDisplayNameInvalid',
+    'host alias already exists': 'hostAliasAlreadyExists'
+  } as const
+  const backendCode = Object.hasOwn(backendCodes, text)
+    ? backendCodes[text as keyof typeof backendCodes]
+    : undefined
+  const code =
+    backendCode ?? (error && typeof error === 'object' && 'code' in error ? error.code : undefined)
+  const message = backendCode ? t(`errors:${backendCode}`) : text
   const field = (
     {
       aliasIsRequired: 'alias',
+      hostDisplayNameRequired: 'name',
+      hostDisplayNameInvalid: 'name',
       hostAliasFormat: 'alias',
       hostNameIsRequired: 'hostName',
       portMustBeBetween1And65535: 'port',
       hostAliasAlreadyExists: 'alias'
     } as const
   )[code as 'aliasIsRequired']
-  if (field) return { text, fieldErrors: { [field]: text } }
+  if (field) return { text: message, fieldErrors: { [field]: message } }
 
   return { text, fieldErrors: {} }
 }

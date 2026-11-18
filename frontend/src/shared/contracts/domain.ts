@@ -30,6 +30,7 @@ export namespace domain {
   export interface Host {
     id: string
     directoryID: string
+    name: string
     alias: string
     hostName: string
     user: string

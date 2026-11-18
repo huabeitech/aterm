@@ -31,6 +31,7 @@ import { desktop } from '../../../api/app'
 import type { BusyAction, EditorMode, FormState, ViewID } from '../../../components/common/types'
 const emptyForm: FormState = {
   directoryID: '',
+  name: '',
   alias: '',
   hostName: '',
   user: '',
@@ -79,7 +80,7 @@ export function useHostWorkbench(
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [inspectorOpen, setInspectorOpen] = useState(false)
   const [batchAddOpen, setBatchAddOpen] = useState(false)
-  const aliasInputRef = useRef<HTMLInputElement>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const detailsDialogRef = useRef<HTMLDivElement>(null)
   const { ensureSecureDataUnlocked } = useSecureData(setBusyAction)
   const selected = hosts.find((h) => h.id === selectedID) ?? null
@@ -337,7 +338,7 @@ export function useHostWorkbench(
             onOpenAutoFocus={(event) => {
               // The first tabbable element is the alias help tooltip, not the input.
               event.preventDefault()
-              aliasInputRef.current?.focus()
+              nameInputRef.current?.focus()
             }}
             onPointerDownOutside={(event) => event.preventDefault()}
             onEscapeKeyDown={(event) => {
@@ -360,7 +361,8 @@ export function useHostWorkbench(
                 <HostEditorForm
                   key={`${editorMode}:${selected?.id ?? 'new'}`}
                   mode={editorMode}
-                  aliasInputRef={aliasInputRef}
+                  nameInputRef={nameInputRef}
+                  hostID={editorMode === 'edit' ? selected?.id : undefined}
                   form={form}
                   directories={directoryOptions}
                   hosts={hosts}

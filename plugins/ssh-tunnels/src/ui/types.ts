@@ -20,6 +20,7 @@ export interface TunnelStatus extends Tunnel {
 
 export interface Host {
   id: string
+  name?: string
   alias: string
   hostName: string
   user: string

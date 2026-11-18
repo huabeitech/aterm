@@ -24,14 +24,16 @@ export function HostDetails({
   return (
     <div className="details-stack grid gap-4.5 [.host-inspector_&]:gap-3.5">
       <h2 className="host-details-title m-0 text-[var(--mac-text)] text-lg font-[650] leading-[calc(1.5rem*var(--app-font-scale))] overflow-hidden text-ellipsis whitespace-nowrap">
-        {host.alias}
+        {host.name}
       </h2>
       <DetailSection title={t('hosts:connection')}>
         <dl className="host-details-table overflow-hidden rounded-md border border-border">
           <DetailRow label={t('hosts:directory')}>{directoryName}</DetailRow>
-          <DetailRow label={t('hosts:hostAlias')}>
-            <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
-          </DetailRow>
+          {host.alias && (
+            <DetailRow label={t('hosts:hostAlias')}>
+              <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+            </DetailRow>
+          )}
           <DetailRow label={t('hosts:address')}>
             <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
           </DetailRow>

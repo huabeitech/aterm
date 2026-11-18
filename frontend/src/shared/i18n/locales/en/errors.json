@@ -1,4 +1,6 @@
 {
+  "hostDisplayNameRequired": "Enter a name.",
+  "hostDisplayNameInvalid": "The name cannot contain control characters.",
   "sftpIsNotConnected": "SFTP is not connected.",
   "noFileEditorBelongsToThisWindow": "No file editor belongs to this window.",
   "invalidFileContents": "Invalid file contents.",

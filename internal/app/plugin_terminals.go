@@ -74,8 +74,7 @@ func (a *App) openPluginTerminal(ctx context.Context, owner uint, source desktop
 	if err = ctx.Err(); err != nil {
 		return "", err
 	}
-	alias := selected.Alias
-	session, err := a.terminal.OpenSSH(alias, options, func(connectCtx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
+	session, err := a.terminal.OpenSSH(selected.DisplayName(), options, func(connectCtx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
 		return a.svc.OpenNativeSSHHostWithInteraction(connectCtx, *selected, a.hostKeyConfirmer(id), a.credentialPrompter(id))
 	})
 	if err != nil {

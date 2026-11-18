@@ -78,12 +78,12 @@ export const ConnectionHoverCard = forwardRef<ComponentRef<typeof HoverCard.Trig
             sideOffset={6}
             arrowPadding={8}
             collisionPadding={12}
-            aria-label={`${host.alias} · ${t('hosts:details')}`}
+            aria-label={`${host.name} · ${t('hosts:details')}`}
             onEscapeKeyDown={() => setOpen(false)}
           >
             <div className="mb-3 flex items-start gap-2 border-b border-border pb-2">
               <Server size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 wrap-anywhere text-sm font-semibold">{host.alias}</span>
+              <span className="min-w-0 wrap-anywhere text-sm font-semibold">{host.name}</span>
             </div>
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs">
               {details.map(([label, value]) => (

@@ -364,9 +364,15 @@ function HostDetails({
       )}
     >
       <div>
-        <dt>{t('terminal:hostAlias')}</dt>
-        <dd>{host.alias}</dd>
+        <dt>{t('hosts:hostDisplayName')}</dt>
+        <dd>{host.name}</dd>
       </div>
+      {host.alias && host.alias !== host.name && (
+        <div>
+          <dt>{t('hosts:hostAlias')}</dt>
+          <dd>{host.alias}</dd>
+        </div>
+      )}
       <div>
         <dt>{t('terminal:address')}</dt>
         <dd>{host.hostName}</dd>

@@ -79,6 +79,7 @@ func TestAppServiceEncryptedSyncWritesOpaqueVault(t *testing.T) {
 		t.Fatalf("HostCount = %d, want 0 before hosts are added", result.HostCount)
 	}
 	host, err := app.CreateHost(context.Background(), HostInput{
+		Name:         "prod-api",
 		Alias:        "prod-api",
 		HostName:     "10.0.0.12",
 		Port:         22,
@@ -158,7 +159,7 @@ func TestAppServicePreviewICloudBackupDoesNotReplaceLocalData(t *testing.T) {
 		DeviceName:       "Source Mac",
 		PasswordStore:    newMemoryPasswordStore(),
 	})
-	if _, err := sourceApp.CreateHost(context.Background(), HostInput{Alias: "cloud", HostName: "10.0.0.10", Port: 22}); err != nil {
+	if _, err := sourceApp.CreateHost(context.Background(), HostInput{Name: "cloud", Alias: "cloud", HostName: "10.0.0.10", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := sourceApp.SetUpSecureData(context.Background(), "vault-password"); err != nil {
@@ -181,7 +182,7 @@ func TestAppServicePreviewICloudBackupDoesNotReplaceLocalData(t *testing.T) {
 		LocalVaultPath:   filepath.Join(tmp, "target-vault.enc"),
 		PasswordStore:    newMemoryPasswordStore(),
 	})
-	if _, err := targetApp.CreateHost(context.Background(), HostInput{Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
+	if _, err := targetApp.CreateHost(context.Background(), HostInput{Name: "local", Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 	metadata, err := targetApp.PreviewICloudBackup(context.Background(), "vault-password")
@@ -249,6 +250,7 @@ func TestAppServiceDownloadEncryptedSyncReplacesLocalData(t *testing.T) {
 		t.Fatal(err)
 	}
 	cloudHost, err := sourceApp.CreateHost(context.Background(), HostInput{
+		Name:         "cloud",
 		Alias:        "cloud",
 		HostName:     "10.0.0.10",
 		Port:         22,
@@ -277,7 +279,7 @@ func TestAppServiceDownloadEncryptedSyncReplacesLocalData(t *testing.T) {
 		BackupDir:        filepath.Join(tmp, "target-backups"),
 		PasswordStore:    newMemoryPasswordStore(),
 	})
-	if _, err := targetApp.CreateHost(context.Background(), HostInput{Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
+	if _, err := targetApp.CreateHost(context.Background(), HostInput{Name: "local", Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -318,7 +320,7 @@ func TestAppServiceEncryptedSyncRejectsTamperedDownload(t *testing.T) {
 		BackupDir:        filepath.Join(tmp, "source-backups"),
 		PasswordStore:    passwords,
 	})
-	if _, err := sourceApp.CreateHost(context.Background(), HostInput{Alias: "source", HostName: "10.0.0.10", Port: 22}); err != nil {
+	if _, err := sourceApp.CreateHost(context.Background(), HostInput{Name: "source", Alias: "source", HostName: "10.0.0.10", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := sourceApp.SetUpSecureData(context.Background(), "vault-password"); err != nil {
@@ -350,7 +352,7 @@ func TestAppServiceEncryptedSyncRejectsTamperedDownload(t *testing.T) {
 		BackupDir:        filepath.Join(tmp, "target-backups"),
 		PasswordStore:    newMemoryPasswordStore(),
 	})
-	if _, err := targetApp.CreateHost(context.Background(), HostInput{Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
+	if _, err := targetApp.CreateHost(context.Background(), HostInput{Name: "local", Alias: "local", HostName: "127.0.0.1", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := targetApp.DownloadEncryptedSync(context.Background(), "vault-password"); !errors.Is(err, ErrVaultCorrupted) && !errors.Is(err, ErrInvalidVaultPassword) {
@@ -384,6 +386,7 @@ func TestAppServiceAutoUnlocksSecureDataOnNextLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 	host, err := first.CreateHost(context.Background(), HostInput{
+		Name:         "production",
 		Alias:        "production",
 		HostName:     "10.0.0.20",
 		Port:         22,
@@ -513,6 +516,7 @@ func TestAppServiceRejectsPasswordHostWhenVaultIsLocked(t *testing.T) {
 		PasswordStore:  passwords,
 	})
 	if _, err := app.CreateHost(context.Background(), HostInput{
+		Name:         "production",
 		Alias:        "production",
 		HostName:     "10.0.0.20",
 		Port:         22,
@@ -524,7 +528,7 @@ func TestAppServiceRejectsPasswordHostWhenVaultIsLocked(t *testing.T) {
 	if _, err := app.SetUpSecureData(context.Background(), "vault-password"); err != nil {
 		t.Fatal(err)
 	}
-	host, err := app.CreateHost(context.Background(), HostInput{Alias: "production", HostName: "10.0.0.20", Port: 22, PasswordAuth: true, Password: "host-password"})
+	host, err := app.CreateHost(context.Background(), HostInput{Name: "production", Alias: "production", HostName: "10.0.0.20", Port: 22, PasswordAuth: true, Password: "host-password"})
 	if err != nil {
 		t.Fatal(err)
 	}

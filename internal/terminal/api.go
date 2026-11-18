@@ -31,7 +31,7 @@ func (m *Manager) OpenSSH(alias string, options LaunchOptions, connect func(cont
 			entry.connectionIdentity = &identity
 			m.mu.Unlock()
 		}
-		return client, host.Alias, err
+		return client, host.DisplayName(), err
 	})
 }
 

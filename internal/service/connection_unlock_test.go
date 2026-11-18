@@ -19,13 +19,13 @@ func TestConnectionRequiresUnlock(t *testing.T) {
 		}
 		return host
 	}
-	system := create(HostInput{Alias: "system"})
-	file := create(HostInput{Alias: "file", IdentityFile: "/tmp/fixture_key"})
-	managed := create(HostInput{Alias: "managed", IdentityFile: "aterm-key://fixture"})
-	password := create(HostInput{Alias: "password", PasswordAuth: true})
-	jump := create(HostInput{Alias: "jump", JumpHostID: managed.ID})
-	aliasJump := create(HostInput{Alias: "alias-jump", ProxyJump: "user@managed:22"})
-	nested := create(HostInput{Alias: "nested", JumpHostID: jump.ID})
+	system := create(HostInput{Name: "system", Alias: "system"})
+	file := create(HostInput{Name: "file", Alias: "file", IdentityFile: "/tmp/fixture_key"})
+	managed := create(HostInput{Name: "managed", Alias: "managed", IdentityFile: "aterm-key://fixture"})
+	password := create(HostInput{Name: "password", Alias: "password", PasswordAuth: true})
+	jump := create(HostInput{Name: "jump", Alias: "jump", JumpHostID: managed.ID})
+	aliasJump := create(HostInput{Name: "alias-jump", Alias: "alias-jump", ProxyJump: "user@managed:22"})
+	nested := create(HostInput{Name: "nested", Alias: "nested", JumpHostID: jump.ID})
 	for _, unlocked := range []bool{false, true} {
 		if unlocked {
 			if _, err := app.SetUpSecureData(ctx, "fixture-password"); err != nil {
@@ -47,7 +47,7 @@ func TestConnectionRequiresUnlock(t *testing.T) {
 
 func TestConnectionRequiresUnlockBoundsJumpCycles(t *testing.T) {
 	app, _, store := managedBackupService(t)
-	host, err := store.CreateHost(HostInput{Alias: "cycle", HostName: "fixture.invalid", Port: 22, ProxyJump: "cycle"})
+	host, err := store.CreateHost(HostInput{Name: "cycle", Alias: "cycle", HostName: "fixture.invalid", Port: 22, ProxyJump: "cycle"})
 	if err != nil {
 		t.Fatal(err)
 	}

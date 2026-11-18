@@ -1,14 +1,19 @@
 package db
 
-import "ssh-connect/internal/domain"
+import (
+	"database/sql"
+	"ssh-connect/internal/domain"
+)
 
 func scanHost(scanner hostScanner) (domain.Host, error) {
 	var host domain.Host
+	var alias sql.NullString
 	var passwordAuth, forwardAgent, compression, favorite int
 	err := scanner.Scan(
 		&host.ID,
 		&host.DirectoryID,
-		&host.Alias,
+		&host.Name,
+		&alias,
 		&host.HostName,
 		&host.User,
 		&host.Port,
@@ -27,6 +32,7 @@ func scanHost(scanner hostScanner) (domain.Host, error) {
 		&host.CreatedAt,
 		&host.UpdatedAt,
 	)
+	host.Alias = alias.String
 	host.ForwardAgent = forwardAgent == 1
 	host.PasswordAuth = passwordAuth == 1
 	host.Compression = compression == 1

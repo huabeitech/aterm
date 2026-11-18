@@ -228,7 +228,8 @@ func validate(w *Workspace) error {
 		if !legacyAlias.MatchString(h.Alias) {
 			return errors.New("invalid legacy host alias")
 		}
-		if err := domain.ValidateHostInput(domain.HostInput{Alias: h.Alias, HostName: h.HostName, Port: h.Port}); err != nil {
+		h.Name = h.Alias
+		if err := domain.ValidateHostInput(domain.HostInput{Name: h.Name, Alias: h.Alias, HostName: h.HostName, Port: h.Port}); err != nil {
 			return err
 		}
 		if h.ServerAliveInterval < 0 || h.ServerAliveCountMax < 0 || h.ConnectTimeout < 0 {

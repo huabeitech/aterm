@@ -28,7 +28,7 @@ func (a *App) OpenTerminal(alias string) (terminal.Session, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		return client, host.Alias, nil
+		return client, host.DisplayName(), nil
 	})
 }
 

@@ -134,6 +134,7 @@ func parseHostSnippet(content string) []parsedHostSnippetRow {
 				current.status = HostSnippetStatusWildcardUnsupported
 			default:
 				current.input.Alias = hostFields[0]
+				current.input.Name = hostFields[0]
 			}
 		case "match":
 			flush()

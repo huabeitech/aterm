@@ -137,12 +137,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	host, err := store.CreateHost(domain.HostInput{Alias: "parity-sftp", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity})
+	host, err := store.CreateHost(domain.HostInput{Name: "parity-sftp", Alias: "parity-sftp", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity})
 	if err != nil {
 		log.Fatal(err)
 	}
 	if *tunnels {
-		jumpHost, err := store.CreateHost(domain.HostInput{Alias: "parity-jump", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity, JumpHostID: host.ID})
+		jumpHost, err := store.CreateHost(domain.HostInput{Name: "parity-jump", Alias: "parity-jump", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity, JumpHostID: host.ID})
 		if err != nil {
 			log.Fatal(err)
 		}

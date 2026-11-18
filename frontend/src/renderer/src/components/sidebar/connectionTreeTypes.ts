@@ -24,7 +24,7 @@ export interface ConnectionTreeProps {
   onSelectHost: (id: string, ids: string[]) => void
   onSelectDirectory: (id: string) => void
   onCreateHost: (directoryID?: string) => void
-  onRenameHost: (id: string, alias: string) => Promise<string | null>
+  onRenameHost: (id: string, name: string) => Promise<string | null>
   onEditHost: (id: string) => void
   onOpenHost: (id: string) => void
   onConnectHost: (id: string) => void

@@ -162,7 +162,7 @@ func TestLegacyBackupGeneratedByCurrentElectron(t *testing.T) {
 func TestLegacyRestorePreferencesFailureRollsBackLibraryAndVault(t *testing.T) {
 	destination, _, store := managedBackupService(t)
 	ctx := context.Background()
-	if _, err := store.CreateHost(HostInput{Alias: "preserved-host", HostName: "before.test", Port: 22}); err != nil {
+	if _, err := store.CreateHost(HostInput{Name: "preserved-host", Alias: "preserved-host", HostName: "before.test", Port: 22}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := destination.SetUpSecureData(ctx, "previous-fixture-password"); err != nil {

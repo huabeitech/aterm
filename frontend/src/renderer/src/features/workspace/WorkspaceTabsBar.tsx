@@ -297,7 +297,7 @@ function TerminalTabDetails({
   const rows = hasRemoteConnection(session)
     ? [
         [t('terminal:type'), 'SSH'],
-        ...(session.remote ? [] : [[t('terminal:alias'), host?.alias || session.alias]]),
+        ...(host?.alias ? [[t('hosts:hostAlias'), host.alias]] : []),
         ['Host', session.remote?.host || host?.hostName || t('terminal:unavailable')],
         [
           t('terminal:port'),

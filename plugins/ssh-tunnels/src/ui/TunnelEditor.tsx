@@ -169,7 +169,7 @@ export function TunnelEditor({ input, hosts, editing, onClose, onSave, onTest }:
                 onChange={(value) => update('hostID', value)}
                 options={hosts.map((host) => ({
                   value: host.id,
-                  label: `${host.alias} — ${host.user ? `${host.user}@` : ''}${host.hostName}`,
+                  label: `${host.name || host.alias} — ${host.user ? `${host.user}@` : ''}${host.hostName}`,
                 }))}
               />
             </Field>

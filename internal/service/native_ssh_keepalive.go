@@ -44,7 +44,7 @@ func nativeSSHKeepaliveConfigForHost(host Host) nativeSSHKeepaliveConfig {
 		count = defaultServerAliveCountMax
 	}
 	return nativeSSHKeepaliveConfig{
-		alias:    host.Alias,
+		alias:    host.DisplayName(),
 		interval: time.Duration(host.ServerAliveInterval) * time.Second,
 		count:    count,
 	}

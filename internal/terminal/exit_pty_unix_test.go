@@ -75,7 +75,7 @@ func TestTerminalExitSnapshotIncludesRealPTYTail(t *testing.T) {
 				}
 				svc := sshServiceFixture(t)
 				const alias = "exit-fixture"
-				if _, err := svc.CreateHost(ctx, service.HostInput{Alias: alias, HostName: hostname, Port: port, User: "fixture", IdentityFile: identity}); err != nil {
+				if _, err := svc.CreateHost(ctx, service.HostInput{Name: alias, Alias: alias, HostName: hostname, Port: port, User: "fixture", IdentityFile: identity}); err != nil {
 					t.Fatal(err)
 				}
 				session, err = manager.OpenSSHAsync(alias, func(ctx context.Context, _ service.HostKeyConfirmer) (*service.NativeSSHClient, string, error) {

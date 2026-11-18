@@ -142,22 +142,22 @@ func (a *App) desktopTerminal(channel string, raw []json.RawMessage) (any, error
 			if e != nil {
 				return nil, e
 			}
-			alias := ""
+			var selected service.Host
 			for _, host := range hosts {
 				if host.ID == request.HostID {
-					alias = host.Alias
+					selected = host
 					break
 				}
 			}
-			if alias == "" {
+			if selected.ID == "" {
 				return nil, errors.New("host not found")
 			}
 			svc, e := a.service()
 			if e != nil {
 				return nil, e
 			}
-			session, err = a.terminal.OpenSSH(alias, terminal.LaunchOptions{}, func(ctx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
-				return svc.OpenNativeSSHWithInteraction(ctx, alias, a.hostKeyConfirmer(id), a.credentialPrompter(id))
+			session, err = a.terminal.OpenSSH(selected.DisplayName(), terminal.LaunchOptions{HostID: selected.ID}, func(ctx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
+				return svc.OpenNativeSSHHostWithInteraction(ctx, selected, a.hostKeyConfirmer(id), a.credentialPrompter(id))
 			})
 		} else {
 			return nil, errors.New("invalid terminal kind")

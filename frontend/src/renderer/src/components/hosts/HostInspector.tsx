@@ -115,6 +115,7 @@ export function HostInspectorPanel({
           <HostEditorForm
             key={`${mode}:${host?.id ?? 'new'}`}
             mode={mode}
+            hostID={mode === 'edit' ? host?.id : undefined}
             form={form}
             directories={directories}
             hosts={hosts}

@@ -163,7 +163,7 @@ export function useConnectionTreeDrag(
         ? props.selectedHostIDs.length
         : 1
     ghost.textContent =
-      (node.kind === 'host' ? node.host.alias : node.directory.name) +
+      (node.kind === 'host' ? node.host.name : node.directory.name) +
       (count > 1 ? ` · ${t('hosts:selectedConnections', { count })}` : '')
     document.body.append(ghost)
     preview.current = ghost

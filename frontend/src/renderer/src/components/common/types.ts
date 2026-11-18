@@ -30,6 +30,7 @@ export type DirectoryDropTarget = {
 
 export type FormState = {
   directoryID: string
+  name: string
   alias: string
   hostName: string
   user: string

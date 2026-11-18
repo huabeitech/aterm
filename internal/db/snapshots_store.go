@@ -273,28 +273,6 @@ CREATE TABLE directories (
   updated_at DATETIME NOT NULL
 );
 CREATE UNIQUE INDEX idx_directories_parent_name ON directories(parent_id, name);
-CREATE TABLE hosts (
-  id TEXT PRIMARY KEY,
-  directory_id TEXT NOT NULL DEFAULT '',
-  alias TEXT NOT NULL UNIQUE,
-  host_name TEXT NOT NULL,
-  user TEXT NOT NULL DEFAULT '',
-  port INTEGER NOT NULL DEFAULT 22,
-  identity_file TEXT NOT NULL DEFAULT '',
-  password_auth INTEGER NOT NULL DEFAULT 0,
-  proxy_jump TEXT NOT NULL DEFAULT '',
-  jump_host_id TEXT NOT NULL DEFAULT '',
-  forward_agent INTEGER NOT NULL DEFAULT 0,
-  compression INTEGER NOT NULL DEFAULT 0,
-  server_alive_interval INTEGER NOT NULL DEFAULT 0,
-  server_alive_count_max INTEGER NOT NULL DEFAULT 0,
-  connect_timeout INTEGER NOT NULL DEFAULT 0,
-  remark TEXT NOT NULL DEFAULT '',
-  favorite INTEGER NOT NULL DEFAULT 0,
-  last_used_at DATETIME NOT NULL DEFAULT '',
-  created_at DATETIME NOT NULL,
-  updated_at DATETIME NOT NULL
-);
 CREATE TABLE host_sort_orders (
   scope_type TEXT NOT NULL,
   scope_id TEXT NOT NULL DEFAULT '',
@@ -304,7 +282,7 @@ CREATE TABLE host_sort_orders (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (scope_type, scope_id, host_id)
 );
-` + pluginDataSchema)
+` + hostSchema + pluginDataSchema)
 	return err
 }
 
@@ -322,8 +300,16 @@ func validateHostConfigSnapshot(raw *sql.DB) error {
 }
 
 func readSnapshotHosts(raw *sql.DB) ([]domain.Host, error) {
+	var hasName bool
+	if err := raw.QueryRow(`SELECT EXISTS(SELECT 1 FROM pragma_table_info('hosts') WHERE name = 'name')`).Scan(&hasName); err != nil {
+		return nil, err
+	}
+	nameColumn := "COALESCE(NULLIF(alias, ''), host_name)"
+	if hasName {
+		nameColumn = "name"
+	}
 	rows, err := raw.Query(`
-SELECT id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+SELECT id, directory_id, ` + nameColumn + `, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
        remark, favorite, last_used_at, created_at, updated_at
 FROM hosts
@@ -425,12 +411,12 @@ func insertHosts(exec sqlExecer, hosts []domain.Host) error {
 	for _, host := range hosts {
 		if _, err := exec.Exec(`
 INSERT INTO hosts (
-  id, directory_id, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
+  id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
   compression, server_alive_interval, server_alive_count_max, connect_timeout,
   remark, favorite, last_used_at, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 `,
-			host.ID, host.DirectoryID, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
+			host.ID, host.DirectoryID, host.DisplayName(), host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 			boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
 			host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
 			host.LastUsedAt, host.CreatedAt, host.UpdatedAt,

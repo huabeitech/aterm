@@ -97,6 +97,7 @@ export function TunnelsPanel({
           </thead>
           <tbody>
             {visible.map((row) => {
+              const host = hosts.find((host) => host.id === row.hostID)
               const active = row.activeConfig ?? row
               const canStop = row.state === 'running' || row.state === 'starting'
               const toggleLabel = t(
@@ -109,7 +110,7 @@ export function TunnelsPanel({
                     {row.name}
                     {!hostID && (
                       <div className="text-muted-foreground">
-                        {hosts.find((host) => host.id === row.hostID)?.alias}
+                        {host?.name ?? host?.alias}
                       </div>
                     )}
                   </td>

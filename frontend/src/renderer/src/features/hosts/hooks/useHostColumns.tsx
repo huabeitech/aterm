@@ -81,7 +81,7 @@ export function useHostColumns({
   const columns = useMemo<HostColumn[]>(
     () => [
       {
-        title: t('hosts:hostAlias'),
+        title: t('hosts:hostDisplayName'),
         dataIndex: 'alias',
         key: 'alias',
         width: columnWidths.alias,
@@ -95,8 +95,8 @@ export function useHostColumns({
           <div className="host-name-cell grid grid-cols-[minmax(0,_1fr)_auto] gap-1 items-center min-w-0">
             <div className="host-name-content grid min-w-0">
               <span className="host-name-label inline-flex items-center gap-[5px] min-w-0 max-w-full">
-                <span className="min-w-0 truncate text-sm font-normal" title={host.alias}>
-                  {host.alias}
+                <span className="min-w-0 truncate text-sm font-normal" title={host.name}>
+                  {host.name}
                 </span>
                 {host.favorite && (
                   <Pin
@@ -398,7 +398,7 @@ function CopySSHCommandButton({
     <InlineCopyButton
       className="host-command-copy"
       title={t('hosts:copySshCommand2')}
-      label={t('hosts:copyHostCommand', { host: host.alias })}
+      label={t('hosts:copyHostCommand', { host: host.name })}
       disabled={disabled}
       onCopy={() => onCopy(host.id)}
     />

@@ -1,4 +1,6 @@
 {
+  "hostDisplayNameRequired": "Geben Sie einen Namen ein.",
+  "hostDisplayNameInvalid": "Der Name darf keine Steuerzeichen enthalten.",
   "sftpIsNotConnected": "SFTP ist nicht verbunden.",
   "noFileEditorBelongsToThisWindow": "Diesem Fenster ist kein Dateieditor zugeordnet.",
   "invalidFileContents": "Ungültiger Dateiinhalt.",

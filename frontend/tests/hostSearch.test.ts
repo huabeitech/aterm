@@ -21,3 +21,10 @@ test('empty host searches deduplicate by ID and prioritize recent use', () => {
   const old=host('old',{lastUsedAt:'2024-01-01'}), recent=host('recent',{lastUsedAt:'2026-01-01'})
   assert.deepEqual(searchHosts([old,recent,old],'').map(result=>result.host.id),['recent','old'])
 })
+
+test('an alias-free host can be found by its display name', () => {
+  const record = host('host-id', { name: '上海 API', alias: '' })
+  const [result] = searchHosts([record], '上海')
+  assert.equal(result.host.id, record.id)
+  assert.deepEqual(result.matches.name, [0, 1])
+})

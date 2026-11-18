@@ -40,7 +40,7 @@ func TestAppServiceHostMutationsDoNotExportAutomatically(t *testing.T) {
 	if _, err := app.UpdateSettings(context.Background(), AppSettingsInput{SSHDirectoryPath: sshDir, SSHDirectoryBookmark: sshDir}); err != nil {
 		t.Fatalf("UpdateSettings() error = %v", err)
 	}
-	if _, err := app.CreateHost(context.Background(), HostInput{Alias: "private-api", HostName: "10.0.0.8", Port: 22}); err != nil {
+	if _, err := app.CreateHost(context.Background(), HostInput{Name: "private-api", Alias: "private-api", HostName: "10.0.0.8", Port: 22}); err != nil {
 		t.Fatalf("CreateHost() error = %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(sshDir, "config.d", "ssh-connect.generated.conf")); !errors.Is(err, os.ErrNotExist) {
@@ -50,18 +50,18 @@ func TestAppServiceHostMutationsDoNotExportAutomatically(t *testing.T) {
 
 func TestAppServiceStoresSelectedJumpHost(t *testing.T) {
 	app := NewAppService(AppServiceOptions{Store: newMemoryHostStore()})
-	jump, err := app.CreateHost(context.Background(), HostInput{Alias: "bastion", HostName: "10.0.0.2", Port: 22})
+	jump, err := app.CreateHost(context.Background(), HostInput{Name: "bastion", Alias: "bastion", HostName: "10.0.0.2", Port: 22})
 	if err != nil {
 		t.Fatalf("CreateHost() jump error = %v", err)
 	}
-	target, err := app.CreateHost(context.Background(), HostInput{Alias: "private-api", HostName: "10.0.0.8", Port: 22, JumpHostID: jump.ID})
+	target, err := app.CreateHost(context.Background(), HostInput{Name: "private-api", Alias: "private-api", HostName: "10.0.0.8", Port: 22, JumpHostID: jump.ID})
 	if err != nil {
 		t.Fatalf("CreateHost() target error = %v", err)
 	}
 	if target.JumpHostID != jump.ID || target.ProxyJump != jump.Alias {
 		t.Fatalf("target jump = %+v, want %q", target, jump.ID)
 	}
-	if _, err := app.UpdateHost(context.Background(), jump.ID, HostInput{Alias: jump.Alias, HostName: jump.HostName, Port: jump.Port, JumpHostID: target.ID}); err == nil {
+	if _, err := app.UpdateHost(context.Background(), jump.ID, HostInput{Name: jump.Alias, Alias: jump.Alias, HostName: jump.HostName, Port: jump.Port, JumpHostID: target.ID}); err == nil {
 		t.Fatal("UpdateHost() cycle error = nil, want rejection")
 	}
 }
@@ -95,6 +95,7 @@ func TestAppServiceManualExportSetsUpIncludeAndWritesSnapshot(t *testing.T) {
 	}
 
 	if _, err := app.CreateHost(context.Background(), HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		User:     "ubuntu",
@@ -230,6 +231,7 @@ func TestAppServiceHostMutationsLeaveManualExportUnchanged(t *testing.T) {
 	authorizeTestSSHDirectory(t, app, sshDir)
 
 	created, err := app.CreateHost(context.Background(), HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		User:     "ubuntu",
@@ -247,6 +249,7 @@ func TestAppServiceHostMutationsLeaveManualExportUnchanged(t *testing.T) {
 	}
 
 	if _, err := app.UpdateHost(context.Background(), created.ID, HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.13",
 		User:     "root",
@@ -278,11 +281,11 @@ func TestAppServiceBatchDeleteLeavesManualExportUnchanged(t *testing.T) {
 		GeneratedConfigPath: filepath.Join(sshDir, "config.d", "ssh-connect.generated.conf"),
 	})
 	authorizeTestSSHDirectory(t, app, sshDir)
-	first, err := app.CreateHost(context.Background(), HostInput{Alias: "batch-one", HostName: "10.0.0.21", Port: 22})
+	first, err := app.CreateHost(context.Background(), HostInput{Name: "batch-one", Alias: "batch-one", HostName: "10.0.0.21", Port: 22})
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := app.CreateHost(context.Background(), HostInput{Alias: "batch-two", HostName: "10.0.0.22", Port: 22})
+	second, err := app.CreateHost(context.Background(), HostInput{Name: "batch-two", Alias: "batch-two", HostName: "10.0.0.22", Port: 22})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,7 +312,7 @@ func TestAppServiceImportHostSnippetDoesNotExportAutomatically(t *testing.T) {
 		DatabasePath:        filepath.Join(tmp, "app.db"),
 	})
 	authorizeTestSSHDirectory(t, app, sshDir)
-	if _, err := app.CreateHost(context.Background(), HostInput{Alias: "snapshot-api", HostName: "10.0.0.19", Port: 22}); err != nil {
+	if _, err := app.CreateHost(context.Background(), HostInput{Name: "snapshot-api", Alias: "snapshot-api", HostName: "10.0.0.19", Port: 22}); err != nil {
 		t.Fatalf("CreateHost() seed error = %v", err)
 	}
 	if err := app.ExportOpenSSHConfig(context.Background()); err != nil {
@@ -341,6 +344,7 @@ func TestAppServiceAuthorizeSSHDirectoryDoesNotExportAutomatically(t *testing.T)
 		DatabasePath:        filepath.Join(tmp, "app.db"),
 	})
 	if _, err := app.CreateHost(context.Background(), HostInput{
+		Name:     "auth-api",
 		Alias:    "auth-api",
 		HostName: "10.0.0.30",
 		User:     "deploy",
@@ -541,6 +545,7 @@ func TestAppServiceUsesAuthorizedSSHDirectory(t *testing.T) {
 		t.Fatalf("SSHDirectoryPath = %q, want authorized directory", status.SSHDirectoryPath)
 	}
 	if _, err := app.CreateHost(context.Background(), HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		Port:     22,
@@ -668,6 +673,7 @@ func TestAppServicePrepareTerminalConnectionMarksHostUsed(t *testing.T) {
 	authorizeTestSSHDirectory(t, app, sshDir)
 
 	created, err := app.CreateHost(context.Background(), HostInput{
+		Name:     "prod-api",
 		Alias:    "prod-api",
 		HostName: "10.0.0.12",
 		Port:     22,
@@ -852,6 +858,7 @@ func TestAppServiceDeleteDirectoryRejectsDirectoryWithHosts(t *testing.T) {
 	}
 	if _, err = app.CreateHost(context.Background(), HostInput{
 		DirectoryID: directory.ID,
+		Name:        "prod-api",
 		Alias:       "prod-api",
 		HostName:    "10.0.0.1",
 		User:        "deploy",
@@ -894,6 +901,7 @@ func TestAppServiceDeleteDirectoryRejectsDirectoryWithDescendantHosts(t *testing
 	}
 	if _, err = app.CreateHost(context.Background(), HostInput{
 		DirectoryID: child.ID,
+		Name:        "prod-api",
 		Alias:       "prod-api",
 		HostName:    "10.0.0.1",
 		User:        "deploy",
@@ -965,6 +973,7 @@ func (s *memoryHostStore) CreateHost(input HostInput) (Host, error) {
 	host := Host{
 		ID:           input.Alias,
 		DirectoryID:  input.DirectoryID,
+		Name:         input.Name,
 		Alias:        input.Alias,
 		HostName:     input.HostName,
 		User:         input.User,
@@ -981,6 +990,7 @@ func (s *memoryHostStore) CreateHost(input HostInput) (Host, error) {
 func (s *memoryHostStore) UpdateHost(id string, input HostInput) (Host, error) {
 	for i := range s.hosts {
 		if s.hosts[i].ID == id {
+			s.hosts[i].Name = input.Name
 			s.hosts[i].Alias = input.Alias
 			s.hosts[i].DirectoryID = input.DirectoryID
 			s.hosts[i].HostName = input.HostName
@@ -1176,4 +1186,31 @@ func (s *memoryHostStore) ImportHostConfigSnapshot(path string) (SyncSnapshotInf
 	s.directories = append([]Directory(nil), snapshot.directories...)
 	s.importedSnapshots = append(s.importedSnapshots, path)
 	return SyncSnapshotInfo{HostCount: len(s.hosts), DirectoryCount: len(s.directories)}, nil
+}
+
+func TestOpenSSHExportUsesOnlyAliasedHostStanzas(t *testing.T) {
+	sshDir := filepath.Join(t.TempDir(), ".ssh")
+	store := newMemoryHostStore()
+	store.hosts = []Host{
+		{ID: "outer", Alias: "outer", HostName: "outer.example"},
+		{ID: "jump", Name: "IPv6 跳板", HostName: "2001:db8::1", User: "ops", Port: 2222, JumpHostID: "outer"},
+		{ID: "private", Name: "仅限 aTerm", HostName: "private.example"},
+		{ID: "target", Name: "生产 API", Alias: "prod", HostName: "api.example", JumpHostID: "jump", ProxyJump: "old-alias"},
+	}
+	app := NewAppService(AppServiceOptions{Store: store, SSHDir: sshDir})
+	authorizeTestSSHDirectory(t, app, sshDir)
+	if err := app.ExportOpenSSHConfig(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	config := readGeneratedConfig(t, sshDir)
+	for _, expected := range []string{"\nHost outer\n", "\nHost prod\n", "ProxyJump outer,ops@[2001:db8::1]:2222"} {
+		if !strings.Contains(config, expected) {
+			t.Fatalf("missing %q in generated config:\n%s", expected, config)
+		}
+	}
+	for _, excluded := range []string{"\nHost \n", "private.example", "old-alias", "生产 API", "IPv6 跳板"} {
+		if strings.Contains(config, excluded) {
+			t.Fatalf("unexpected %q in generated config:\n%s", excluded, config)
+		}
+	}
 }
