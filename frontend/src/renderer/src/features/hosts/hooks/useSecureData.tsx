@@ -1,4 +1,4 @@
-import { t } from '../../../../../shared/i18n'
+import { i18n, t } from '../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useId } from 'react'
 import { PasswordInput } from '@/components/ui/desktop'
@@ -17,7 +17,7 @@ export function useSecureData(
   const SetUpSecureData = (password: string) => desktop.library.unlockVault(password, true)
   const UnlockSecureData = (password: string) => desktop.library.unlockVault(password, false)
   async function ensureSecureDataUnlocked(
-    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync'
+    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
   ) {
     const status = await loadSyncStatus()
     if (status.unlocked) return true
@@ -25,7 +25,7 @@ export function useSecureData(
   }
   function promptSecureDataUnlock(
     status: Pick<domain.EncryptedSyncStatus, 'localVaultAvailable' | 'unlocked'>,
-    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync'
+    reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
   ) {
     return new Promise<boolean>((resolve) => {
       const needsSetup = status.localVaultAvailable === false
@@ -35,11 +35,11 @@ export function useSecureData(
       let submitting = false
       let settled = false
       let passwordDialog: ReturnType<typeof options.modal.confirm>
-      const copy = secureDataPromptCopy(needsSetup, reason)
 
       const finish = (value: boolean) => {
         if (settled) return
         settled = true
+        i18n.off('languageChanged', updateDialog)
         resolve(value)
       }
 
@@ -87,7 +87,7 @@ export function useSecureData(
       const renderContent = () => (
         <div className="sync-password-dialog">
           <p id={`${id}-description`} className="secure-data-description">
-            {copy.description}
+            {secureDataPromptCopy(needsSetup, reason).description}
           </p>
           <div className="sync-password-dialog-fields">
             <div className="secure-data-field">
@@ -145,12 +145,16 @@ export function useSecureData(
 
       const updateDialog = () => {
         if (settled) return
+        const copy = secureDataPromptCopy(needsSetup, reason)
         passwordDialog.update({
+          title: copy.title,
+          okText: copy.okText,
           content: renderContent(),
           okButtonProps: { loading: submitting }
         })
       }
 
+      const copy = secureDataPromptCopy(needsSetup, reason)
       passwordDialog = options.modal.confirm({
         className: 'secure-data-alert',
         overlayClassName: 'secure-data-overlay',
@@ -164,6 +168,7 @@ export function useSecureData(
         onOk: submit,
         onCancel: () => finish(false)
       })
+      i18n.on('languageChanged', updateDialog)
     })
   }
 
@@ -171,7 +176,7 @@ export function useSecureData(
 }
 function secureDataPromptCopy(
   needsSetup: boolean,
-  reason: 'save-password' | 'connect' | 'reveal-password' | 'sync'
+  reason: 'save-password' | 'connect' | 'reveal-password' | 'sync' | 'ssh-keys'
 ) {
   if (needsSetup) {
     return {
@@ -184,7 +189,14 @@ function secureDataPromptCopy(
     return {
       title: t('hosts:unlockToConnect'),
       okText: t('hosts:unlockAndConnect'),
-      description: t('hosts:enterYourEncryptionPasswordToUseTheSavedSshPasswordForThisHost')
+      description: t('hosts:unlockConnectionCredentialsDescription')
+    }
+  }
+  if (reason === 'ssh-keys') {
+    return {
+      title: t('hosts:unlockManagedSshKeys'),
+      okText: t('hosts:unlock'),
+      description: t('hosts:unlockManagedSshKeysDescription')
     }
   }
   if (reason === 'reveal-password') {

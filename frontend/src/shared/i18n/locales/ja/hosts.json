@@ -244,5 +244,8 @@
   "moveIntoFolder": "{{name}} に移動",
   "dragOrganizationHint": "線上で並べ替え、フォルダー上で移動。Esc でキャンセル。",
   "moveToRoot": "ルートに移動",
-  "moreActions": "その他の操作"
+  "moreActions": "その他の操作",
+  "unlockManagedSshKeys": "SSH 鍵をロック解除",
+  "unlockManagedSshKeysDescription": "暗号化パスワードを入力して、aTerm に保存された SSH 鍵を選択します。",
+  "unlockConnectionCredentialsDescription": "暗号化パスワードを入力して、この接続と踏み台ホストに保存された SSH パスワードまたは鍵を使用します。"
 }

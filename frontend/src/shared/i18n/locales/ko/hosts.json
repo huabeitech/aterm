@@ -244,5 +244,8 @@
   "moveIntoFolder": "{{name}}(으)로 이동",
   "dragOrganizationHint": "선에 놓아 정렬하거나 폴더에 놓아 이동하세요. Esc로 취소합니다.",
   "moveToRoot": "루트 폴더로 이동",
-  "moreActions": "추가 작업"
+  "moreActions": "추가 작업",
+  "unlockManagedSshKeys": "SSH 키 잠금 해제",
+  "unlockManagedSshKeysDescription": "암호화 비밀번호를 입력하여 aTerm에 저장된 SSH 키를 선택하세요.",
+  "unlockConnectionCredentialsDescription": "암호화 비밀번호를 입력하여 이 연결 및 점프 호스트에 저장된 SSH 비밀번호 또는 키를 사용하세요."
 }

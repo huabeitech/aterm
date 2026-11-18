@@ -244,5 +244,8 @@
   "moveIntoFolder": "Move into {{name}}",
   "dragOrganizationHint": "Drop on a line to reorder, or on a folder to move. Esc cancels.",
   "moveToRoot": "Move to root folder",
-  "moreActions": "More actions"
+  "moreActions": "More actions",
+  "unlockManagedSshKeys": "Unlock SSH Keys",
+  "unlockManagedSshKeysDescription": "Enter your encryption password to choose SSH keys stored in aTerm.",
+  "unlockConnectionCredentialsDescription": "Enter your encryption password to use saved SSH passwords or keys for this connection, including its jump hosts."
 }

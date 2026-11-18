@@ -11,7 +11,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Field, PasswordInput, SearchSelect } from '@/components/ui/desktop'
 import { domain } from '../../../../api/types'
 import { desktop } from '../../../../api/app'
-import type { FormState } from '../../../../components/common/types'
+import type { BusyAction, FormState } from '../../../../components/common/types'
+import { useSecureData } from '../../hooks/useSecureData'
+import { useAppUI } from '@/components/ui/confirm-provider'
 import { DetailSection } from './DetailSection'
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group'
 
@@ -37,12 +39,39 @@ export function HostEditorForm({
     onChange({ ...form, [key]: value })
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [managedKeys, setManagedKeys] = useState<domain.ManagedKey[]>([])
+  const [keysLocked, setKeysLocked] = useState(true)
+  const [keysBusy, setKeysBusy] = useState<BusyAction>(null)
+  const { ensureSecureDataUnlocked } = useSecureData(setKeysBusy)
+  const { message } = useAppUI()
   useEffect(() => {
-    void desktop.library
-      .listManagedKeys()
-      .then(setManagedKeys)
-      .catch(() => setManagedKeys([]))
-  }, [])
+    let active = true
+    void (async () => {
+      try {
+        const status = await desktop.library.vaultStatus()
+        if (!active) return
+        setKeysLocked(!status.unlocked)
+        if (status.unlocked) {
+          const keys = await desktop.library.listManagedKeys()
+          if (active) setManagedKeys(keys)
+        }
+      } catch {
+        if (active) message.error(t('settings:unableToLoadSshKeys'))
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [message])
+  async function unlockManagedKeys() {
+    try {
+      if (!(await ensureSecureDataUnlocked('ssh-keys'))) return
+      const keys = await desktop.library.listManagedKeys()
+      setManagedKeys(keys)
+      setKeysLocked(false)
+    } catch {
+      message.error(t('settings:unableToLoadSshKeys'))
+    }
+  }
   const advancedFields: (keyof FormState)[] = [
     'jumpHostID',
     'proxyJump',
@@ -238,19 +267,17 @@ export function HostEditorForm({
                     </span>
                   </span>
                 </label>
-                {(managedKeys.length || managedIdentity) && (
-                  <label
-                    className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors hover:bg-accent/50 ${managedIdentity ? 'border-primary bg-primary/5' : 'border-border'}`}
-                  >
-                    <RadioGroupItem value="managed" />
-                    <span className="grid gap-0.5">
-                      <span className="text-sm font-medium">{t('hosts:managedSshKey')}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {t('hosts:chooseAKeyEncryptedByAterm')}
-                      </span>
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors hover:bg-accent/50 ${managedIdentity ? 'border-primary bg-primary/5' : 'border-border'}`}
+                >
+                  <RadioGroupItem value="managed" />
+                  <span className="grid gap-0.5">
+                    <span className="text-sm font-medium">{t('hosts:managedSshKey')}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t('hosts:chooseAKeyEncryptedByAterm')}
                     </span>
-                  </label>
-                )}
+                  </span>
+                </label>
               </RadioGroup>
             </Field>
             {legacyIdentity && (
@@ -265,16 +292,22 @@ export function HostEditorForm({
                 help={errors.identityFile}
                 extra={t('hosts:privateMaterialStaysEncryptedInAterm')}
               >
-                <SearchSelect
-                  label={t('hosts:managedSshKey')}
-                  value={form.identityFile}
-                  placeholder={t('hosts:selectAManagedKey')}
-                  options={managedKeys.map((key) => ({
-                    value: `aterm-key://${key.id}`,
-                    label: `${key.name} · Ed25519`
-                  }))}
-                  onChange={(value) => update('identityFile', value)}
-                />
+                {keysLocked ? (
+                  <Button size="sm" disabled={!!keysBusy} onClick={() => void unlockManagedKeys()}>
+                    {t('hosts:unlockManagedSshKeys')}
+                  </Button>
+                ) : (
+                  <SearchSelect
+                    label={t('hosts:managedSshKey')}
+                    value={form.identityFile}
+                    placeholder={t('hosts:selectAManagedKey')}
+                    options={managedKeys.map((key) => ({
+                      value: `aterm-key://${key.id}`,
+                      label: `${key.name} · Ed25519`
+                    }))}
+                    onChange={(value) => update('identityFile', value)}
+                  />
+                )}
               </Field>
             )}
           </div>

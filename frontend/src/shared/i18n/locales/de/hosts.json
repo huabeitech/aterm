@@ -244,5 +244,8 @@
   "moveIntoFolder": "In {{name}} verschieben",
   "dragOrganizationHint": "Zum Sortieren auf eine Linie, zum Verschieben auf einen Ordner ziehen. Esc bricht ab.",
   "moveToRoot": "In den Stammordner verschieben",
-  "moreActions": "Weitere Aktionen"
+  "moreActions": "Weitere Aktionen",
+  "unlockManagedSshKeys": "SSH-Schlüssel entsperren",
+  "unlockManagedSshKeysDescription": "Geben Sie Ihr Verschlüsselungspasswort ein, um in aTerm gespeicherte SSH-Schlüssel auszuwählen.",
+  "unlockConnectionCredentialsDescription": "Geben Sie Ihr Verschlüsselungspasswort ein, um gespeicherte SSH-Passwörter oder Schlüssel für diese Verbindung und ihre Sprunghosts zu verwenden."
 }

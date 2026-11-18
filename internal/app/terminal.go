@@ -121,17 +121,11 @@ func (a *App) desktopTerminal(channel string, raw []json.RawMessage) (any, error
 		if err != nil {
 			return nil, err
 		}
-		hosts, err := a.ListHosts()
+		svc, err := a.service()
 		if err != nil {
 			return nil, err
 		}
-		for _, host := range hosts {
-			if host.ID == id {
-				status, err := a.GetEncryptedSyncStatus()
-				return host.PasswordAuth && !status.Unlocked, err
-			}
-		}
-		return nil, errors.New("host not found")
+		return svc.ConnectionRequiresUnlock(a.ctx, id)
 	case "open":
 		request, err := argument[struct {
 			Kind   string `json:"kind"`

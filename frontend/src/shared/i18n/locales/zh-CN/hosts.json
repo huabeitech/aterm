@@ -244,5 +244,8 @@
   "moveIntoFolder": "移入 {{name}}",
   "dragOrganizationHint": "拖到插入线排序，拖到文件夹移入，Esc 取消",
   "moveToRoot": "移到根目录",
-  "moreActions": "更多操作"
+  "moreActions": "更多操作",
+  "unlockManagedSshKeys": "解锁 SSH 密钥",
+  "unlockManagedSshKeysDescription": "输入加密密码，以选择保存在 aTerm 中的 SSH 密钥。",
+  "unlockConnectionCredentialsDescription": "输入加密密码，以使用此连接及其跳板机保存的 SSH 密码或密钥。"
 }

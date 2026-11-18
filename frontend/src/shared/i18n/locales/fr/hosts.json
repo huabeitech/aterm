@@ -252,5 +252,8 @@
   "moveIntoFolder": "Déplacer dans {{name}}",
   "dragOrganizationHint": "Déposez sur une ligne pour trier ou sur un dossier pour déplacer. Échap annule.",
   "moveToRoot": "Déplacer à la racine",
-  "moreActions": "Autres actions"
+  "moreActions": "Autres actions",
+  "unlockManagedSshKeys": "Déverrouiller les clés SSH",
+  "unlockManagedSshKeysDescription": "Saisissez votre mot de passe de chiffrement pour choisir les clés SSH stockées dans aTerm.",
+  "unlockConnectionCredentialsDescription": "Saisissez votre mot de passe de chiffrement pour utiliser les mots de passe ou clés SSH enregistrés pour cette connexion et ses hôtes de rebond."
 }

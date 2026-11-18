@@ -252,5 +252,8 @@
   "moveIntoFolder": "Mover a {{name}}",
   "dragOrganizationHint": "Suelte en una línea para ordenar o en una carpeta para mover. Esc cancela.",
   "moveToRoot": "Mover a la carpeta raíz",
-  "moreActions": "Más acciones"
+  "moreActions": "Más acciones",
+  "unlockManagedSshKeys": "Desbloquear claves SSH",
+  "unlockManagedSshKeysDescription": "Introduce tu contraseña de cifrado para elegir claves SSH guardadas en aTerm.",
+  "unlockConnectionCredentialsDescription": "Introduce tu contraseña de cifrado para usar contraseñas o claves SSH guardadas para esta conexión y sus servidores de salto."
 }
