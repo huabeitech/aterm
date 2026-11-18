@@ -2,7 +2,10 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Pencil, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { MdEditor, MdPreview } from 'md-editor-rt'
+import 'md-editor-rt/lib/style.css'
+import './hostNotes.css'
+import { noteToolbars, sanitizeNote } from './markdownNotes'
 import { cn } from '@/lib/utils'
 
 export function HostNotes({
@@ -20,22 +23,32 @@ export function HostNotes({
   onCancel: () => void
   onSave: () => Promise<boolean>
 }) {
-  const { t } = useTranslation('hosts')
+  const { t, i18n } = useTranslation('hosts')
   const headingID = useId()
-  const textID = useId()
+  const textID = 'host-notes-' + useId().replace(/:/g, '')
   const errorID = useId()
-  const textarea = useRef<HTMLTextAreaElement>(null)
-  const preview = useRef<HTMLParagraphElement>(null)
+  const preview = useRef<HTMLDivElement>(null)
   const editButton = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  )
+  useEffect(() => {
+    const root = document.documentElement
+    const update = () => setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light')
+    const observer = new MutationObserver(update)
+    observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
+    update()
+    return () => observer.disconnect()
+  }, [])
+  const language = i18n.resolvedLanguage || 'en'
   const editing = !!draft
   const canSave = draft && draft.value !== draft.original && !draft.saving
 
   useEffect(() => {
-    if (editing) textarea.current?.focus()
-    else if (restoreFocus.current) editButton.current?.focus()
+    if (!editing && restoreFocus.current) editButton.current?.focus()
     restoreFocus.current = false
   }, [editing])
 
@@ -46,6 +59,7 @@ export function HostNotes({
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
+    if (element.firstElementChild) observer.observe(element.firstElementChild)
     return () => observer.disconnect()
   }, [editing, expanded, notes])
 
@@ -80,7 +94,7 @@ export function HostNotes({
             event.preventDefault()
             void save()
           }}
-          onKeyDown={(event) => {
+          onKeyDownCapture={(event) => {
             if (
               event.key.toLowerCase() === 's' &&
               (event.metaKey || event.ctrlKey) &&
@@ -92,16 +106,29 @@ export function HostNotes({
             }
           }}
         >
-          <Textarea
-            ref={textarea}
-            aria-labelledby={headingID}
-            aria-describedby={draft.failed ? errorID : undefined}
-            className="min-h-24 max-h-[60vh] field-sizing-fixed resize-y bg-[var(--mac-content)] text-[length:var(--app-text-13)] md:text-[length:var(--app-text-13)]"
-            rows={4}
-            value={draft.value}
-            readOnly={draft.saving}
-            onChange={(event) => onChange(event.target.value)}
-          />
+          <div aria-labelledby={headingID} aria-describedby={draft.failed ? errorID : undefined}>
+            <MdEditor
+              id={textID + '-editor'}
+              value={draft.value}
+              onChange={onChange}
+              theme={theme}
+              language={language}
+              className="host-note-markdown host-note-editor"
+              autoFocus
+              disabled={draft.saving}
+              toolbars={noteToolbars}
+              footers={[]}
+              preview={false}
+              noMermaid
+              noKatex
+              noEcharts
+              noHighlight
+              noPrettier
+              noUploadImg
+              noImgZoomIn
+              sanitize={sanitizeNote}
+            />
+          </div>
           {draft.failed && (
             <p id={errorID} role="alert" className="text-destructive">{t('notesSaveFailed')}</p>
           )}
@@ -128,13 +155,25 @@ export function HostNotes({
         <div className="rounded-md bg-[var(--mac-content)] py-2">
           {notes ? (
             <>
-              <p
+              <div
                 id={textID}
                 ref={preview}
-                className={cn('m-0 whitespace-pre-wrap wrap-anywhere leading-relaxed', !expanded && 'line-clamp-4')}
+                className={cn('min-w-0', !expanded && 'max-h-48 overflow-hidden')}
               >
-                {notes}
-              </p>
+                <MdPreview
+                  id={textID + '-preview'}
+                  value={notes}
+                  theme={theme}
+                  language={language}
+                  className="host-note-markdown"
+                  noMermaid
+                  noKatex
+                  noEcharts
+                  noHighlight
+                  noImgZoomIn
+                  sanitize={sanitizeNote}
+                />
+              </div>
               {(overflows || expanded) && (
                 <Button
                   type="button"

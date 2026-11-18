@@ -1,0 +1,37 @@
+.host-note-markdown[data-theme] {
+  --md-color: var(--mac-text);
+  --md-bk-color: var(--mac-content);
+  --md-border-color: var(--mac-separator);
+  --md-border-hover-color: var(--mac-control-border);
+  --md-bk-hover-color: var(--mac-hover-background);
+  --md-bk-code-color: var(--mac-panel);
+  --md-theme-color: var(--primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--app-text-13);
+}
+.host-note-editor {
+  height: clamp(260px, 42vh, 480px);
+  border-radius: 8px;
+}
+.host-note-markdown .md-editor-preview {
+  padding: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--app-text-13);
+}
+.host-note-markdown .md-editor-preview > :first-child {
+  margin-top: 0;
+}
+.host-note-markdown .md-editor-preview > :last-child {
+  margin-bottom: 0;
+}
+.host-note-markdown .md-editor-toolbar-wrapper {
+  flex-wrap: wrap;
+}
+.host-note-markdown .md-editor-preview pre,
+.host-note-markdown .md-editor-preview table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.host-note-markdown .md-editor-preview img {
+  max-width: 100%;
+}
