@@ -1,23 +1,21 @@
-import { t, i18n } from '../../../../../../shared/i18n'
+import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
-import { Clock3, Copy, Eye, EyeOff, Folder, Server } from 'lucide-react'
+import { Copy, Eye, EyeOff, Server } from 'lucide-react'
 import { domain } from '../../../../api/types'
 import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
 
 export function HostDetails({
   host,
-  directoryName,
   jumpHostName,
   notes,
   actions,
   onGetHostPassword
 }: {
   host: domain.Host
-  directoryName: string
   jumpHostName?: string
   notes: ReactNode
   actions?: ReactNode
@@ -31,10 +29,6 @@ export function HostDetails({
   const jumpHost = jumpHostName || host.proxyJump
   return (
     <div className="grid w-full min-w-0 gap-4 px-4 pt-4 pb-6 text-[length:var(--app-text-13)] sm:px-6">
-      <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-        <Folder size={14} aria-hidden="true" />
-        <span className="wrap-anywhere">{directoryName}</span>
-      </div>
       <header className="flex min-w-0 items-start gap-3">
         <div className="grid size-12 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
           <Server size={28} aria-hidden="true" />
@@ -53,15 +47,10 @@ export function HostDetails({
         </div>
       </header>
       {actions}
-      <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-x-8 gap-y-6 py-2">
+      <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-3 py-2">
         <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
       </dl>
       <div className="min-w-0 pt-3">{notes}</div>
-      <footer className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <Clock3 size={13} aria-hidden="true" />
-        <span>{t('hosts:updated')}</span>
-        <span>{formatDate(host.updatedAt)}</span>
-      </footer>
     </div>
   )
 }
@@ -268,20 +257,9 @@ function CopyableDetailValue({
   )
 }
 
-function formatDate(value: string) {
-  if (!value) return '-'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat(i18n.language, {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }).format(date)
-}
-
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 content-start gap-1.5">
+    <div className="grid min-w-0 content-start gap-2 rounded-lg bg-muted/50 px-4 py-3">
       <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
       <dd className="min-h-6 min-w-0 wrap-anywhere text-left text-[var(--mac-text)]">
         {children}

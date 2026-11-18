@@ -21,8 +21,7 @@ import { useDirectoryActions } from '../../directories/hooks/useDirectoryActions
 import { useSecureData } from './useSecureData'
 import {
   buildDirectoryTree,
-  buildDirectoryOptions,
-  directoryLabel
+  buildDirectoryOptions
 } from '../../directories/model/directoryModel'
 import { buildSSHCommand } from '../model/sshCommand'
 import { HostDetailsToolbar } from '../components/HostInspector/HostDetailsToolbar'
@@ -305,7 +304,6 @@ export function useHostWorkbench(
               />
             }
             host={host}
-            directoryName={directoryLabel(host.directoryID, directories)}
             jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
             notes={
               <HostNotes

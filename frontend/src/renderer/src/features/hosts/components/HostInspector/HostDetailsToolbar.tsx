@@ -66,9 +66,9 @@ export function HostDetailsToolbar({
             SFTP
           </ActionButton>
         </Tip>
-      </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-1">
         {pluginActions}
+      </div>
+      <div className="ml-auto flex min-w-0 flex-wrap items-center gap-1">
         {action(t('hosts:edit'), <Pencil size={16} />, onEdit)}
         {action(t('hosts:copySshCommand'), <Copy size={16} />, onCopy)}
         {action(

@@ -58,7 +58,7 @@ export function PluginActions({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <Button key={`${p.manifest.id}:${v.id}`} variant="ghost" size="sm" onClick={open}>
+                <Button key={`${p.manifest.id}:${v.id}`} variant={location === 'host.details' ? 'outline' : 'ghost'} size="sm" onClick={open}>
                   <PluginIcon view={v} />
                   {label}
                 </Button>
