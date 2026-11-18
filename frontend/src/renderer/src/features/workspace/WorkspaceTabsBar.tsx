@@ -1,5 +1,5 @@
 import { usePluginCatalog } from '../plugins/pluginCatalog'
-import { pluginTitle } from '../plugins/NativeWorkspace'
+import { pluginTitle, PluginIcon } from '../plugins/NativeWorkspace'
 import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
@@ -10,7 +10,6 @@ import { useAppUI } from '@/components/ui/confirm-provider'
 import type { DragEvent, RefObject, WheelEvent } from 'react'
 
 import {
-  Box,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -98,7 +97,7 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
                     ? pluginTitle(plugin, view.title, i18n.resolvedLanguage ?? i18n.language)
                     : pluginID
                 }
-                icon={<Box size={14} />}
+                icon={<PluginIcon view={view} />}
                 active={props.activeTab === tab}
                 dragging={props.draggingTab === tab}
                 dropPosition={dropPosition(props, tab)}

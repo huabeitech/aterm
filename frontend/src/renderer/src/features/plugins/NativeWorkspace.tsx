@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { SidebarUtilityIcon } from '../../components/sidebar/SidebarUtilityIcon'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Box } from 'lucide-react'
 import type {
   JsonValue,
@@ -13,6 +15,9 @@ import { Button } from '@/components/ui/button'
 export function pluginTitle(plugin: PluginInfo, key: string, locale: string): string {
   const bundle = plugin.localizations
   return bundle?.messages[locale]?.[key] ?? bundle?.messages[bundle.defaultLocale]?.[key] ?? key
+}
+export function PluginIcon({ view }: { view?: View }) {
+  return view?.icon ? <SidebarUtilityIcon path={view.icon} /> : <Box size={16} aria-hidden="true" />
 }
 export type OpenNativePlugin = (pluginID: string, viewID: string, hostID?: string) => void
 export function PluginActions({
@@ -33,17 +38,32 @@ export function PluginActions({
         .flatMap((p) =>
           (p.manifest.contributes.views ?? [])
             .filter((v) => v.locations?.includes(location))
-            .map((v) => (
-              <Button
-                key={`${p.manifest.id}:${v.id}`}
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpen(p.manifest.id, v.id, hostID)}
-              >
-                <Box size={14} />
-                {pluginTitle(p, v.title, i18n.resolvedLanguage ?? i18n.language)}
-              </Button>
-            )),
+            .map((v) => {
+              const label = pluginTitle(p, v.title, i18n.resolvedLanguage ?? i18n.language)
+              const open = () => onOpen(p.manifest.id, v.id, hostID)
+              return location === 'sidebar' ? (
+                <Tooltip key={`${p.manifest.id}:${v.id}`}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="sidebar-utility-button sidebar-utility-icon"
+                      aria-label={label}
+                      onClick={open}
+                    >
+                      <PluginIcon view={v} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={8}>
+                    {label}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button key={`${p.manifest.id}:${v.id}`} variant="ghost" size="sm" onClick={open}>
+                  <PluginIcon view={v} />
+                  {label}
+                </Button>
+              )
+            }),
         )}
     </>
   )

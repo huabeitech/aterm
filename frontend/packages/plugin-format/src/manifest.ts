@@ -145,7 +145,8 @@ export function validateManifest(input: unknown): PluginManifest {
         (view.availability !== undefined &&
           (view.availability !== 'dynamic' || view.placement !== 'terminal.workspace')) ||
         Object.keys(view).some(
-          (k) => !['id', 'title', 'placement', 'entry', 'availability', 'locations'].includes(k),
+          (k) =>
+            !['id', 'title', 'placement', 'entry', 'availability', 'locations', 'icon'].includes(k),
         )
       )
         throw Error('Invalid view')
@@ -156,12 +157,20 @@ export function validateManifest(input: unknown): PluginManifest {
           view.locations.some((l) => !['sidebar', 'host.details', 'connection'].includes(l)))
       )
         throw Error('Invalid view location')
+      if (
+        view.icon !== undefined &&
+        (typeof view.icon !== 'string' ||
+          view.icon.length > 8192 ||
+          !/^[Mm][MmZzLlHhVvCcSsQqTtAa0-9.,eE+\s-]*$/.test(view.icon))
+      )
+        throw Error('Invalid plugin icon path')
       ids.add(view.id)
       return {
         id: view.id,
         title: view.title,
         placement: view.placement,
         entry: view.entry,
+        ...(view.icon ? { icon: view.icon } : {}),
         ...(view.locations ? { locations: [...view.locations] } : {}),
         ...(view.availability ? { availability: view.availability } : {}),
       }

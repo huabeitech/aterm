@@ -73,7 +73,7 @@ func rejectOptionalNull(data []byte) error {
 			if availability, exists := entry["availability"]; exists && !bytes.Equal(availability, []byte(`"dynamic"`)) {
 				return errors.New("invalid plugin view availability")
 			}
-			for _, key := range []string{"action", "availability", "requiresUnlock", "locations"} {
+			for _, key := range []string{"action", "availability", "requiresUnlock", "locations", "icon"} {
 				if v, ok := entry[key]; ok && bytes.Equal(v, []byte("null")) {
 					return errors.New("invalid plugin contribution")
 				}
@@ -148,6 +148,9 @@ func ParseManifest(data []byte) (Manifest, error) {
 	for _, view := range m.Contributes.Views {
 		if !contributionID.MatchString(view.ID) || ids[view.ID] || !validTitle(view.Title, 150) || (view.Placement != "terminal.sidePanel" && view.Placement != "terminal.workspace" && !(m.Runtime == "native" && view.Placement == "app.workspace")) || !uiEntry.MatchString(view.Entry) || (view.Availability != "" && (view.Availability != "dynamic" || view.Placement != "terminal.workspace")) {
 			return m, errors.New("invalid plugin view")
+		}
+		if view.Icon != "" && (len(view.Icon) > 8192 || !regexp.MustCompile(`^[Mm][MmZzLlHhVvCcSsQqTtAa0-9.,eE+\s-]*$`).MatchString(view.Icon)) {
+			return m, errors.New("invalid plugin icon path")
 		}
 		for _, location := range view.Locations {
 			if m.Runtime != "native" || (location != "sidebar" && location != "host.details" && location != "connection") {

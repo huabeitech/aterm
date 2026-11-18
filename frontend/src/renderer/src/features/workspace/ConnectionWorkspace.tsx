@@ -1,4 +1,4 @@
-import { NativeWorkspace, pluginTitle } from '../plugins/NativeWorkspace'
+import { NativeWorkspace, pluginTitle, PluginIcon } from '../plugins/NativeWorkspace'
 import { useWorkspaceAvailability } from '../plugins/useWorkspaceAvailability'
 import { usePluginCatalog } from '../plugins/pluginCatalog'
 import { PluginWorkspace } from '../plugins/PluginWorkspace'
@@ -6,7 +6,7 @@ import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
-import { FolderOpen, Terminal, Columns2, ArrowDownUp, Box } from 'lucide-react'
+import { FolderOpen, Terminal, Columns2, ArrowDownUp } from 'lucide-react'
 import { SplitLayout } from '@/components/ui/split-layout'
 import { ActionButton } from '@/components/ui/workbench-controls'
 import type { TerminalSession } from '../../../../shared/contracts/terminal'
@@ -238,7 +238,7 @@ export function ConnectionWorkspace({
               title={availability[item.plugin.manifest.id]?.[item.view.id]?.message}
               onClick={() => onViewChange(item.key)}
             >
-              <Box size={14} aria-hidden="true" />
+              <PluginIcon view={item.view} />
               <span>
                 {pluginTitle(item.plugin, item.view.title, i18n.resolvedLanguage ?? i18n.language)}
               </span>

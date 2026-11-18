@@ -9,6 +9,16 @@ import { resolve, join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const root = dirname(fileURLToPath(import.meta.url)),
   repo = resolve(root, '../..')
+const buildingMac = (process.env.GOOS ?? process.platform) === 'darwin'
+if (buildingMac && !process.env.GOARCH) {
+  for (const arch of ['arm64', 'amd64']) {
+    execFileSync(process.execPath, [fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
+      env: { ...process.env, GOOS: 'darwin', GOARCH: arch },
+      stdio: 'inherit',
+    })
+  }
+  process.exit(0)
+}
 const platform = process.env.GOOS ?? process.platform
 const arch = process.env.GOARCH ?? (process.arch === 'x64' ? 'amd64' : process.arch)
 const target = `${platform === 'win32' ? 'windows' : platform}-${arch}`
@@ -47,7 +57,7 @@ try {
   manifest.backend.sha256 = createHash('sha256').update(readFileSync(binary)).digest('hex')
   const output = await build({
     configFile: false,
-    define:{'process.env.NODE_ENV':JSON.stringify('production')},
+    define: { 'process.env.NODE_ENV': JSON.stringify('production') },
     root: join(repo, 'frontend'),
     plugins: [react(), tailwind()],
     resolve: {

@@ -83,6 +83,8 @@ export interface PluginView {
   entry: string
   placement: 'terminal.sidePanel' | 'terminal.workspace' | 'app.workspace'
   locations?: string[]
+  /** Filled SVG path in a 256 by 256 view box. No SVG markup. */
+  icon?: string
   /** Opt in to session-scoped availability published by the plugin. */
   availability?: 'dynamic'
 }

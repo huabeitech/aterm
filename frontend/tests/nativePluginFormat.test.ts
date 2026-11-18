@@ -24,6 +24,7 @@ const manifest = {
         placement: 'app.workspace',
         entry: 'ui/workspace.html',
         locations: ['sidebar', 'host.details', 'connection'],
+        icon: 'M8,8H248V248H8Z',
       },
     ],
     commands: [{ id: 'native.request', title: 'command.title', requiresUnlock: true }],
@@ -32,6 +33,8 @@ const manifest = {
 test('native package declarations retain platform, entry points and unlock requirements', () => {
   const m = validateManifest(manifest)
   assert.equal(m.runtime, 'native')
+  assert.equal(m.contributes.views?.[0].icon, manifest.contributes.views[0].icon)
+  assert.throws(()=>validateManifest({...manifest,contributes:{...manifest.contributes,views:[{...manifest.contributes.views[0],icon:'<svg onload="alert(1)"/>'}]}}),/icon/i)
   assert.equal(m.entry, 'backend/windows-amd64/plugin.exe')
   assert.deepEqual(m.backend, manifest.backend)
   assert.deepEqual(m.contributes.views?.[0].locations, manifest.contributes.views[0].locations)

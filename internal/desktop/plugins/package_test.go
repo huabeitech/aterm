@@ -190,3 +190,19 @@ func TestManifestRejectsUndeclaredCapabilitiesAndMalformedContributions(t *testi
 		t.Fatal("accepted excessive depth")
 	}
 }
+
+func TestViewIconAcceptsGeometryOnly(t *testing.T) {
+	p := fixturePackage(t)
+	for _, icon := range []string{"M8,8H248V248H8Z", "<svg onload=\"alert(1)\"/>", "javascript:alert(1)"} {
+		p.Manifest.Contributes.Views[0].Icon = icon
+		raw, _ := json.Marshal(p.Manifest)
+		m, err := ParseManifest(raw)
+		if strings.HasPrefix(icon, "M") {
+			if err != nil || m.Contributes.Views[0].Icon != icon {
+				t.Fatalf("valid geometry rejected: %v", err)
+			}
+		} else if err == nil {
+			t.Fatalf("accepted non-geometry icon %q", icon)
+		}
+	}
+}

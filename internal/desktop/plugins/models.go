@@ -37,6 +37,7 @@ type View struct {
 	Entry        string   `json:"entry"`
 	Availability string   `json:"availability,omitempty"`
 	Locations    []string `json:"locations,omitempty"`
+	Icon         string   `json:"icon,omitempty"`
 }
 type Command struct {
 	RequiresUnlock bool        `json:"requiresUnlock,omitempty"`

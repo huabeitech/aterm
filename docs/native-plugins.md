@@ -42,6 +42,9 @@ GOOS=linux GOARCH=amd64 node plugins/ssh-tunnels/build.mjs
 GOOS=windows GOARCH=amd64 node plugins/ssh-tunnels/build.mjs
 ```
 
+On macOS, the default command produces both Apple Silicon (`darwin-arm64`) and
+Intel (`darwin-amd64`) packages. Set `GOARCH` to build only one architecture.
+
 Build each supported platform in CI and install its `.aterm-plugin` through
 Settings → Plugins. macOS builds use the repository's pinned toolchain and are
 ad hoc signed by default. Set `ATERM_PLUGIN_SIGN_IDENTITY` for distribution
@@ -97,7 +100,9 @@ before uninstalling, or reinstall it to edit them later.
 ## UI contributions
 
 Views can declare `placement: "app.workspace"` and locations `sidebar`,
-`host.details`, `connection`. The host supplies standard entry points and opens
+`host.details`, `connection`. An optional `icon` supplies a filled SVG path in
+a 256 by 256 view box. Only path geometry is accepted, never SVG markup. Sidebar
+entries use the same icon button and tooltip styling as built-in utilities. The host supplies standard entry points and opens
 isolated React HTML using the existing view bridge. Commands may declare
 `requiresUnlock: true` to invoke the existing vault-unlock flow before execution.
 The view receives host context, visibility, theme tokens and locale updates.
