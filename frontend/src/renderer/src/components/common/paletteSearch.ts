@@ -1,9 +1,12 @@
+import type { ThemePreference } from '../../../../shared/contracts/preferences'
+
 export type PaletteCommand = {
   id: string
   label: string
   keywords?: string
   shortcut?: string
   detail?: string
+  previewTheme?: ThemePreference
   choices?: { title: string; items: PaletteCommand[] }
   run: () => void
 }

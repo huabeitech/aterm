@@ -30,6 +30,7 @@ type CommandPaletteProps = {
   request: { query: string; serial: number }
   commands: PaletteCommand[]
   workspaceTabs: PaletteCommand[]
+  onPreviewTheme: (theme: PaletteCommand['previewTheme']) => void
   onExecute: (run: () => void) => void
   onClose: () => void
   onSelectHost: (id: string) => void
@@ -44,6 +45,7 @@ export function CommandPalette({
   request,
   commands,
   workspaceTabs,
+  onPreviewTheme,
   onExecute,
   onClose,
   onSelectHost,
@@ -54,7 +56,7 @@ export function CommandPalette({
   const [selected, setSelected] = useState('')
   const [cmdPressed, setCmdPressed] = useState(false)
   const [step, setStep] = useState<
-    'ssh' | 'sftp' | 'tabs' | ({ id: string } & NonNullable<PaletteCommand['choices']>) | null
+    'ssh' | 'sftp' | 'tabs' | { id: string } | null
   >(null)
   const previousQuery = useRef('>')
   const previousSelected = useRef('')
@@ -71,18 +73,24 @@ export function CommandPalette({
       return []
     }
   })
-  const choiceStep = typeof step === 'object' ? step : null
+  const choiceStep = step && typeof step === 'object' ? commands.find(({ id }) => id === step.id) : undefined
+  const choiceOptions = choiceStep?.choices
   const commandMode = !step && paletteMode(query) === 'commands'
   const commandQuery = commandMode ? query.slice(1).trimStart() : query
   const commandResults = useMemo(
     () =>
       searchPaletteCommands(
-        choiceStep?.items ?? (step === 'tabs' ? workspaceTabs : commands),
+        choiceOptions?.items ?? (step === 'tabs' ? workspaceTabs : commands),
         commandQuery,
         choiceStep || step === 'tabs' ? [] : recent
       ),
-    [step, choiceStep, workspaceTabs, commands, commandQuery, recent]
+    [step, choiceStep, choiceOptions, workspaceTabs, commands, commandQuery, recent]
   )
+  const previewTheme = choiceOptions && commandResults.find(({ id }) => id === selected)?.previewTheme
+  useLayoutEffect(() => {
+    onPreviewTheme(previewTheme)
+    return () => onPreviewTheme(undefined)
+  }, [previewTheme, onPreviewTheme])
   const inputRef = useRef<HTMLInputElement>(null)
   const resultsListRef = useRef<HTMLDivElement>(null)
   const results = useMemo(() => searchHosts(hosts, query).slice(0, 12), [hosts, query])
@@ -151,7 +159,7 @@ export function CommandPalette({
     if (command.choices) {
       previousQuery.current = query
       previousSelected.current = command.id
-      setStep({ id: command.id, ...command.choices })
+      setStep({ id: command.id })
       setQuery('')
       return
     }
@@ -218,8 +226,8 @@ export function CommandPalette({
                 {t('commands:back')}
               </button>
               <span>
-                {choiceStep
-                  ? choiceStep.title
+                {choiceOptions
+                  ? choiceOptions.title
                   : step === 'tabs'
                     ? t('commands:switchWorkspaceTab')
                     : step === 'sftp'
@@ -233,8 +241,8 @@ export function CommandPalette({
             className="host-command-palette-input"
             aria-label={commandMode ? t('commands:searchCommands') : t('commands:search')}
             placeholder={
-              choiceStep
-                ? t('commands:searchCategory', { category: choiceStep.title })
+              choiceOptions
+                ? t('commands:searchCategory', { category: choiceOptions.title })
                 : step === 'tabs'
                   ? t('commands:searchOpenTabs')
                   : commandMode
@@ -251,8 +259,8 @@ export function CommandPalette({
             ref={resultsListRef}
             className="host-command-palette-list"
             label={
-              choiceStep
-                ? choiceStep.title
+              choiceOptions
+                ? choiceOptions.title
                 : commandMode
                   ? t('commands:commandSearchResults')
                   : step === 'tabs'
@@ -262,7 +270,7 @@ export function CommandPalette({
           >
             <CommandEmpty>
               {choiceStep
-                ? t('commands:noThemesFound')
+                ? t('common:noResults')
                 : commandMode
                   ? t('commands:noCommandsFound')
                   : step === 'tabs'

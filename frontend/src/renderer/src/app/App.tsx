@@ -1,3 +1,4 @@
+import { languageOptions } from '../../../shared/contracts/locale'
 import { NativeWorkspace, PluginActions, pluginTitle } from '../features/plugins/NativeWorkspace'
 import { usePluginCatalog } from '../features/plugins/pluginCatalog'
 
@@ -97,6 +98,8 @@ function Workbench({
   const { i18n } = useTranslation()
   const { message, notification } = useAppUI()
   const [settings, setSettings] = useState(bootstrap.preferences)
+  const [previewTheme, setPreviewTheme] = useState<ThemePreference>()
+  const displayedTheme = previewTheme ?? settings.theme
   const themeRevision = useThemeRevision()
   useEffect(() => {
     const next = themePreferences()
@@ -176,7 +179,7 @@ function Workbench({
   )
   const terminal = useTerminalWorkbench(
     tabs,
-    effectiveAppTheme(settings.theme, appearance),
+    effectiveAppTheme(displayedTheme, appearance),
     settings.terminalFontSize,
     settings.terminalWordNavigation,
     library.unlockForConnection,
@@ -509,6 +512,28 @@ function Workbench({
         ]
       : []),
     {
+      id: 'change-language',
+      label: t('settings:language'),
+      keywords: 'language locale',
+      run: () => {},
+      choices: {
+        title: t('settings:language'),
+        items: [{ value: 'system' as const, label: t('settings:system') }, ...languageOptions].map(
+          ({ value, label }) => ({
+            id: `language:${value}`,
+            label,
+            keywords: value,
+            detail: settings.language === value ? t('common:current') : undefined,
+            run: () => {
+              void saveSettings({ ...settings, language: value }).catch((error) => {
+                void message.error(error instanceof Error ? localizedError(error) : t('settings:unableToSavePleaseTryAgain'))
+              })
+            },
+          }),
+        ),
+      },
+    },
+    {
       id: 'change-theme',
       label: t('commands:themeCommand'),
       keywords: '切换 主题 外观 theme appearance',
@@ -517,6 +542,7 @@ function Workbench({
         title: t('common:appTheme'),
         items: themeOptions().map(({ label, value }) => ({
           id: `theme:${value}`,
+          previewTheme: value as ThemePreference,
           label,
           detail: settings.theme === value ? t('common:current') : undefined,
           run: () => {
@@ -690,7 +716,7 @@ function Workbench({
   }
   return (
     <>
-      <AppAppearance theme={settings.theme as ThemePreference} appearance={appearance} />
+      <AppAppearance theme={displayedTheme as ThemePreference} appearance={appearance} />
       <AppShell
         platform={bootstrap.info.platform}
         style={{}}
@@ -861,6 +887,7 @@ function Workbench({
         <CommandPalette
           open
           request={searchRequest}
+          onPreviewTheme={setPreviewTheme}
           commands={paletteCommands}
           workspaceTabs={paletteTabs}
           onExecute={(run) => closeSearch(run)}

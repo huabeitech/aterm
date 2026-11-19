@@ -69,6 +69,31 @@ func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string
 	if depth > maxProxyJumpDepth {
 		return nil, errors.New("SSH ProxyJump chain is too deep")
 	}
+	route := []Host{host}
+	for {
+		jumpID, alias := strings.TrimSpace(host.JumpHostID), firstProxyJump(host.ProxyJump)
+		if jumpID == "" && alias == "" {
+			break
+		}
+		if depth+len(route) > maxProxyJumpDepth {
+			return nil, errors.New("SSH ProxyJump chain is too deep")
+		}
+		var err error
+		if jumpID != "" {
+			host, err = s.storeHostByID(jumpID)
+		} else {
+			host, err = s.hostByAlias(alias)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("resolve ProxyJump %q: %w", alias, err)
+		}
+		route = append(route, host)
+	}
+	return s.dialNativeSSHRoute(ctx, route, sshDir, confirmer, interactions...)
+}
+
+func (s *AppService) dialNativeSSHRoute(ctx context.Context, route []Host, sshDir string, confirmer HostKeyConfirmer, interactions ...NativeSSHAuthOptions) (*NativeSSHClient, error) {
+	host := route[0]
 	// Callbacks for host trust and interactive credentials must observe the
 	// same deadline as the transport, or NewClientConn can remain blocked in
 	// a prompt after the socket has already timed out.
@@ -95,19 +120,9 @@ func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string
 	address := net.JoinHostPort(host.HostName, strconv.Itoa(resolvedSSHPort(host.Port)))
 	var connection net.Conn
 	var proxyClient *NativeSSHClient
-	jumpID, jumpAlias := strings.TrimSpace(host.JumpHostID), firstProxyJump(host.ProxyJump)
-	if jumpID != "" || jumpAlias != "" {
-		var jump Host
-		if jumpID != "" {
-			jump, err = s.storeHostByID(jumpID)
-		} else {
-			jump, err = s.hostByAlias(jumpAlias)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("resolve ProxyJump %q: %w", jumpAlias, err)
-		}
-		jumpAlias = jump.DisplayName()
-		proxy, err := s.dialNativeSSH(ctx, jump, sshDir, confirmer, depth+1, options)
+	if len(route) > 1 {
+		jumpAlias := route[1].DisplayName()
+		proxy, err := s.dialNativeSSHRoute(ctx, route[1:], sshDir, confirmer, options)
 		if err != nil {
 			return nil, fmt.Errorf("connect ProxyJump %q: %w", jumpAlias, err)
 		}
