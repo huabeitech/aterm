@@ -1,8 +1,9 @@
 {
+  "agent.section": "IA",
   "agent.access": "Accès des agents",
-  "agent.enable": "Autoriser les agents locaux à demander un terminal SSH pour les hôtes sélectionnés",
-  "agent.openTitle": "Ouvrir un terminal SSH ?",
-  "agent.openMessage": "Un agent local souhaite ouvrir {{target}}. Destination et hôtes de rebond :\n{{route}}",
+  "agent.enable": "Autoriser les agents locaux à accéder à tous les hôtes enregistrés et à leurs notes",
+  "agent.openTitle": "Préparer la connexion SSH ?",
+  "agent.openMessage": "Autoriser un agent local à se connecter à {{target}} via cet itinéraire ?\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "La connexion SFTP est fermée. Vos modifications restent dans cette fenêtre. Copiez-les avant de la fermer.",
   "unableToSaveFile": "Impossible d’enregistrer le fichier.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "Si vous fermez sans enregistrer, vos modifications seront perdues.",

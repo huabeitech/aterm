@@ -9,7 +9,7 @@ import (
 	"ssh-connect/internal/service"
 )
 
-// approveAgentRoute is called after checking the local host grant. The returned
+// approveAgentRoute is called when local agent access is enabled. The returned
 // route is kept by the desktop process while the user unlocks their vault.
 func (a *App) approveAgentRoute(ctx context.Context, hostID string) (service.AgentRoute, error) {
 	if runtime.GOOS != "darwin" || !service.LocalTerminalAvailable() {

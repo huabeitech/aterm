@@ -1,8 +1,9 @@
 {
+  "agent.section": "KI",
   "agent.access": "Agentenzugriff",
-  "agent.enable": "Lokalen Agenten erlauben, SSH-Terminals für ausgewählte Hosts anzufordern",
-  "agent.openTitle": "SSH-Terminal öffnen?",
-  "agent.openMessage": "Ein lokaler Agent möchte {{target}} öffnen. Ziel und Sprungserver:\n{{route}}",
+  "agent.enable": "Lokalen Agenten Zugriff auf alle gespeicherten Hosts und deren Notizen erlauben",
+  "agent.openTitle": "SSH-Verbindung vorbereiten?",
+  "agent.openMessage": "Darf ein lokaler Agent über diese Route eine Verbindung zu {{target}} herstellen?\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "Die SFTP-Verbindung wurde geschlossen. Ihre Änderungen bleiben in diesem Fenster erhalten. Kopieren Sie sie vor dem Schließen.",
   "unableToSaveFile": "Die Datei konnte nicht gespeichert werden.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "Wenn Sie ohne Speichern schließen, gehen Ihre Änderungen verloren.",

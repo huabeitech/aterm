@@ -1,8 +1,9 @@
 {
+  "agent.section": "AI",
   "agent.access": "エージェントアクセス",
-  "agent.enable": "選択したホストの SSH ターミナルをローカルエージェントが要求できるようにする",
-  "agent.openTitle": "SSH ターミナルを開きますか？",
-  "agent.openMessage": "ローカルエージェントが {{target}} を開こうとしています。接続先と踏み台ホスト：\n{{route}}",
+  "agent.enable": "ローカルエージェントに保存済みのすべてのホストとそのメモへのアクセスを許可する",
+  "agent.openTitle": "SSH 接続を準備しますか？",
+  "agent.openMessage": "ローカルエージェントが次の経路で {{target}} に接続することを許可しますか？\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 接続が閉じられました。編集内容はこのウィンドウに残っています。閉じる前にコピーしてください。",
   "unableToSaveFile": "ファイルを保存できませんでした。",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "保存せずに閉じると、変更は失われます。",

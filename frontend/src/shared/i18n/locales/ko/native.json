@@ -1,8 +1,9 @@
 {
+  "agent.section": "AI",
   "agent.access": "에이전트 접근",
-  "agent.enable": "로컬 에이전트가 선택한 호스트의 SSH 터미널을 요청하도록 허용",
-  "agent.openTitle": "SSH 터미널을 열까요?",
-  "agent.openMessage": "로컬 에이전트가 {{target}} 연결을 요청했습니다. 대상 및 경유 호스트:\n{{route}}",
+  "agent.enable": "로컬 에이전트가 저장된 모든 호스트와 메모에 접근하도록 허용",
+  "agent.openTitle": "SSH 연결을 준비할까요?",
+  "agent.openMessage": "로컬 에이전트가 다음 경로로 {{target}}에 연결하도록 허용할까요?\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 연결이 종료되었습니다. 편집 내용은 이 창에 남아 있습니다. 창을 닫기 전에 복사하세요.",
   "unableToSaveFile": "파일을 저장하지 못했습니다.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "저장하지 않고 닫으면 변경 사항이 사라집니다.",

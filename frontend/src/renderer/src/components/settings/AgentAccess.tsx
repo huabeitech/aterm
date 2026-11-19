@@ -1,24 +1,22 @@
+import { SettingsGroup, SettingRow } from './SettingsGroup'
+import { Switch } from '../ui/switch'
 import { t } from '../../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { agentRequest, type AgentConfig } from '../../api/agent'
-import { ListHosts } from '../../api/hosts'
-import type { domain } from '../../api/types'
 
 export function AgentAccess() {
   useTranslation()
   const [config, setConfig] = useState<AgentConfig>()
-  const [hosts, setHosts] = useState<domain.Host[]>([])
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const [command, setCommand] = useState('')
   useEffect(() => {
     let active = true
-    Promise.all([agentRequest<{config: AgentConfig; socket: string; helper: string}>('config'), ListHosts()])
-      .then(([result, hosts]) => {
+    agentRequest<{config: AgentConfig; socket: string; helper: string}>('config')
+      .then((result) => {
         if (!active) return
         setConfig(result.config)
-        setHosts(hosts)
         const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'"
         setCommand('codex mcp add aterm -- ' + quote(result.helper) + ' --socket ' + quote(result.socket))
       }).catch(() => { if (active) setFailed(true) })
@@ -31,17 +29,24 @@ export function AgentAccess() {
     catch { setFailed(true) }
     finally { setBusy(false) }
   }
-  return <fieldset className="settings-group" disabled={busy || !config}>
-    <legend>{t('native:agent.access')}</legend>
-    <label><input type="checkbox" checked={!!config?.enabled}
-      onChange={e => config && void save({...config, enabled: e.target.checked})} />
-      {t('native:agent.enable')}</label>
-    {config?.enabled && <>
-      {hosts.map(h => <div key={h.id}><label><input type="checkbox" checked={!!config.hosts?.[h.id]}
-        onChange={e => void save({...config, hosts: {...config.hosts, [h.id]:e.target.checked}})} />
-        {h.name || h.alias || h.hostName}</label></div>)}
-      <pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',userSelect:'all'}}>{command}</pre>
-    </>}
-    {failed && <p role="alert">{t('settings:unableToSavePleaseTryAgain')}</p>}
-  </fieldset>
+  const label = t('native:agent.enable')
+  return (
+    <>
+      <SettingsGroup title={t('native:agent.access')}>
+        <SettingRow label={label} error={failed ? t('settings:unableToSavePleaseTryAgain') : undefined}>
+          <Switch
+            aria-label={label}
+            checked={config?.enabled ?? false}
+            disabled={busy || !config}
+            onCheckedChange={(enabled) => void save({ enabled })}
+          />
+        </SettingRow>
+      </SettingsGroup>
+      {config?.enabled && (
+        <SettingsGroup title="Codex">
+          <pre className="settings-agent-command"><code>{command}</code></pre>
+        </SettingsGroup>
+      )}
+    </>
+  )
 }

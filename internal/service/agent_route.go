@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"golang.org/x/crypto/ssh"
 	"net"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -43,7 +43,7 @@ func (r AgentRoute) Endpoints() []string {
 
 func (s *AppService) AgentRouteRequiresUnlock(ctx context.Context, r AgentRoute) (bool, error) {
 	for _, host := range r.hosts {
-		if host.PasswordAuth || strings.HasPrefix(host.IdentityFile, desktopkeys.Prefix) {
+		if !host.PasswordAuth && strings.HasPrefix(host.IdentityFile, desktopkeys.Prefix) {
 			status, err := s.GetEncryptedSyncStatus(ctx)
 			return !status.Unlocked, err
 		}
@@ -51,18 +51,11 @@ func (s *AppService) AgentRouteRequiresUnlock(ctx context.Context, r AgentRoute)
 	return false, nil
 }
 
-func (s *AppService) OpenApprovedAgentRoute(ctx context.Context, approved AgentRoute, confirm HostKeyConfirmer, prompt CredentialPrompter) (*NativeSSHClient, Host, error) {
-	if len(approved.hosts) == 0 {
-		return nil, Host{}, errors.New("empty approved SSH route")
+func (r AgentRoute) Hosts() []Host { return append([]Host(nil), r.hosts...) }
+
+func (s *AppService) ManagedAgentSigner(ctx context.Context, identity string, prompt CredentialPrompter) (ssh.Signer, error) {
+	if !strings.HasPrefix(identity, desktopkeys.Prefix) {
+		return nil, errors.New("managed identity required")
 	}
-	current, err := s.PrepareAgentRoute(ctx, approved.hosts[0].ID)
-	if err != nil {
-		return nil, Host{}, err
-	}
-	if !reflect.DeepEqual(current.hosts, approved.hosts) {
-		return nil, Host{}, errors.New("SSH route changed after approval")
-	}
-	return s.openSSHRoute(ctx, approved.hosts, confirm, NativeSSHAuthOptions{
-		ReadIdentity: s.identityReader, IdentityName: s.identityNameReader, Prompt: prompt,
-	})
+	return loadNativeSSHIdentity(ctx, identity, true, NativeSSHAuthOptions{ReadIdentity: s.identityReader, IdentityName: s.identityNameReader, Prompt: prompt})
 }

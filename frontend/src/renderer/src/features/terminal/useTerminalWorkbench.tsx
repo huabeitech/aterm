@@ -1,4 +1,4 @@
-import { agentRequest, onAgentOpen } from '../../api/agent'
+import { agentRequest, onAgentUnlock } from '../../api/agent'
 import { usePluginCatalog } from '../plugins/pluginCatalog'
 import type { ConnectionView } from '../workspace/ConnectionWorkspace'
 import { TerminalPluginWorkspace } from '../plugins/TerminalPluginBars'
@@ -179,15 +179,10 @@ export function useTerminalWorkbench(
       }
     }
     const offPlugin = desktop.plugins.onTerminalOpened(id => { void adopt(id) })
-    const offAgent = onAgentOpen(async ({id, locked}) => {
-      let opened = false
-      try {
-        if (!locked || await current.current.unlock()) {
-          const session = await agentRequest<string>('claim', id)
-          opened = !!await adopt(session)
-        }
-      } catch (error) { report(error) }
-      finally { await agentRequest('finish', id, opened).catch(() => {}) }
+    const offAgent = onAgentUnlock(async ({id}) => {
+      let unlocked = false
+      try { unlocked = await current.current.unlock() }
+      finally { await agentRequest('unlocked', id, unlocked).catch(() => {}) }
     })
     return () => { offAgent(); offPlugin() }
   }, [])

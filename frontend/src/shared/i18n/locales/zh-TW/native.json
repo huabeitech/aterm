@@ -1,8 +1,9 @@
 {
+  "agent.section": "AI",
   "agent.access": "代理程式存取",
-  "agent.enable": "允許本機代理程式要求開啟所選主機的 SSH 終端機",
-  "agent.openTitle": "開啟 SSH 終端機？",
-  "agent.openMessage": "本機代理程式要求開啟 {{target}}。目標主機與跳板主機如下。\n{{route}}",
+  "agent.enable": "允許本機代理程式存取所有已儲存的主機及其備註",
+  "agent.openTitle": "準備 SSH 連線？",
+  "agent.openMessage": "允許本機代理程式透過以下路徑連線至 {{target}}？\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 連線已關閉。修改仍保留在此視窗中，請在關閉前複製儲存。",
   "unableToSaveFile": "無法儲存檔案。",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "不儲存就關閉將丟失所做的修改。",

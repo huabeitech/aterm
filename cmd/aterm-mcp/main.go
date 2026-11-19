@@ -53,11 +53,11 @@ func main() {
 	type Open struct {
 		HostID string `json:"hostId"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "list_hosts", Description: "List permitted aTerm SSH hosts."}, func(ctx context.Context, _ *mcp.CallToolRequest, in Search) (*mcp.CallToolResult, agentbridge.Result, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "list_hosts", Description: "List saved aTerm SSH hosts."}, func(ctx context.Context, _ *mcp.CallToolRequest, in Search) (*mcp.CallToolResult, agentbridge.Result, error) {
 		return call(ctx, agentbridge.Request{Method: "list", Query: in.Query})
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "open_ssh_terminal", Description: "Ask the user to open a saved SSH host in aTerm."}, func(ctx context.Context, _ *mcp.CallToolRequest, in Open) (*mcp.CallToolResult, agentbridge.Result, error) {
-		return call(ctx, agentbridge.Request{Method: "open", HostID: in.HostID})
+	mcp.AddTool(server, &mcp.Tool{Name: "prepare_ssh", Description: "Prepare a local OpenSSH invocation for a saved host. Execute the returned program with its argument array and environment. For password authentication use a user-controlled interactive terminal. Never request or relay a password in chat."}, func(ctx context.Context, _ *mcp.CallToolRequest, in Open) (*mcp.CallToolResult, agentbridge.Result, error) {
+		return call(ctx, agentbridge.Request{Method: "prepare", HostID: in.HostID})
 	})
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		log.Fatal(err)

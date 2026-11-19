@@ -1,3 +1,4 @@
+import { SettingsGroup, SettingRow } from './SettingsGroup'
 import { AgentAccess } from './AgentAccess'
 import { platformFeatures } from '../../../../shared/platformFeatures'
 import { PluginManagement } from '../../features/plugins/PluginManagement'
@@ -6,8 +7,9 @@ import { languageOptions } from '../../../../shared/contracts/locale'
 import { localizedError } from '../../../../shared/i18n/errors'
 import { t, i18n } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useState, type KeyboardEvent } from 'react'
 import {
+  Bot,
   Puzzle,
   Settings2,
   KeyRound,
@@ -86,6 +88,9 @@ export function SettingsPage({
   const sections = [
     { key: 'general', label: t('settings:general'), icon: Settings2 },
     { key: 'ssh', label: 'SSH', icon: KeyRound },
+    ...(platform === 'darwin' && status && !status.macAppStoreBuild
+      ? [{ key: 'ai', label: t('native:agent.section'), icon: Bot } as const]
+      : []),
     { key: 'security', label: t('settings:security'), icon: ShieldCheck },
     { key: 'backup', label: t('settings:backup'), icon: Cloud },
     { key: 'shortcuts', label: t('settings:shortcuts'), icon: Keyboard },
@@ -129,7 +134,7 @@ export function SettingsPage({
     macAppStoreBuild && syncStatus?.syncDirectoryAuthorizationRequired
   )
   const autoUnlockNotice = getAutoUnlockNotice(syncStatus)
-  const current = sections.find((section) => section.key === activeSection)!
+  const current = sections.find((section) => section.key === activeSection) ?? sections[0]
   const moreActions: MenuAction[] = [
     ...(macAppStoreBuild
       ? [
@@ -356,7 +361,7 @@ export function SettingsPage({
                     )}
                   </>
                 )}
-                {activeSection === 'security' && platform === 'darwin' && status && !macAppStoreBuild && <AgentAccess />}
+                {activeSection === 'ai' && <AgentAccess />}
                 {activeSection === 'security' && (
                   <>
                     <SettingsGroup
@@ -563,47 +568,6 @@ export function SettingsPage({
         </ScrollArea>
       </div>
     </section>
-  )
-}
-
-function SettingsGroup({
-  title,
-  footer,
-  children
-}: {
-  title: string
-  footer?: string
-  children: ReactNode
-}) {
-  const id = useId()
-  return (
-    <section className="settings-group" aria-labelledby={id}>
-      <h2 id={id}>{title}</h2>
-      <div className="settings-group-rows">{children}</div>
-      {footer && <p className="settings-footnote">{footer}</p>}
-    </section>
-  )
-}
-
-function SettingRow({
-  label,
-  children,
-  error
-}: {
-  label: string
-  children: ReactNode
-  error?: string
-}) {
-  return (
-    <div className="settings-row">
-      <span className="settings-row-label">{label}</span>
-      <div className="settings-row-control">{children}</div>
-      {error && (
-        <p className="settings-inline-error" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
   )
 }
 

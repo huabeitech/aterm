@@ -3,9 +3,8 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"os"
@@ -39,16 +38,13 @@ func TestMain(m *testing.M) {
 			if e != nil {
 				panic(e)
 			}
-			config := agentConfig{Enabled: true, Hosts: map[string]bool{}}
+			config := agentConfig{Enabled: true}
 			for _, h := range hosts {
 				if h.HostName != "127.0.0.1" {
 					panic("loopback required")
 				}
-				if h.Alias == "parity-jump" {
-					config.Hosts[h.ID] = true
-				}
 			}
-			if len(config.Hosts) != 1 {
+			if len(hosts) < 2 {
 				panic("fixture host missing")
 			}
 			payload, _ := json.Marshal(config)
@@ -57,20 +53,12 @@ func TestMain(m *testing.M) {
 			}
 			for time.Now().Before(deadline) {
 				w.ExecJS(`(()=>{const buttons=[...document.querySelectorAll('button')];const allow=buttons.find(b=>['Allow','允许','允許'].includes(b.textContent.trim()));if(allow&&document.body.innerText.includes('127.0.0.1'))allow.click();const input=document.querySelector('.sync-password-dialog input[type=password]');if(input&&!input.value){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'fixture-vault-password');input.dispatchEvent(new Event('input',{bubbles:true}));const unlock=buttons.find(b=>['Unlock','解锁','解鎖'].includes(b.textContent.trim()));unlock?.click()}})()`)
-				for _, id := range a.terminal.IDs() {
-					ss, _ := a.terminal.Snapshot(id)
-					if ss.State == "running" {
-						status, e := a.svc.GetEncryptedSyncStatus(context.Background())
-						if e != nil || !status.Unlocked {
-							panic("vault still locked")
-						}
-						fmt.Println("PASS SSH running with unlocked fixture vault")
-						return
-					}
+				if len(a.terminal.IDs()) != 0 {
+					panic("unexpected aTerm terminal")
 				}
 				time.Sleep(250 * time.Millisecond)
 			}
-			panic("timed out waiting for SSH")
+			app.Quit()
 		}()
 	})
 	if e = app.Run(); e != nil {

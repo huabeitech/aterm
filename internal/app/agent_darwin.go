@@ -19,27 +19,25 @@ import (
 	"ssh-connect/internal/agentbridge"
 	"ssh-connect/internal/fsutil"
 	"ssh-connect/internal/service"
-	"ssh-connect/internal/terminal"
 )
 
 type agentConfig struct {
-	Enabled bool            `json:"enabled"`
-	Hosts   map[string]bool `json:"hosts"`
+	Enabled bool `json:"enabled"`
 }
 type agentState struct {
-	mu      sync.Mutex
-	dir     string
-	server  *http.Server
-	config  agentConfig
-	pending *agentOpen
+	mu        sync.Mutex
+	dir       string
+	server    *http.Server
+	config    agentConfig
+	pending   *agentOpen
+	leaseRoot context.Context
+	revoke    context.CancelFunc
 }
 type agentOpen struct {
-	id, host, session string
-	ctx               context.Context
-	cancel            context.CancelFunc
-	route             service.AgentRoute
-	done              chan bool
-	claimed           bool
+	id     string
+	ctx    context.Context
+	cancel context.CancelFunc
+	done   chan bool
 }
 
 func (a *App) startAgents(dir string) error {
@@ -102,6 +100,7 @@ func (a *App) listenAgents() error {
 			c.Close()
 		}
 	}}
+	s.leaseRoot, s.revoke = context.WithCancel(context.Background())
 	s.server = server
 	go server.Serve(l)
 	return nil
@@ -114,6 +113,7 @@ func (a *App) stopAgents() {
 		s.pending.cancel()
 	}
 	if s.server != nil {
+		s.revoke()
 		s.server.Close()
 		s.server = nil
 	}
@@ -137,45 +137,52 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		for _, h := range hosts {
-			if s.config.Hosts[h.ID] && strings.Contains(strings.ToLower(h.DisplayName()), strings.ToLower(in.Query)) {
-				result.Hosts = append(result.Hosts, agentbridge.Host{ID: h.ID, Name: h.DisplayName(), Group: h.DirectoryID})
+			if strings.Contains(strings.ToLower(h.DisplayName()+" "+h.Remark+" "+h.HostName), strings.ToLower(in.Query)) {
+				result.Hosts = append(result.Hosts, agentbridge.Host{ID: h.ID, Name: h.DisplayName(), Group: h.DirectoryID, Address: h.HostName, Port: sshPort(h.Port), User: h.User, Remark: h.Remark})
 			}
 		}
-	case in.Method != "open" || !s.config.Hosts[in.HostID]:
+	case in.Method != "prepare" || in.HostID == "":
 		result.Error = "HOST_NOT_AVAILABLE"
 	case s.pending != nil:
 		result.Error = "REQUEST_IN_PROGRESS"
 	default:
 		ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-		p := &agentOpen{id: uuid.NewString(), host: in.HostID, ctx: ctx, cancel: cancel, done: make(chan bool, 1)}
+		p := &agentOpen{id: uuid.NewString(), ctx: ctx, cancel: cancel, done: make(chan bool, 1)}
+		root := s.leaseRoot
 		s.pending = p
 		s.mu.Unlock()
-		route, err := a.approveAgentRoute(ctx, p.host)
+		route, err := a.approveAgentRoute(ctx, in.HostID)
 		if err == nil {
 			var locked bool
 			locked, err = a.svc.AgentRouteRequiresUnlock(ctx, route)
-			if err == nil && ctx.Err() == nil {
-				s.mu.Lock()
-				p.route = route
-				s.mu.Unlock()
-				a.emitEvent("agent:open", map[string]any{"id": p.id, "locked": locked})
+			if err == nil && locked {
+				a.emitEvent("agent:unlock", map[string]string{"id": p.id})
 				select {
-				case success := <-p.done:
-					if success {
-						result.Status = "terminal_opened"
+				case ok := <-p.done:
+					if !ok {
+						err = errors.New("VAULT_LOCKED")
 					}
 				case <-ctx.Done():
+					err = ctx.Err()
 				}
 			}
 		}
-		cancel()
-		s.mu.Lock()
-		if result.Status == "" {
-			result.Error = "OPEN_CANCELLED"
-			if p.session != "" {
-				_ = a.CloseTerminal(p.session)
+		if err == nil && ctx.Err() == nil {
+			lease, revoke := context.WithTimeout(root, 2*time.Minute)
+			result.Connection, err = a.agentCommand(ctx, lease, route)
+			if err != nil || ctx.Err() != nil {
+				revoke()
 			}
 		}
+		s.mu.Lock()
+		if err != nil || ctx.Err() != nil || !s.config.Enabled {
+			result.Connection = nil
+			result.Error = "PREPARATION_FAILED"
+			if errors.Is(err, service.ErrHostNotFound) {
+				result.Error = "HOST_NOT_AVAILABLE"
+			}
+		}
+		cancel()
 		s.pending = nil
 	}
 	s.mu.Unlock()
@@ -208,6 +215,7 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 		}
 		if err = fsutil.AtomicWriteFile(filepath.Join(s.dir, "agent-access.json"), data, 0600); err != nil {
 			if !s.config.Enabled && s.server != nil {
+				s.revoke()
 				s.server.Close()
 				s.server = nil
 			}
@@ -218,6 +226,7 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 			s.pending.cancel()
 		}
 		if !cfg.Enabled && s.server != nil {
+			s.revoke()
 			s.server.Close()
 			s.server = nil
 		}
@@ -225,38 +234,19 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 	}
 	id, err := argument[string](args, 0)
 	p := s.pending
-	if err != nil || p == nil || id != p.id || p.ctx.Err() != nil || !s.config.Hosts[p.host] {
+	if err != nil || p == nil || id != p.id || p.ctx.Err() != nil || !s.config.Enabled {
 		return nil, errors.New("REQUEST_EXPIRED")
 	}
-	switch op {
-	case "claim":
-		if p.claimed || len(p.route.Endpoints()) == 0 {
-			return nil, errors.New("REQUEST_CONSUMED")
-		}
-		p.claimed = true
-		locked, err := a.svc.AgentRouteRequiresUnlock(p.ctx, p.route)
-		if err != nil || locked {
-			return nil, errors.New("VAULT_LOCKED")
-		}
-		session, err := a.terminal.OpenSSH(p.host, terminal.LaunchOptions{HostID: p.host}, func(ctx context.Context, id string) (*service.NativeSSHClient, service.Host, error) {
-			return a.svc.OpenApprovedAgentRoute(ctx, p.route, a.hostKeyConfirmer(id), a.credentialPrompter(id))
-		})
-		if err != nil {
-			return nil, err
-		}
-		p.session = session.ID
-		a.terminal.Present(session.ID, p.host, false)
-		return session.ID, nil
-	case "finish":
-		ok, err := argument[bool](args, 1)
-		if err != nil {
-			return nil, err
-		}
-		select {
-		case p.done <- ok && p.session != "":
-		default:
-		}
-		return nil, nil
+	if op != "unlocked" {
+		return nil, errors.New("unknown agent operation")
 	}
-	return nil, errors.New("unknown agent operation")
+	ok, err := argument[bool](args, 1)
+	if err != nil {
+		return nil, err
+	}
+	select {
+	case p.done <- ok:
+	default:
+	}
+	return nil, nil
 }

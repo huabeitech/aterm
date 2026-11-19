@@ -84,8 +84,10 @@ func main() {
 	}}
 	switch *authMode {
 	case "publickey":
-	case "password":
-		config.PublicKeyCallback = nil
+	case "password", "mixed":
+		if *authMode == "password" {
+			config.PublicKeyCallback = nil
+		}
 		config.PasswordCallback = func(_ ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
 			if string(password) != "fixture-password" {
 				return nil, fmt.Errorf("incorrect fixture password")
@@ -142,6 +144,12 @@ func main() {
 	host, err := store.CreateHost(domain.HostInput{Name: "parity-sftp", Alias: "parity-sftp", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity})
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *authMode == "mixed" {
+		_, err = store.CreateHost(domain.HostInput{Name: "fixture-password-host", Alias: "not-an-exported-alias", HostName: "127.0.0.1", Port: port, User: "fixture", PasswordAuth: true, Remark: "password terminal fixture"})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	if *tunnels {
 		jumpHost, err := store.CreateHost(domain.HostInput{Name: "parity-jump", Alias: "parity-jump", HostName: "127.0.0.1", User: "fixture", Port: port, IdentityFile: identity, JumpHostID: host.ID})
@@ -268,7 +276,7 @@ func serve(connection net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers
 					return
 				case "exec":
 					var value struct{ Command string }
-					if err := ssh.Unmarshal(request.Payload, &value); err != nil || remoteCwd == "" || value.Command != terminalmeta.RemoteDirectoryCommand {
+					if err := ssh.Unmarshal(request.Payload, &value); err != nil || remoteCwd == "" || (value.Command != terminalmeta.RemoteDirectoryCommand && value.Command != "pwd") {
 						request.Reply(false, nil)
 						continue
 					}

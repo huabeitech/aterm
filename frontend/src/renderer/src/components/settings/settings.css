@@ -125,6 +125,16 @@
   max-width: min(100%, calc(340px * var(--app-layout-scale)));
   gap: 8px;
 }
+.settings-agent-command {
+  margin: 0;
+  padding: 12px;
+  font-family: var(--font-family-mono);
+  font-size: var(--app-text-12);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
 .settings-value {
   color: var(--mac-secondary-text);
   text-align: right;

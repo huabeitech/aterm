@@ -1,8 +1,9 @@
 {
+  "agent.section": "AI",
   "agent.access": "Agent 访问",
-  "agent.enable": "允许本地 Agent 请求打开所选主机的 SSH 终端",
-  "agent.openTitle": "打开 SSH 终端？",
-  "agent.openMessage": "本地 Agent 请求打开 {{target}}。目标主机和跳板主机如下。\n{{route}}",
+  "agent.enable": "允许本地 Agent 访问所有已保存的主机及其备注",
+  "agent.openTitle": "准备 SSH 连接？",
+  "agent.openMessage": "允许本地 Agent 通过以下路径连接 {{target}}？\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 连接已关闭。修改仍保留在此窗口中，请在关闭前复制保存。",
   "unableToSaveFile": "无法保存文件。",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "不保存就关闭将丢失所做的修改。",
