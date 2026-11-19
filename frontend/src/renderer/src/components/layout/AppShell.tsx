@@ -1,5 +1,5 @@
 import { t } from '../../../../shared/i18n'
-import { PanelLeft } from 'lucide-react'
+import { PanelLeft, PanelRight } from 'lucide-react'
 import { IconButton, Tip } from '@/components/ui/desktop'
 import { formatCommandPaletteShortcut } from '../common/commandPaletteShortcut'
 import { cn } from '@/lib/utils'
@@ -20,6 +20,11 @@ type AppShellProps = {
   header: ReactNode
   sidebar: ReactNode
   content: ReactNode
+  inspector: ReactNode
+  inspectorWidth: number
+  inspectorOpen: boolean
+  onToggleInspector: () => void
+  onInspectorWidthCommit: (width: number) => void
   onSidebarWidthCommit: (width: number) => void
 }
 
@@ -34,11 +39,17 @@ export function AppShell({
   header,
   sidebar,
   content,
+  inspector,
+  inspectorWidth,
+  inspectorOpen,
+  onToggleInspector,
+  onInspectorWidthCommit,
   onSidebarWidthCommit
 }: AppShellProps) {
   const sidebarAvailable = mode !== 'settings'
   const sidebarHidden = !sidebarAvailable || sidebarCollapsed
   const sidebarLabel = t(sidebarCollapsed ? 'hosts:showSidebar' : 'hosts:hideSidebar')
+  const inspectorLabel = t(inspectorOpen ? 'hosts:hideHostDetails' : 'hosts:showHostDetails')
   const toggleWindowMaximise = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement
     const isEmptyTabStrip = target === target.closest('.workspace-tabs')
@@ -83,6 +94,17 @@ export function AppShell({
           </Tip>
         )}
         {header}
+        <Tip title={inspectorLabel}>
+          <IconButton
+            className="ml-2 h-7 shrink-0 rounded-[7px] border border-transparent text-[var(--mac-secondary-text)] hover:bg-[var(--workspace-tab-hover-background)] aria-pressed:bg-[var(--workspace-tab-active-background)] aria-pressed:border-[var(--workspace-tab-active-border)] [-webkit-app-region:no-drag]"
+            aria-label={inspectorLabel}
+            aria-expanded={inspectorOpen}
+            aria-pressed={inspectorOpen}
+            aria-controls="host-inspector-sidebar"
+            icon={<PanelRight size={16} />}
+            onClick={onToggleInspector}
+          />
+        </Tip>
       </header>
       <SidebarLayout
         preferredWidth={sidebarWidth}
@@ -90,7 +112,19 @@ export function AppShell({
         onWidthCommit={onSidebarWidthCommit}
         sidebar={sidebar}
       >
-        {content}
+        <SidebarLayout
+          side="right"
+          preferredWidth={inspectorWidth}
+          hidden={!inspectorOpen}
+          onWidthCommit={onInspectorWidthCommit}
+          sidebar={
+            <aside id="host-inspector-sidebar" aria-label={t('hosts:hostDetails')} className="min-w-0 min-h-0">
+              {inspectorOpen && inspector}
+            </aside>
+          }
+        >
+          {content}
+        </SidebarLayout>
       </SidebarLayout>
     </main>
   )

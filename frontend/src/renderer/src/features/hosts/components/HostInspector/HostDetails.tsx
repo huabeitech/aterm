@@ -33,74 +33,82 @@ export function HostDetails({
   const jumpHost = jumpHostName || host.proxyJump ||
     (host.jumpHostID ? '—' : t('hosts:directConnection'))
   return (
-    <div className="grid w-full min-w-0 gap-4 px-4 pt-4 pb-6 text-[length:var(--app-text-13)] sm:px-6">
-      <header className="flex min-w-0 items-center gap-3">
-        <div className="grid size-12 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
-          <Server size={28} aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <h2 className="m-0 wrap-anywhere text-2xl leading-tight font-semibold text-[var(--mac-text)]">
-            {host.name}
-          </h2>
-          <div className="flex font-mono text-[var(--mac-secondary-text)]">
-            <CopyableDetailValue
-              value={endpoint}
-              copyValue={host.hostName}
-              label={t('hosts:address')}
-            />
+    <div className="flex h-full min-h-0 min-w-0 flex-col text-[length:var(--app-text-13)]">
+      <div className="grid shrink-0 gap-3 border-b border-border px-4 py-3">
+        <header className="flex min-w-0 items-center gap-2">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
+            <Server size={18} aria-hidden="true" />
           </div>
+          <div className="min-w-0">
+            <h2 className="m-0 wrap-anywhere text-base leading-tight font-semibold text-[var(--mac-text)]">
+              {host.name}
+            </h2>
+            <div className="flex font-mono text-[var(--mac-secondary-text)]">
+              <CopyableDetailValue
+                value={endpoint}
+                copyValue={host.hostName}
+                label={t('hosts:address')}
+              />
+            </div>
+          </div>
+        </header>
+        {actions}
+      </div>
+      <div className="grid min-h-0 min-w-0 content-start gap-4 overflow-auto px-4 py-3">
+        <DetailGroup title={t('hosts:connection')}>
+          <DetailRow label={t('hosts:address')}>
+            <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
+          </DetailRow>
+          <DetailRow label={t('hosts:port')}>{host.port || 22}</DetailRow>
+          <DetailRow label={t('hosts:username')}>
+            <CopyableDetailValue value={host.user} label={t('hosts:username')} />
+          </DetailRow>
+          <DetailRow label={t('hosts:hostAlias')}>
+            <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+          </DetailRow>
+          <DetailRow label={t('hosts:directory')}>
+            {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
+          </DetailRow>
+        </DetailGroup>
+        <DetailGroup title={t('hosts:authentication')}>
+          <DetailRow label={t('hosts:method')}>
+            {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
+          </DetailRow>
+          {host.passwordAuth ? (
+            <DetailRow label={t('hosts:password')}>
+              <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
+            </DetailRow>
+          ) : (
+            <DetailRow label={t('hosts:privateKeyFile')}>
+              <IdentityDetailValue identityFile={host.identityFile} />
+            </DetailRow>
+          )}
+      </DetailGroup>
+      <details className="min-w-0">
+        <summary className="cursor-pointer text-sm font-semibold">{t('hosts:advancedSettings')}</summary>
+        <div className="mt-2 grid gap-3">
+          <DetailGroup title={t('hosts:connectionOptions')}>
+            <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
+            <DetailRow label={t('hosts:agentForwarding')}>
+              {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
+            </DetailRow>
+            <DetailRow label={t('hosts:compression')}>
+              {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+            </DetailRow>
+          </DetailGroup>
+          <DetailGroup title={t('hosts:reliability')}>
+            <DetailRow label={t('hosts:keepaliveInterval')}>
+              {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
+            </DetailRow>
+            <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
+              {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
+            </DetailRow>
+            <DetailRow label={t('hosts:connectionTimeout')}>
+              {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
+            </DetailRow>
+          </DetailGroup>
         </div>
-      </header>
-      {actions}
-      <DetailGroup title={t('hosts:connection')}>
-        <DetailRow label={t('hosts:address')}>
-          <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
-        </DetailRow>
-        <DetailRow label={t('hosts:port')}>{host.port || 22}</DetailRow>
-        <DetailRow label={t('hosts:username')}>
-          <CopyableDetailValue value={host.user} label={t('hosts:username')} />
-        </DetailRow>
-        <DetailRow label={t('hosts:hostAlias')}>
-          <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
-        </DetailRow>
-        <DetailRow label={t('hosts:directory')}>
-          {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
-        </DetailRow>
-      </DetailGroup>
-      <DetailGroup title={t('hosts:authentication')}>
-        <DetailRow label={t('hosts:method')}>
-          {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
-        </DetailRow>
-        {host.passwordAuth ? (
-          <DetailRow label={t('hosts:password')}>
-            <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
-          </DetailRow>
-        ) : (
-          <DetailRow label={t('hosts:privateKeyFile')}>
-            <IdentityDetailValue identityFile={host.identityFile} />
-          </DetailRow>
-        )}
-      </DetailGroup>
-      <DetailGroup title={t('hosts:connectionOptions')}>
-        <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
-        <DetailRow label={t('hosts:agentForwarding')}>
-          {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-        </DetailRow>
-        <DetailRow label={t('hosts:compression')}>
-          {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-        </DetailRow>
-      </DetailGroup>
-      <DetailGroup title={t('hosts:reliability')}>
-        <DetailRow label={t('hosts:keepaliveInterval')}>
-          {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
-        </DetailRow>
-        <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
-          {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
-        </DetailRow>
-        <DetailRow label={t('hosts:connectionTimeout')}>
-          {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
-        </DetailRow>
-      </DetailGroup>
+      </details>
       {host.remark && (
         <section aria-labelledby={notesHeadingID} className="min-w-0">
           <h3 id={notesHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
@@ -111,6 +119,7 @@ export function HostDetails({
           </p>
         </section>
       )}
+      </div>
     </div>
   )
 }
@@ -281,7 +290,7 @@ function CopyableDetailValue({
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,11rem)_minmax(0,1fr)] items-baseline gap-x-3 px-3 py-1.5 max-[480px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-baseline gap-x-3 px-3 py-1.5">
       <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
       <dd className="m-0 min-w-0 wrap-anywhere text-[var(--mac-text)]">
         {children}

@@ -7,7 +7,8 @@ export function useSidebarDrawerAnimation(
   drawer: RefObject<HTMLDivElement>,
   content: RefObject<HTMLDivElement>,
   hidden: boolean,
-  width: number
+  width: number,
+  right: boolean
 ) {
   const previousHidden = useRef(hidden)
   const interrupted = useRef<{ drawer: number; content: number } | null>(null)
@@ -27,9 +28,10 @@ export function useSidebarDrawerAnimation(
       interrupted.current = null
       return
     }
-    const offset = width + 1
+    const drawerOffset = right ? width : -width
+    const offset = right ? 0 : width + 1
     const from = interrupted.current ?? {
-      drawer: hidden ? 0 : -width,
+      drawer: hidden ? 0 : drawerOffset,
       content: hidden ? offset : -offset
     }
     interrupted.current = null
@@ -46,7 +48,7 @@ export function useSidebarDrawerAnimation(
       sidebar.animate(
         [
           { transform: `translateX(${from.drawer}px)` },
-          { transform: `translateX(${hidden ? -width : 0}px)` }
+          { transform: `translateX(${hidden ? drawerOffset : 0}px)` }
         ],
         options
       ),
@@ -83,5 +85,5 @@ export function useSidebarDrawerAnimation(
       finish()
       motion.removeEventListener('change', motionChanged)
     }
-  }, [body, drawer, content, hidden, width])
+  }, [body, drawer, content, hidden, width, right])
 }

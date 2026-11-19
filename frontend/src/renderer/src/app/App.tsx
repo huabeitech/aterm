@@ -30,7 +30,6 @@ import { SettingsPage } from '../components/settings/SettingsPage'
 import type { PaletteCommand } from '../components/common/paletteSearch'
 import { CommandPalette } from '../components/common/CommandPalette'
 import {
-  ConnectionDetailsTab,
   ConnectionWorkspace,
   type ConnectionView,
 } from '../features/workspace/ConnectionWorkspace'
@@ -140,7 +139,9 @@ function Workbench({
   const [connectionViews, setConnectionViews] = useState<Record<string, ConnectionView>>({})
   const cycleConnectionView = useRef<(() => void) | null>(null)
   const openingHostSessions = useRef(new Set<string>())
-  const [connectingHostTabs, setConnectingHostTabs] = useState<ReadonlySet<string>>(new Set())
+  const [pendingHostTabs, setPendingHostTabs] = useState<ReadonlySet<string>>(new Set())
+  const [inspectorWidth, setInspectorWidth] = useState(320)
+  const [showInspector, setShowInspector] = useState(true)
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
@@ -161,7 +162,7 @@ function Workbench({
   const library = useHostWorkbench(
     (id) => void connectHost(id),
     (id) => void openFiles(id),
-    (id) => showHostDetails(id),
+    () => setShowInspector(true),
     (id) => <PluginActions location="host.details" hostID={id} onOpen={openPlugin} />,
   )
   const files = useFilesWorkbench(
@@ -178,7 +179,6 @@ function Workbench({
     library.unlockForConnection,
     library.refresh,
     (id, groupID) => void openFiles(id, groupID),
-    showHostDetails,
     connectionViews,
     (id, session, content, onReconnect) => {
       const fileSession = files.sessions.find((s) => s.ownerID === id)
@@ -192,9 +192,6 @@ function Workbench({
           fileSession={fileSession}
           transfers={files.transfers.filter((t) => t.sessionID === fileSession?.id)}
           terminal={content}
-          details={
-            session.hostID ? renderHostDetails(session.hostID, id) : undefined
-          }
           unlock={library.unlockForConnection}
           onReconnectSSH={onReconnect}
           onReconnectSFTP={() => {
@@ -239,19 +236,13 @@ function Workbench({
     ? tabs.activeWorkspaceTab.slice(9)
     : null
   const activeHostTab = tabs.workspaceTabs.find((tab) => tab.id === tabs.activeWorkspaceTab)
-  const sessionGroupIDs = new Set(terminal.tabSessions.map((session) => session.id))
-  const isDetails = !!activeConnectionID && (
-    connectionViews[activeConnectionID] === 'details' ||
-    (!!activeHostTab?.hostID && !sessionGroupIDs.has(activeConnectionID))
-  )
-  const isFiles = !isDetails && !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
+  const isFiles = !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
   const isConnectionPlugin =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:')
   const isPluginView =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:') === true
   const isTerminal =
     tabs.activeWorkspaceTab.startsWith('terminal:') &&
-    !isDetails &&
     !isFiles &&
     !isConnectionPlugin &&
     !connectionViews[activeConnectionID ?? '']?.startsWith('plugin:')
@@ -269,41 +260,22 @@ function Workbench({
       previous[id] === view ? previous : { ...previous, [id]: view },
     )
   }
-  function showHostDetails(hostID: string, groupID?: string) {
-    const existing = groupID ? undefined : recentHostTab(hostID)
-    const id = groupID ?? existing?.id.slice(9)
-    if (id) {
-      if (terminal.sessionForGroup(id) || openingHostSessions.current.has(id))
-        selectConnectionView(id, 'details')
-      else tabs.setActiveWorkspaceTab(`terminal:${id}`)
-    } else {
-      tabs.openHostTab(hostID, true)
-    }
-  }
-  function renderHostDetails(hostID: string, groupID: string) {
-    return library.renderHostDetails(hostID, {
-      connect: () => void connectHost(hostID, { groupID }),
-      openFiles: () => void openFiles(hostID, groupID),
-      connecting: connectingHostTabs.has(groupID),
-    })
-  }
   async function openHostSession(hostID: string, id: string, view: 'terminal' | 'files') {
     if (openingHostSessions.current.has(id) || closingConnections.current.has(id)) return
-    const tabID = `terminal:${id}` as const
-    tabs.keepTabOpen(tabID)
     selectConnectionView(id, view)
     if (terminal.sessionForGroup(id)) {
       if (view === 'files') await files.open(hostID, id)
       return
     }
     openingHostSessions.current.add(id)
-    setConnectingHostTabs(new Set(openingHostSessions.current))
+    setPendingHostTabs(new Set(openingHostSessions.current))
     try {
       const opened = await terminal.open({ kind: 'ssh', hostID }, id)
-      if (opened && view === 'files') await files.open(hostID, id)
+      if (!opened) tabs.removeTabs([`terminal:${id}`])
+      else if (view === 'files') await files.open(hostID, id)
     } finally {
       openingHostSessions.current.delete(id)
-      setConnectingHostTabs(new Set(openingHostSessions.current))
+      setPendingHostTabs(new Set(openingHostSessions.current))
     }
   }
   async function connectHost(
@@ -315,7 +287,7 @@ function Workbench({
     const id = groupID ?? (
       existingID && (!terminal.sessionForGroup(existingID) || openingHostSessions.current.has(existingID))
         ? existingID
-        : tabs.openHostTab(hostID, false).id.slice(9)
+        : tabs.openHostTab(hostID).id.slice(9)
     )
     await openHostSession(hostID, id, 'terminal')
   }
@@ -326,7 +298,7 @@ function Workbench({
       await files.open(target, groupID)
       return
     }
-    const id = groupID ?? (recentHostTab(target) ?? tabs.openHostTab(target, false)).id.slice(9)
+    const id = groupID ?? (recentHostTab(target) ?? tabs.openHostTab(target)).id.slice(9)
     await openHostSession(target, id, 'files')
   }
   async function closeConnection(id: string) {
@@ -367,7 +339,7 @@ function Workbench({
     document.title = 'aTerm'
   }, [])
   function activateHosts() {
-    if (isSettings) tabs.setActiveWorkspaceTab('home')
+    tabs.setActiveWorkspaceTab('home')
     sidebar.revealSearch()
   }
   function openSettings() {
@@ -733,6 +705,11 @@ function Workbench({
                 : 'home'
         }
         onSidebarWidthCommit={sidebar.commitWidth}
+        inspector={library.hostInspector}
+        inspectorWidth={inspectorWidth}
+        inspectorOpen={showInspector}
+        onToggleInspector={() => setShowInspector((visible) => !visible)}
+        onInspectorWidthCommit={setInspectorWidth}
         header={
           <WorkspaceTabsBar
             tabs={tabs.workspaceTabs}
@@ -750,7 +727,6 @@ function Workbench({
             onOpenSettings={openSettings}
             onCloseSettings={closeSettings}
             onActivateTab={tabs.setActiveWorkspaceTab}
-            onKeepTabOpen={tabs.keepTabOpen}
             onActivateTerminal={terminal.activate}
             onRenameTerminal={terminal.renameTab}
             terminalActions={terminal.tabActions}
@@ -795,21 +771,13 @@ function Workbench({
         content={
           <>
             {terminal.pages}
-            {activeConnectionID && activeHostTab?.hostID && !sessionGroupIDs.has(activeConnectionID) && (
-              <section
-                className="connection-workspace flex"
-                aria-label={t('hosts:hostDetails')}
-              >
-                <div className="connection-content">
-                  {renderHostDetails(activeHostTab.hostID, activeConnectionID)}
+            {activeConnectionID && pendingHostTabs.has(activeConnectionID) &&
+              !terminal.sessionForGroup(activeConnectionID) && (
+                <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground" role="status">
+                  <BusyIndicator />
+                  {t('terminal:connecting')}
                 </div>
-                <footer className="connection-statusbar">
-                  <div className="connection-views" role="group" aria-label={t('terminal:connectionView')}>
-                    <ConnectionDetailsTab active />
-                  </div>
-                </footer>
-              </section>
-            )}
+              )}
             {tabs.workspaceTabs
               .filter((tab) => tab.kind === 'plugin')
               .map((tab) => {
@@ -858,26 +826,28 @@ function Workbench({
               </div>
             )}
             <div
-              className="workspace-welcome-pane h-full min-h-0 grid grid-rows-[minmax(0,_1fr)]"
+              className="workspace-welcome-pane relative h-full min-h-0 min-w-0"
               style={{
-                display: tabs.activeWorkspaceTab === 'home' ? 'grid' : 'none',
+                display: tabs.activeWorkspaceTab === 'home' ? 'flex' : 'none',
               }}
               aria-hidden={tabs.activeWorkspaceTab !== 'home'}
             >
-              <ConnectionWelcome
-                hosts={library.hosts}
-                searchShortcut={settings.commandPaletteShortcut}
-                onConnect={library.sidebarProps.onConnectHost}
-                onTogglePinned={library.sidebarProps.onToggleFavoriteHost}
-                pinBusy={!!library.sidebarProps.busyAction}
-                onCreate={() => library.sidebarProps.onCreateHost('')}
-                onSearch={() => showSearch()}
-                onLocalTerminal={
-                  bootstrap.info.localTerminalAvailable
-                    ? () => void terminal.open({ kind: 'local' })
-                    : undefined
-                }
-              />
+              <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+                <ConnectionWelcome
+                  hosts={library.hosts}
+                  searchShortcut={settings.commandPaletteShortcut}
+                  onConnect={library.sidebarProps.onConnectHost}
+                  onTogglePinned={library.sidebarProps.onToggleFavoriteHost}
+                  pinBusy={!!library.sidebarProps.busyAction}
+                  onCreate={() => library.sidebarProps.onCreateHost('')}
+                  onSearch={() => showSearch()}
+                  onLocalTerminal={
+                    bootstrap.info.localTerminalAvailable
+                      ? () => void terminal.open({ kind: 'local' })
+                      : undefined
+                  }
+                />
+              </div>
             </div>
           </>
         }

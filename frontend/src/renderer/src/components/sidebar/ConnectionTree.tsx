@@ -172,7 +172,6 @@ export function ConnectionTree(props: ConnectionTreeProps) {
         : [...props.selectedHostIDs, id]
     if (!range) anchor.current = id
     props.onSelectHost(id, ids)
-    if (!additive && !range) props.onOpenHost(id)
   }
   const selectedHostID = props.selectedHostIDs.includes(props.selectedHostID ?? '')
     ? props.selectedHostID
@@ -284,6 +283,9 @@ export function ConnectionTree(props: ConnectionTreeProps) {
               else return
               event.preventDefault()
               rows[next]?.focus()
+              const node = nodes[next]
+              if (next !== index && node?.kind === 'host')
+                select(node.id, false, event.shiftKey)
             }}
             onDragOver={drag.backgroundOver}
             onDragLeave={drag.leave}

@@ -38,7 +38,6 @@
   "openSftp": "SFTP 열기",
   "splitRight": "오른쪽으로 분할",
   "splitDown": "아래로 분할",
-  "hostConnectionDetails": "호스트 연결 세부 정보",
   "terminal": "터미널",
   "resizeTerminalColumns": "터미널 열 크기 조절",
   "resizeTerminalRows": "터미널 행 크기 조절",

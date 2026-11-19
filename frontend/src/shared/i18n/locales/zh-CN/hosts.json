@@ -151,8 +151,6 @@
   "copied2": "已复制！",
   "openSftp": "打开 SFTP",
   "connectInNewTab": "在新标签中连接",
-  "keepTabOpen": "保留标签页",
-  "previewTabLabel": "{{name}}（预览）",
   "details": "详情",
   "thisHostNoLongerExists": "此主机已不存在。",
   "reviewTheHighlightedFields": "请检查标记出的字段。",

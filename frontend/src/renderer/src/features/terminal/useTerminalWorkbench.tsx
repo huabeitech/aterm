@@ -11,7 +11,6 @@ import { TextField, WorkbenchDialog, type MenuAction } from '@/components/ui/wor
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   FolderOpen,
-  Info,
   RotateCcw,
   Search,
   SquareSplitHorizontal,
@@ -54,7 +53,6 @@ export function useTerminalWorkbench(
   unlock: () => Promise<boolean>,
   onConnected: () => void,
   onOpenFiles: (id: FileTarget, groupID: string) => void,
-  onOpenHost: (id: string, groupID: string) => void,
   connectionViews: Record<string, ConnectionView>,
   renderConnection: (
     id: string,
@@ -362,16 +360,6 @@ export function useTerminalWorkbench(
           reconnect(groupID, id)
         }
       },
-      ...(session.hostID
-        ? [
-            {
-              key: 'details',
-              icon: <Info size={14} />,
-              label: t('terminal:hostConnectionDetails'),
-              onClick: () => onOpenHost(session.hostID!, groupID)
-            }
-          ]
-        : []),
       ...(paneIDs(group.root).length > 1
         ? [
             {

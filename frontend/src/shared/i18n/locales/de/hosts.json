@@ -151,8 +151,6 @@
   "copied2": "Kopiert!",
   "openSftp": "SFTP öffnen",
   "connectInNewTab": "In neuem Tab verbinden",
-  "keepTabOpen": "Tab geöffnet lassen",
-  "previewTabLabel": "{{name}} (Vorschau)",
   "details": "Details",
   "thisHostNoLongerExists": "Dieser Host ist nicht mehr vorhanden.",
   "reviewTheHighlightedFields": "Prüfen Sie die hervorgehobenen Felder.",

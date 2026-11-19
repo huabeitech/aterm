@@ -17,7 +17,6 @@ import {
   PanelLeftClose,
   PanelsTopLeft,
   Pencil,
-  Pin,
   RotateCcw,
   Server,
   SquareSplitHorizontal,
@@ -46,7 +45,6 @@ type WorkspaceTabProps = DragProps & {
   actions?: MenuAction[]
   onRename?: () => void
   onResetName?: () => void
-  onKeepOpen?: () => void
   active: boolean
   onActivate: () => void
   onClose: () => void
@@ -64,7 +62,6 @@ export function WorkspaceTab({
   actions = [],
   onRename,
   onResetName,
-  onKeepOpen,
   active,
   dragging,
   dropPosition,
@@ -82,14 +79,6 @@ export function WorkspaceTab({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuItems = [
     ...actions,
-    ...(onKeepOpen
-      ? [{
-          key: 'keep-open',
-          icon: <Pin size={14} />,
-          label: t('hosts:keepTabOpen'),
-          onClick: onKeepOpen
-        }]
-      : []),
     ...(onRename
       ? [
           {
@@ -163,14 +152,11 @@ export function WorkspaceTab({
         type="button"
         role="tab"
         aria-selected={active}
-        aria-label={onKeepOpen ? t('hosts:previewTabLabel', { name: label }) : undefined}
         onClick={onActivate}
-        onDoubleClick={onKeepOpen}
       >
         {icon}
         <span className={cn(
           'workspace-tab-label min-w-0 overflow-hidden text-ellipsis whitespace-nowrap',
-          onKeepOpen && 'italic'
         )}>
           {label}
         </span>

@@ -46,7 +46,6 @@ interface WorkspaceTabsBarProps {
   onOpenSettings: () => void
   onCloseSettings: () => void
   onActivateTab: (tab: WorkspaceTabID) => void
-  onKeepTabOpen: (tab: WorkspaceTabID) => void
   onActivateTerminal: (id: string) => void
   terminalActions: (id: string) => MenuAction[]
   onRenameTerminal: (id: string) => void
@@ -169,7 +168,6 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
               actions={session ? props.terminalActions(session.id) : undefined}
               label={(workspaceTab.hostID && host?.name) || session?.title || t('hosts:hostDetails')}
               number={session?.localNumber}
-              onKeepOpen={workspaceTab.preview ? () => props.onKeepTabOpen(tab) : undefined}
               onRename={session?.localNumber ? () => props.onRenameTerminal(session.id) : undefined}
               onResetName={
                 session?.customTitle ? () => props.onResetTerminalName(session.id) : undefined

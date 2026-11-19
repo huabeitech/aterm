@@ -38,7 +38,6 @@
   "openSftp": "Abrir SFTP",
   "splitRight": "Dividir a la derecha",
   "splitDown": "Dividir abajo",
-  "hostConnectionDetails": "Detalles de conexión del host",
   "terminal": "Terminal",
   "resizeTerminalColumns": "Redimensionar columnas del terminal",
   "resizeTerminalRows": "Redimensionar filas del terminal",

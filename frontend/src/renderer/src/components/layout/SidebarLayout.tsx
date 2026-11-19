@@ -5,6 +5,7 @@ import { sidebarLayout, constrainSidebarWidth } from '../../features/workspace/s
 import { useSidebarDrawerAnimation } from './useSidebarDrawerAnimation'
 
 type Props = {
+  side?: 'left' | 'right'
   preferredWidth: number
   hidden: boolean
   onWidthCommit: (width: number) => void
@@ -13,8 +14,10 @@ type Props = {
 }
 
 // Preferences flow into layout. Only explicit pointer/keyboard actions flow back out.
-export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, children }: Props) {
+export function SidebarLayout({ side = 'left', preferredWidth, hidden, onWidthCommit, sidebar, children }: Props) {
   useTranslation()
+  const right = side === 'right'
+  const direction = right ? -1 : 1
   const root = useRef<HTMLDivElement>(null)
   const drawer = useRef<HTMLDivElement>(null)
   const content = useRef<HTMLDivElement>(null)
@@ -26,7 +29,7 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
       ? sidebarLayout.maxWidth
       : Math.max(
           sidebarLayout.minWidth,
-          Math.min(sidebarLayout.maxWidth, availableWidth - sidebarLayout.minimumContentWidth - 1)
+          Math.min(sidebarLayout.maxWidth, availableWidth - (right ? 440 : sidebarLayout.minimumContentWidth) - 1)
         )
   const width = Math.min(dragWidth ?? preferredWidth, maximum)
   useLayoutEffect(() => {
@@ -43,23 +46,25 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
     }
     drawer.current!.inert = hidden
   }, [hidden])
-  useSidebarDrawerAnimation(root, drawer, content, hidden, width)
+  useSidebarDrawerAnimation(root, drawer, content, hidden, width, right)
 
   function commit(value: number) {
     onWidthCommit(Math.min(constrainSidebarWidth(value), maximum))
   }
 
   return (
-    <div ref={root} className="workspace-body min-w-0 min-h-0 overflow-hidden">
+    <div ref={root} className="workspace-body h-full min-w-0 min-h-0 overflow-hidden">
       <div
         className="workspace-splitter grid h-full min-w-0 min-h-0"
         style={{
-          gridTemplateColumns: `${hidden ? 0 : width}px ${hidden ? 0 : 1}px minmax(0, 1fr)`
+          gridTemplateColumns: right
+            ? `minmax(0, 1fr) ${hidden ? 0 : 1}px ${hidden ? 0 : width}px`
+            : `${hidden ? 0 : width}px ${hidden ? 0 : 1}px minmax(0, 1fr)`
         }}
       >
         <div
           ref={drawer}
-          className="source-sidebar col-start-1 relative z-[1] grid grid-rows-[minmax(0,_1fr)_auto] min-w-0 min-h-0 overflow-hidden bg-[var(--hosts-background)] [-webkit-app-region:no-drag]"
+          className={`row-start-1 ${right ? 'col-start-3' : 'source-sidebar col-start-1'} relative z-[1] grid grid-rows-[minmax(0,_1fr)_auto] min-w-0 min-h-0 overflow-hidden bg-[var(--hosts-background)] [-webkit-app-region:no-drag]`}
           style={{ width, display: hidden ? 'none' : undefined }}
         >
           {sidebar}
@@ -73,7 +78,7 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
             aria-valuemax={maximum}
             aria-valuenow={Math.round(width)}
             tabIndex={0}
-            className="split-handle col-start-2 relative flex items-center justify-center bg-border outline-none focus-visible:ring-1 focus-visible:ring-ring after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 touch-none [-webkit-app-region:no-drag]"
+            className="split-handle row-start-1 col-start-2 relative flex items-center justify-center bg-border outline-none focus-visible:ring-1 focus-visible:ring-ring after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 touch-none [-webkit-app-region:no-drag]"
             onPointerDown={(event) => {
               if (event.button !== 0 || root.current?.hasAttribute('data-sidebar-animating')) return
               event.preventDefault()
@@ -90,7 +95,7 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
               if (!current || current.pointerId !== event.pointerId) return
               setDragWidth(
                 Math.min(
-                  constrainSidebarWidth(current.startWidth + event.clientX - current.startX),
+                  constrainSidebarWidth(current.startWidth + direction * (event.clientX - current.startX)),
                   maximum
                 )
               )
@@ -99,7 +104,7 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
               const current = drag.current
               if (!current || current.pointerId !== event.pointerId) return
               if (event.clientX !== current.startX)
-                commit(current.startWidth + event.clientX - current.startX)
+                commit(current.startWidth + direction * (event.clientX - current.startX))
               drag.current = null
               setDragWidth(null)
               event.currentTarget.releasePointerCapture(event.pointerId)
@@ -115,9 +120,9 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
                   : event.key === 'End'
                     ? maximum
                     : event.key === 'ArrowLeft'
-                      ? width - 10
+                      ? width - direction * 10
                       : event.key === 'ArrowRight'
-                        ? width + 10
+                        ? width + direction * 10
                         : null
               if (next === null) return
               event.preventDefault()
@@ -127,11 +132,11 @@ export function SidebarLayout({ preferredWidth, hidden, onWidthCommit, sidebar, 
             <div />
           </div>
         ) : (
-          <div className="col-start-2" />
+          <div className="row-start-1 col-start-2" />
         )}
         <div
           ref={content}
-          className="workspace-content col-start-3 min-w-0 min-h-0 relative overflow-hidden"
+          className={`workspace-content row-start-1 ${right ? 'col-start-1' : 'col-start-3'} min-w-0 min-h-0 relative overflow-hidden`}
         >
           {children}
         </div>

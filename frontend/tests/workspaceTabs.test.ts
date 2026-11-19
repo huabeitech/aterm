@@ -4,7 +4,6 @@ import {
   addWorkspaceTab,
  removeWorkspaceTabs,
   createWorkspaceTab,
-  keepWorkspaceTabOpen,
   openHostWorkspaceTab,
   nextWorkspaceTabAfterClose,
   reorderWorkspaceTabs,
@@ -28,31 +27,13 @@ test('Workspace tabs contain working sessions and settings, with home as the emp
   assert.equal(nextWorkspaceTabAfterClose([terminal], 'terminal:a', [], ['terminal:a']), 'home')
 })
 
-test('a new host preview replaces the previous preview in place', () => {
+test('explicit host sessions append independent workspaces', () => {
   const settings = createWorkspaceTab('settings')
-  const first = openHostWorkspaceTab([settings], 'alpha', true)
-  const terminal = createWorkspaceTab('terminal:session')
-  const second = openHostWorkspaceTab([...first.tabs, terminal], 'bravo', true)
-
-  assert.deepEqual(second.tabs, [settings, second.tab, terminal])
-  assert.equal(second.tab.hostID, 'bravo')
-  assert.equal(second.tab.preview, true)
-  assert.notEqual(second.tab.id, first.tab.id)
-})
-
-test('keeping a host open preserves its identity and allows an independent workspace for the same host', () => {
-  const first = openHostWorkspaceTab([], 'alpha', true)
-  const fixed = keepWorkspaceTabOpen(first.tabs, first.tab.id)
-  const duplicate = openHostWorkspaceTab(fixed, 'alpha', false)
-  const preview = openHostWorkspaceTab(duplicate.tabs, 'bravo', true)
-
-  assert.deepEqual(preview.tabs.map(({ hostID, preview }) => [hostID, preview]), [
-    ['alpha', false],
-    ['alpha', false],
-    ['bravo', true]
-  ])
-  assert.equal(fixed[0].id, first.tab.id)
-  assert.notEqual(duplicate.tab.id, first.tab.id)
+  const first = openHostWorkspaceTab([settings], 'alpha')
+  const second = openHostWorkspaceTab(first.tabs, 'alpha')
+  assert.deepEqual(second.tabs, [settings, first.tab, second.tab])
+  assert.equal(second.tab.hostID, 'alpha')
+  assert.notEqual(first.tab.id, second.tab.id)
 })
 
 test('tab removal preserves the source list and close follows recent history or its left neighbor', () => {

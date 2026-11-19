@@ -12,7 +12,6 @@ import {
   adjacentWorkspaceTab,
   createFilesWorkspaceTab,
   createWorkspaceTab,
-  keepWorkspaceTabOpen,
   nextWorkspaceTabAfterClose,
   openHostWorkspaceTab,
   removeWorkspaceTabs,
@@ -61,19 +60,13 @@ export function useWorkspaceTabs() {
     setTabs(addWorkspaceTab(workspaceTabsStateRef.current, createWorkspaceTab(tab)))
   }
 
-  function openHostTab(hostID: string, preview: boolean) {
+  function openHostTab(hostID: string) {
     const current = workspaceTabsStateRef.current
-    const { tabs, tab } = openHostWorkspaceTab(current, hostID, preview)
+    const { tabs, tab } = openHostWorkspaceTab(current, hostID)
     setTabs(tabs)
     setActiveWorkspaceTab(tab.id)
     tabHistoryRef.current = tabHistoryRef.current.filter((id) => tabs.some((item) => item.id === id))
     return tab
-  }
-
-  function keepTabOpen(id: WorkspaceTabID) {
-    const current = workspaceTabsStateRef.current
-    const next = keepWorkspaceTabOpen(current, id)
-    if (next !== current) setTabs(next)
   }
 
   function findRecentTab(predicate: (tab: WorkspaceTab) => boolean) {
@@ -242,7 +235,6 @@ export function useWorkspaceTabs() {
     workspaceTabsRef,
     openWorkspaceTab,
     openHostTab,
-    keepTabOpen,
     findRecentTab,
     openFilesWorkspaceTab,
     removeTabs,

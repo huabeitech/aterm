@@ -54,7 +54,7 @@ const emptyForm: FormState = {
 export function useHostWorkbench(
   connectHost: (id: string) => void,
   openFiles: (id: string) => void,
-  openHost: (id: string) => void,
+  revealInspector: () => void,
   renderPluginActions: (id: string) => import("react").ReactNode
 ) {
   useTranslation()
@@ -216,7 +216,11 @@ export function useHostWorkbench(
     onCreateHost: editor.startCreate,
     onEditHost: editor.startEditHost,
     onRenameHost: editor.renameHost,
-    onOpenHost: openHost,
+    onOpenHost: (id: string) => {
+      setSelectedID(id)
+      setSelectedHostIDs([id])
+      revealInspector()
+    },
     onConnectHost: connectHost,
     onOpenFiles: openFiles,
     onDeleteHosts: editor.confirmDeleteHosts,
@@ -271,39 +275,38 @@ export function useHostWorkbench(
   }, [inspectorOpen, editorMode, busyAction, editor.saveHost])
   const editorOpen =
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
-  function renderHostDetails(
-    id: string,
-    actions: {
-      connect: () => void
-      openFiles: () => void
-      connecting: boolean
-    }
-  ) {
+  function renderHostInspector() {
+    if (visibleSelectedIDs.length !== 1)
+      return (
+        <p className="p-4 text-sm text-muted-foreground">
+          {visibleSelectedIDs.length
+            ? t('hosts:hostsSelected', { count: visibleSelectedIDs.length })
+            : t('hosts:selectASingleHostToViewItsConnectionDetails')}
+        </p>
+      )
+    const id = visibleSelectedIDs[0]
     const host = hosts.find((item) => item.id === id)
     if (!host) return <p className="p-4 text-muted-foreground">{t('hosts:thisHostNoLongerExists')}</p>
     return (
       <div key={id} className="h-full min-h-0 min-w-0">
-        <ScrollArea className="h-full min-h-0">
-          <HostDetails
-            actions={
-              <HostDetailsToolbar
-                favorite={host.favorite}
-                disabled={!!busyAction || actions.connecting}
-                connecting={actions.connecting}
-                pluginActions={renderPluginActions(id)}
-                onConnect={actions.connect}
-                onEdit={() => editor.startEditHost(id)}
-                onOpenFiles={actions.openFiles}
-                onCopy={() => void copySSHCommand(id)}
-                onFavorite={() => void editor.toggleFavoriteHost(id)}
-              />
+        <HostDetails
+          actions={
+            <HostDetailsToolbar
+              favorite={host.favorite}
+              disabled={!!busyAction}
+              pluginActions={renderPluginActions(id)}
+              onConnect={() => connectHost(id)}
+              onEdit={() => editor.startEditHost(id)}
+              onOpenFiles={() => openFiles(id)}
+              onCopy={() => void copySSHCommand(id)}
+              onFavorite={() => void editor.toggleFavoriteHost(id)}
+            />
             }
             host={host}
             directoryPath={directoryOptions.find((option) => option.id === host.directoryID)?.label}
             jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
             onGetHostPassword={getPassword}
           />
-        </ScrollArea>
       </div>
     )
   }
@@ -402,6 +405,6 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
-    renderHostDetails
+    hostInspector: renderHostInspector()
   }
 }

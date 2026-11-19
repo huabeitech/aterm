@@ -151,8 +151,6 @@
   "copied2": "コピーしました！",
   "openSftp": "SFTP を開く",
   "connectInNewTab": "新しいタブで接続",
-  "keepTabOpen": "タブを開いたままにする",
-  "previewTabLabel": "{{name}}（プレビュー）",
   "details": "詳細",
   "thisHostNoLongerExists": "このホストは存在しなくなりました。",
   "reviewTheHighlightedFields": "強調表示された項目を確認してください。",

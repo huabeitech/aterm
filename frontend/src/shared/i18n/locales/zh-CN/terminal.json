@@ -38,7 +38,6 @@
   "openSftp": "打开 SFTP",
   "splitRight": "向右分屏",
   "splitDown": "向下分屏",
-  "hostConnectionDetails": "主机连接详情",
   "terminal": "终端",
   "resizeTerminalColumns": "调整终端列宽",
   "resizeTerminalRows": "调整终端行高",

@@ -2,13 +2,13 @@ import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { IconButton, Tip } from '@/components/ui/desktop'
 import { ActionButton } from '@/components/ui/workbench-controls'
-import { Copy, FolderOpen, Pencil, Pin, Terminal } from 'lucide-react'
+import { Copy, Ellipsis, FolderOpen, Pencil, Pin, Terminal } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import type { ReactNode } from 'react'
 
 export function HostDetailsToolbar({
   favorite,
   disabled,
-  connecting,
   pluginActions,
   onConnect,
   onEdit,
@@ -18,7 +18,6 @@ export function HostDetailsToolbar({
 }: {
   favorite: boolean
   disabled: boolean
-  connecting: boolean
   pluginActions: ReactNode
   onConnect: () => void
   onEdit: () => void
@@ -27,13 +26,12 @@ export function HostDetailsToolbar({
   onFavorite: () => void
 }) {
   useTranslation()
-  const action = (label: string, icon: ReactNode, onClick: () => void, pressed?: boolean) => (
+  const action = (label: string, icon: ReactNode, onClick: () => void) => (
     <Tip title={label}>
       <IconButton
-        className="size-7 min-w-7 rounded-md p-0 text-muted-foreground aria-pressed:text-amber-600 dark:aria-pressed:text-amber-500"
+        className="size-7 min-w-7 rounded-md p-0 text-muted-foreground"
         icon={icon}
         aria-label={label}
-        aria-pressed={pressed}
         disabled={disabled}
         onClick={onClick}
       />
@@ -51,10 +49,9 @@ export function HostDetailsToolbar({
             variant="default"
             icon={<Terminal size={15} aria-hidden="true" />}
             disabled={disabled}
-            busy={connecting}
             onClick={onConnect}
           >
-            {t('hosts:connect')}
+            {t('hosts:openSshTerminal')}
           </ActionButton>
         </Tip>
         <Tip title={t('hosts:openSftp')}>
@@ -63,20 +60,32 @@ export function HostDetailsToolbar({
             disabled={disabled}
             onClick={onOpenFiles}
           >
-            SFTP
+            {t('hosts:openSftp')}
           </ActionButton>
         </Tip>
         {pluginActions}
       </div>
       <div className="ml-auto flex min-w-0 flex-wrap items-center gap-1">
         {action(t('hosts:edit'), <Pencil size={16} />, onEdit)}
-        {action(t('hosts:copySshCommand'), <Copy size={16} />, onCopy)}
-        {action(
-          favorite ? t('hosts:removeFromFavorites') : t('hosts:addToFavorites'),
-          <Pin size={16} fill={favorite ? 'currentColor' : 'none'} />,
-          onFavorite,
-          favorite
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <IconButton
+              icon={<Ellipsis size={16} />}
+              aria-label={t('hosts:moreActions')}
+              title={t('hosts:moreActions')}
+              disabled={disabled}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onCopy}>
+              <Copy size={14} /> {t('hosts:copySshCommand')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onFavorite}>
+              <Pin size={14} />
+              {t(favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

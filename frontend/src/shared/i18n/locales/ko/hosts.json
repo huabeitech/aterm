@@ -151,8 +151,6 @@
   "copied2": "복사했습니다!",
   "openSftp": "SFTP 열기",
   "connectInNewTab": "새 탭에서 연결",
-  "keepTabOpen": "탭을 열린 상태로 유지",
-  "previewTabLabel": "{{name}}(미리 보기)",
   "details": "세부 정보",
   "thisHostNoLongerExists": "이 호스트가 더 이상 존재하지 않습니다.",
   "reviewTheHighlightedFields": "강조 표시된 필드를 확인하세요.",

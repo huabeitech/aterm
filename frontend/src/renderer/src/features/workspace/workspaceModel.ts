@@ -7,7 +7,6 @@ export type WorkspaceTab = {
   kind: WorkspaceTabKind
   closable: boolean
   hostID?: string
-  preview?: boolean
 }
 
 let fileWorkspaceTabSequence = 0
@@ -15,26 +14,15 @@ let hostWorkspaceTabSequence = 0
 
 export function openHostWorkspaceTab(
   tabs: WorkspaceTab[],
-  hostID: string,
-  preview: boolean
+  hostID: string
 ): { tabs: WorkspaceTab[]; tab: WorkspaceTab } {
   const tab: WorkspaceTab = {
     id: `terminal:host-workspace-${++hostWorkspaceTabSequence}`,
     kind: 'terminal',
     closable: true,
-    hostID,
-    preview
+    hostID
   }
-  const previewIndex = preview ? tabs.findIndex((item) => item.preview) : -1
-  return {
-    tab,
-    tabs: previewIndex < 0 ? [...tabs, tab] : tabs.map((item, index) => index === previewIndex ? tab : item)
-  }
-}
-
-export function keepWorkspaceTabOpen(tabs: WorkspaceTab[], id: WorkspaceTabID): WorkspaceTab[] {
-  if (!tabs.some((tab) => tab.id === id && tab.preview)) return tabs
-  return tabs.map((tab) => tab.id === id ? { ...tab, preview: false } : tab)
+  return { tab, tabs: [...tabs, tab] }
 }
 
 export function createWorkspaceTab(id: Exclude<WorkspaceTabID, 'home'>): WorkspaceTab {

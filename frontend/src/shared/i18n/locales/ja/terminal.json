@@ -38,7 +38,6 @@
   "openSftp": "SFTP を開く",
   "splitRight": "右側に分割",
   "splitDown": "下側に分割",
-  "hostConnectionDetails": "ホスト接続の詳細",
   "terminal": "ターミナル",
   "resizeTerminalColumns": "ターミナル列の幅を変更",
   "resizeTerminalRows": "ターミナル行の高さを変更",

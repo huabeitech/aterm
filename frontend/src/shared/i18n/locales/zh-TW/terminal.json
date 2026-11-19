@@ -38,7 +38,6 @@
   "openSftp": "開啟 SFTP",
   "splitRight": "向右分屏",
   "splitDown": "向下分屏",
-  "hostConnectionDetails": "主機連線詳情",
   "terminal": "終端機",
   "resizeTerminalColumns": "調整終端機列寬",
   "resizeTerminalRows": "調整終端機行高",
