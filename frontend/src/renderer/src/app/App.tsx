@@ -35,6 +35,7 @@ import {
 } from '../features/workspace/ConnectionWorkspace'
 import { WorkspaceTabsBar } from '../features/workspace/WorkspaceTabsBar'
 import { useConnectionSidebar } from '../features/workspace/useConnectionSidebar'
+import { useSidebarWidth } from '../features/workspace/useSidebarWidth'
 import { useWorkspaceTabs } from '../features/workspace/useWorkspaceTabs'
 import { useHostWorkbench } from '../features/hosts/hooks/useHostWorkbench'
 
@@ -140,7 +141,8 @@ function Workbench({
   const cycleConnectionView = useRef<(() => void) | null>(null)
   const openingHostSessions = useRef(new Set<string>())
   const [pendingHostTabs, setPendingHostTabs] = useState<ReadonlySet<string>>(new Set())
-  const [inspectorWidth, setInspectorWidth] = useState(320)
+  const { preferredWidth: inspectorWidth, commitWidth: commitInspectorWidth } =
+    useSidebarWidth('aterm.hostInspector.width', 320)
   const [showInspector, setShowInspector] = useState(false)
   const dismissInspector = useCallback(() => setShowInspector(false), [])
   const closingConnections = useRef(new Set<string>())
@@ -711,7 +713,7 @@ function Workbench({
         inspectorOpen={showInspector}
         onToggleInspector={() => setShowInspector((visible) => !visible)}
         onDismissInspector={dismissInspector}
-        onInspectorWidthCommit={setInspectorWidth}
+        onInspectorWidthCommit={commitInspectorWidth}
         header={
           <WorkspaceTabsBar
             tabs={tabs.workspaceTabs}

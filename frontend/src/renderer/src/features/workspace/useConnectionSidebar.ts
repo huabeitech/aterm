@@ -1,4 +1,4 @@
-import { sidebarLayout, constrainSidebarWidth } from './sidebarLayout'
+import { useSidebarWidth } from './useSidebarWidth'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const SIDEBAR_WIDTH_KEY = 'aterm.connectionSidebar.width'
@@ -12,24 +12,12 @@ function readSidebarCollapsed(): boolean {
   }
 }
 
-function readSidebarWidth(): number {
-  try {
-    const stored: unknown = JSON.parse(localStorage.getItem(SIDEBAR_WIDTH_KEY) ?? 'null')
-    if (typeof stored === 'number' && Number.isFinite(stored) && stored > 0) {
-      return constrainSidebarWidth(stored)
-    }
-  } catch {
-    // Fall back to the default width if storage is unavailable or invalid.
-  }
-  return sidebarLayout.defaultWidth
-}
-
 function viewport() {
   return document.querySelector<HTMLElement>('.source-sidebar [data-slot="scroll-area-viewport"]')
 }
 
 export function useConnectionSidebar() {
-  const [preferredWidth, setPreferredWidth] = useState(readSidebarWidth)
+  const { preferredWidth, commitWidth } = useSidebarWidth(SIDEBAR_WIDTH_KEY)
   const [collapsed, setCollapsed] = useState(readSidebarCollapsed)
   const collapsedRef = useRef(collapsed)
   const scrollTop = useRef(0)
@@ -81,17 +69,6 @@ export function useConnectionSidebar() {
       search?.focus({ preventScroll: true })
     }
     requestAnimationFrame(focusSearch)
-  }
-
-  function commitWidth(width: number) {
-    if (!Number.isFinite(width) || width <= 0) return
-    const next = constrainSidebarWidth(width)
-    setPreferredWidth(next)
-    try {
-      localStorage.setItem(SIDEBAR_WIDTH_KEY, JSON.stringify(next))
-    } catch {
-      // Keep the user's adjustment usable when storage is unavailable.
-    }
   }
 
   return { preferredWidth, collapsed, toggle, revealSearch, commitWidth }

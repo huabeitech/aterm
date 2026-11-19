@@ -9,7 +9,9 @@ import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
 
 const sectionHeading =
-  'm-0 border-y border-border/70 bg-muted/45 px-3 py-1.5 text-sm font-semibold text-foreground'
+  'm-0 border-t border-border/70 group-open/section:border-b group-last/section:border-b bg-muted/45 px-3 py-1.5 text-sm font-semibold text-foreground'
+
+type SectionID = 'connection' | 'authentication' | 'advancedSettings' | 'notes'
 
 export function HostDetails({
   host,
@@ -53,7 +55,7 @@ export function HostDetails({
         )}
       </div>
       <div className="grid min-h-0 min-w-0 content-start overflow-y-auto">
-        <DetailGroup title={t('hosts:connection')} initiallyOpen>
+        <DetailGroup sectionID="connection" title={t('hosts:connection')} initiallyOpen>
           <DetailRow label={t('hosts:address')}>
             <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
           </DetailRow>
@@ -68,7 +70,7 @@ export function HostDetails({
             {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
           </DetailRow>
         </DetailGroup>
-        <DetailGroup title={t('hosts:authentication')} initiallyOpen>
+        <DetailGroup sectionID="authentication" title={t('hosts:authentication')} initiallyOpen>
           <DetailRow label={t('hosts:method')}>
             {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
           </DetailRow>
@@ -82,7 +84,7 @@ export function HostDetails({
             </DetailRow>
           )}
         </DetailGroup>
-        <DetailGroup title={t('hosts:advancedSettings')}>
+        <DetailGroup sectionID="advancedSettings" title={t('hosts:advancedSettings')}>
           <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
           <DetailRow label={t('hosts:agentForwarding')}>
             {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
@@ -101,7 +103,7 @@ export function HostDetails({
           </DetailRow>
         </DetailGroup>
         {host.remark && (
-          <CollapsibleSection title={t('hosts:notes')} initiallyOpen>
+          <CollapsibleSection sectionID="notes" title={t('hosts:notes')} initiallyOpen>
             <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap px-3 py-2.5 text-sm leading-relaxed text-foreground">
               {host.remark}
             </p>
@@ -113,17 +115,42 @@ export function HostDetails({
 }
 
 function CollapsibleSection({
+  sectionID,
   title,
   children,
   initiallyOpen = false
 }: {
+  sectionID: SectionID
   title: string
   children: ReactNode
   initiallyOpen?: boolean
 }) {
+  const storageKey = `aterm.hostInspector.section.${sectionID}`
+  const [open, setOpen] = useState(() => {
+    try {
+      const stored = localStorage.getItem(storageKey)
+      if (stored === 'true' || stored === 'false') return stored === 'true'
+    } catch {
+      // Use the default when storage is unavailable.
+    }
+    return initiallyOpen
+  })
+
   return (
-    <details className="group/section min-w-0" open={initiallyOpen}>
-      <summary className={`${sectionHeading} flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden`}>
+    <details className="group/section min-w-0" open={open}>
+      <summary
+        className={`${sectionHeading} flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden`}
+        onClick={(event) => {
+          event.preventDefault()
+          const next = !open
+          setOpen(next)
+          try {
+            localStorage.setItem(storageKey, String(next))
+          } catch {
+            // Keep the section usable when storage is unavailable.
+          }
+        }}
+      >
         <ChevronRight size={13} aria-hidden="true" className="shrink-0 group-open/section:rotate-90" />
         {title}
       </summary>
@@ -133,16 +160,18 @@ function CollapsibleSection({
 }
 
 function DetailGroup({
+  sectionID,
   title,
   children,
   initiallyOpen
 }: {
+  sectionID: SectionID
   title: string
   children: ReactNode
   initiallyOpen?: boolean
 }) {
   return (
-    <CollapsibleSection title={title} initiallyOpen={initiallyOpen}>
+    <CollapsibleSection sectionID={sectionID} title={title} initiallyOpen={initiallyOpen}>
       <dl className="m-0 divide-y divide-border/55">{children}</dl>
     </CollapsibleSection>
   )
