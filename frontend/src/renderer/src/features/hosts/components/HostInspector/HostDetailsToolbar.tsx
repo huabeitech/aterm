@@ -2,7 +2,7 @@ import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { IconButton, Tip } from '@/components/ui/desktop'
 import { ActionButton } from '@/components/ui/workbench-controls'
-import { Copy, FolderOpen, Pencil, Pin, PinOff, Terminal } from 'lucide-react'
+import { Copy, FolderOpen, Pin, PinOff, SquarePen, Terminal } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export function HostDetailsToolbar({
@@ -69,7 +69,7 @@ export function HostDetailsToolbar({
           </Tip>
         </div>
         <div className="ml-auto flex flex-wrap justify-end items-center gap-0.5">
-          {action(t('hosts:edit'), <Pencil size={16} />, onEdit)}
+          {action(t('hosts:edit'), <SquarePen size={16} />, onEdit)}
           {action(t('hosts:copySshCommand'), <Copy size={16} />, onCopy)}
           {action(
             t(favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites'),
