@@ -10,23 +10,28 @@ import { ClipboardSetText } from '../../../../api/runtime'
 
 export function HostDetails({
   host,
+  directoryPath,
   jumpHostName,
   actions,
   onGetHostPassword
 }: {
   host: domain.Host
+  directoryPath?: string
   jumpHostName?: string
   actions?: ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
-  useTranslation()
-  const connectionHeadingID = useId()
+  const { i18n } = useTranslation()
+  const seconds = new Intl.NumberFormat(i18n.language, { style: 'unit', unit: 'second' })
+  const number = new Intl.NumberFormat(i18n.language)
+  const defaultValue = t('hosts:default')
   const notesHeadingID = useId()
   const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
     ? `[${host.hostName}]`
     : host.hostName
   const endpoint = `${host.user ? `${host.user}@` : ''}${address}:${host.port || 22}`
-  const jumpHost = jumpHostName || host.proxyJump
+  const jumpHost = jumpHostName || host.proxyJump ||
+    (host.jumpHostID ? '—' : t('hosts:directConnection'))
   return (
     <div className="grid w-full min-w-0 gap-4 px-4 pt-4 pb-6 text-[length:var(--app-text-13)] sm:px-6">
       <header className="flex min-w-0 items-center gap-3">
@@ -47,14 +52,55 @@ export function HostDetails({
         </div>
       </header>
       {actions}
-      <section aria-labelledby={connectionHeadingID} className="min-w-0">
-        <h3 id={connectionHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
-          {t('hosts:connection')}
-        </h3>
-        <dl className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-2">
-          <FullHostDetails host={host} jumpHost={jumpHost} onGetHostPassword={onGetHostPassword} />
-        </dl>
-      </section>
+      <DetailGroup title={t('hosts:connection')}>
+        <DetailRow label={t('hosts:address')}>
+          <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
+        </DetailRow>
+        <DetailRow label={t('hosts:port')}>{host.port || 22}</DetailRow>
+        <DetailRow label={t('hosts:username')}>
+          <CopyableDetailValue value={host.user} label={t('hosts:username')} />
+        </DetailRow>
+        <DetailRow label={t('hosts:hostAlias')}>
+          <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+        </DetailRow>
+        <DetailRow label={t('hosts:directory')}>
+          {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
+        </DetailRow>
+      </DetailGroup>
+      <DetailGroup title={t('hosts:authentication')}>
+        <DetailRow label={t('hosts:method')}>
+          {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
+        </DetailRow>
+        {host.passwordAuth ? (
+          <DetailRow label={t('hosts:password')}>
+            <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
+          </DetailRow>
+        ) : (
+          <DetailRow label={t('hosts:privateKeyFile')}>
+            <IdentityDetailValue identityFile={host.identityFile} />
+          </DetailRow>
+        )}
+      </DetailGroup>
+      <DetailGroup title={t('hosts:connectionOptions')}>
+        <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
+        <DetailRow label={t('hosts:agentForwarding')}>
+          {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
+        </DetailRow>
+        <DetailRow label={t('hosts:compression')}>
+          {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+        </DetailRow>
+      </DetailGroup>
+      <DetailGroup title={t('hosts:reliability')}>
+        <DetailRow label={t('hosts:keepaliveInterval')}>
+          {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
+        </DetailRow>
+        <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
+          {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
+        </DetailRow>
+        <DetailRow label={t('hosts:connectionTimeout')}>
+          {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
+        </DetailRow>
+      </DetailGroup>
       {host.remark && (
         <section aria-labelledby={notesHeadingID} className="min-w-0">
           <h3 id={notesHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
@@ -69,53 +115,17 @@ export function HostDetails({
   )
 }
 
-function FullHostDetails({
-  host,
-  jumpHost,
-  onGetHostPassword
-}: {
-  host: domain.Host
-  jumpHost: string
-  onGetHostPassword: (id: string) => Promise<string | null>
-}) {
+function DetailGroup({ title, children }: { title: string; children: ReactNode }) {
+  const headingID = useId()
   return (
-    <>
-      <DetailRow label={t('hosts:address')}>
-        <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
-      </DetailRow>
-      <DetailRow label={t('hosts:username')}>
-        <CopyableDetailValue value={host.user} label={t('hosts:username')} fallback="-" />
-      </DetailRow>
-      <DetailRow label={t('hosts:port')}>{String(host.port || 22)}</DetailRow>
-      {host.alias && (
-        <DetailRow label={t('hosts:hostAlias')}>
-          <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
-        </DetailRow>
-      )}
-      <DetailRow label={t('hosts:jumpHost')}>
-        {jumpHost || t('hosts:directConnection')}
-      </DetailRow>
-      <DetailRow label={t('hosts:authentication')}>
-        {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
-      </DetailRow>
-      {host.passwordAuth ? (
-        <DetailRow label={t('hosts:password')}>
-          <PasswordDetailValue host={host} onGetHostPassword={onGetHostPassword} />
-        </DetailRow>
-      ) : (
-        <>
-          <DetailRow label={t('hosts:privateKeyFile')}>
-            <IdentityDetailValue identityFile={host.identityFile} />
-          </DetailRow>
-          <DetailRow label={t('hosts:agentForwarding')}>
-            {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-          </DetailRow>
-        </>
-      )}
-      <DetailRow label={t('hosts:compression')}>
-        {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-      </DetailRow>
-    </>
+    <section aria-labelledby={headingID} className="min-w-0">
+      <h3 id={headingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
+        {title}
+      </h3>
+      <dl className="m-0 divide-y divide-[var(--mac-separator)] rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)]">
+        {children}
+      </dl>
+    </section>
   )
 }
 
@@ -143,7 +153,7 @@ function IdentityDetailValue({ identityFile }: { identityFile: string }) {
   const value = managed
     ? (keyName?.identity === identityFile ? keyName.name : t('hosts:managedSshKey'))
     : identityFile || t('hosts:defaultSshKeys')
-  return <span className="block truncate" title={identityFile || value}>{value}</span>
+  return <span className="min-w-0 select-text wrap-anywhere" title={value}>{value}</span>
 }
 
 function PasswordDetailValue({
@@ -235,16 +245,14 @@ function PasswordDetailValue({
 function CopyableDetailValue({
   value,
   copyValue = value,
-  label,
-  fallback
+  label
 }: {
   value?: string
   copyValue?: string
   label: string
-  fallback?: string
 }) {
   useTranslation()
-  if (!value) return <>{fallback ?? '-'}</>
+  if (!value) return <>—</>
   async function copy(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
     if (!copyValue) return
@@ -257,7 +265,7 @@ function CopyableDetailValue({
   }
   return (
     <span className="group/copy inline-flex max-w-full items-center gap-1">
-      <span className="min-w-0 truncate" title={value}>
+      <span className="min-w-0 select-text wrap-anywhere" title={value}>
         {value}
       </span>
       <IconButton
@@ -273,9 +281,9 @@ function CopyableDetailValue({
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 content-start gap-1 rounded-lg bg-muted/50 px-3 py-2">
+    <div className="grid min-w-0 grid-cols-[minmax(0,11rem)_minmax(0,1fr)] items-baseline gap-x-3 px-3 py-1.5 max-[480px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
       <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
-      <dd className="flex min-h-6 min-w-0 items-center wrap-anywhere text-[var(--mac-text)]">
+      <dd className="m-0 min-w-0 wrap-anywhere text-[var(--mac-text)]">
         {children}
       </dd>
     </div>

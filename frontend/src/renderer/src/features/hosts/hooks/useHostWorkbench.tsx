@@ -299,6 +299,7 @@ export function useHostWorkbench(
               />
             }
             host={host}
+            directoryPath={directoryOptions.find((option) => option.id === host.directoryID)?.label}
             jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
             onGetHostPassword={getPassword}
           />
