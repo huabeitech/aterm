@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
-import { Copy, Eye, EyeOff } from 'lucide-react'
+import { ChevronRight, Copy, Eye, EyeOff } from 'lucide-react'
 import { domain } from '../../../../api/types'
 import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
+
+const sectionHeading =
+  'm-0 border-y border-border/70 bg-muted/45 px-3 py-1.5 text-xs font-semibold text-foreground'
 
 export function HostDetails({
   host,
@@ -25,7 +28,6 @@ export function HostDetails({
   const seconds = new Intl.NumberFormat(i18n.language, { style: 'unit', unit: 'second' })
   const number = new Intl.NumberFormat(i18n.language)
   const defaultValue = t('hosts:default')
-  const notesHeadingID = useId()
   const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
     ? `[${host.hostName}]`
     : host.hostName
@@ -50,8 +52,8 @@ export function HostDetails({
           </div>
         )}
       </div>
-      <div className="grid min-h-0 min-w-0 content-start gap-4 overflow-auto px-4 py-3">
-        <DetailGroup title={t('hosts:connection')}>
+      <div className="grid min-h-0 min-w-0 content-start overflow-y-auto">
+        <DetailGroup title={t('hosts:connection')} collapsible>
           <DetailRow label={t('hosts:address')}>
             <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
           </DetailRow>
@@ -66,7 +68,7 @@ export function HostDetails({
             {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
           </DetailRow>
         </DetailGroup>
-        <DetailGroup title={t('hosts:authentication')}>
+        <DetailGroup title={t('hosts:authentication')} collapsible>
           <DetailRow label={t('hosts:method')}>
             {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
           </DetailRow>
@@ -79,57 +81,82 @@ export function HostDetails({
               <IdentityDetailValue identityFile={host.identityFile} />
             </DetailRow>
           )}
-      </DetailGroup>
-      <details className="min-w-0">
-        <summary className="cursor-pointer text-sm font-semibold">{t('hosts:advancedSettings')}</summary>
-        <div className="mt-2 grid gap-3">
-          <DetailGroup title={t('hosts:connectionOptions')}>
-            <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
-            <DetailRow label={t('hosts:agentForwarding')}>
-              {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-            </DetailRow>
-            <DetailRow label={t('hosts:compression')}>
-              {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-            </DetailRow>
-          </DetailGroup>
-          <DetailGroup title={t('hosts:reliability')}>
-            <DetailRow label={t('hosts:keepaliveInterval')}>
-              {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
-            </DetailRow>
-            <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
-              {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
-            </DetailRow>
-            <DetailRow label={t('hosts:connectionTimeout')}>
-              {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
-            </DetailRow>
-          </DetailGroup>
-        </div>
-      </details>
-      {host.remark && (
-        <section aria-labelledby={notesHeadingID} className="min-w-0">
-          <h3 id={notesHeadingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
-            {t('hosts:notes')}
-          </h3>
-          <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap text-[var(--mac-text)]">
-            {host.remark}
-          </p>
-        </section>
-      )}
+        </DetailGroup>
+        <CollapsibleSection title={t('hosts:advancedSettings')}>
+          <div>
+            <DetailGroup title={t('hosts:connectionOptions')}>
+              <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
+              <DetailRow label={t('hosts:agentForwarding')}>
+                {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
+              </DetailRow>
+              <DetailRow label={t('hosts:compression')}>
+                {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+              </DetailRow>
+            </DetailGroup>
+            <DetailGroup title={t('hosts:reliability')}>
+              <DetailRow label={t('hosts:keepaliveInterval')}>
+                {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
+              </DetailRow>
+              <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
+                {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
+              </DetailRow>
+              <DetailRow label={t('hosts:connectionTimeout')}>
+                {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
+              </DetailRow>
+            </DetailGroup>
+          </div>
+        </CollapsibleSection>
+        {host.remark && (
+          <CollapsibleSection title={t('hosts:notes')} initiallyOpen>
+            <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap px-3 py-2.5 text-xs leading-relaxed text-foreground">
+              {host.remark}
+            </p>
+          </CollapsibleSection>
+        )}
       </div>
     </div>
   )
 }
 
-function DetailGroup({ title, children }: { title: string; children: ReactNode }) {
+function CollapsibleSection({
+  title,
+  children,
+  initiallyOpen = false
+}: {
+  title: string
+  children: ReactNode
+  initiallyOpen?: boolean
+}) {
+  return (
+    <details className="group/section min-w-0" open={initiallyOpen}>
+      <summary className={`${sectionHeading} flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden`}>
+        <ChevronRight size={13} aria-hidden="true" className="shrink-0 group-open/section:rotate-90" />
+        {title}
+      </summary>
+      {children}
+    </details>
+  )
+}
+
+function DetailGroup({
+  title,
+  children,
+  collapsible = false
+}: {
+  title: string
+  children: ReactNode
+  collapsible?: boolean
+}) {
   const headingID = useId()
+  const properties = <dl className="m-0 divide-y divide-border/55">{children}</dl>
+  if (collapsible)
+    return <CollapsibleSection title={title} initiallyOpen>{properties}</CollapsibleSection>
   return (
     <section aria-labelledby={headingID} className="min-w-0">
       <h3 id={headingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
         {title}
       </h3>
-      <dl className="m-0 divide-y divide-[var(--mac-separator)] rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)]">
-        {children}
-      </dl>
+      {properties}
     </section>
   )
 }
@@ -274,7 +301,7 @@ function CopyableDetailValue({
         {value}
       </span>
       <IconButton
-        className="size-6 shrink-0 text-muted-foreground opacity-40 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 group-hover/copy:opacity-100 group-focus-within/copy:opacity-100 [@media(hover:none)]:opacity-100"
+        className="size-5 shrink-0 text-muted-foreground opacity-40 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 group-hover/copy:opacity-100 group-focus-within/copy:opacity-100 [@media(hover:none)]:opacity-100"
         icon={<Copy size={13} />}
         title={t('hosts:copyField', { label })}
         aria-label={t('hosts:copyField', { label })}
@@ -286,9 +313,9 @@ function CopyableDetailValue({
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-baseline gap-x-3 px-3 py-1.5">
-      <dt className="min-w-0 wrap-anywhere text-xs text-[var(--mac-secondary-text)]">{label}</dt>
-      <dd className="m-0 min-w-0 wrap-anywhere text-[var(--mac-text)]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch text-xs">
+      <dt className="min-w-0 wrap-anywhere border-r border-border/55 px-3 py-1.5 text-muted-foreground">{label}</dt>
+      <dd className="m-0 min-w-0 select-text wrap-anywhere px-3 py-1.5 text-foreground">
         {children}
       </dd>
     </div>
