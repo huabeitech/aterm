@@ -225,6 +225,7 @@
   "welcomeConnections": "Ouvrez une connexion dans la barre latérale ou créez-en une pour commencer.",
   "showSidebar": "Afficher la barre latérale",
   "hideSidebar": "Masquer la barre latérale",
+  "toggleInspector": "Afficher ou masquer la barre latérale droite",
   "toggleSidebar": "Afficher ou masquer la barre latérale",
   "morePinned": "Plus ({{count}})",
   "collapsePinned": "Réduire",

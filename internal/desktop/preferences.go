@@ -35,6 +35,7 @@ func DefaultPreferencesForPlatform(platform string) Preferences {
 				result[key] = strings.Replace(value.(string), "meta+", "ctrl+", 1)
 			}
 		}
+		result["toggleInspectorShortcut"] = "ctrl+alt+b"
 		result["toggleSidebarShortcut"] = "ctrl+shift+b"
 	}
 	return result
@@ -45,7 +46,7 @@ func DefaultPreferencesForPlatform(platform string) Preferences {
 var shortcutFields = []string{
 	"commandPaletteShortcut", "commandSearchShortcut", "toggleSidebarShortcut", "toggleTerminalFilesShortcut",
 	"newTerminalShortcut", "closeTerminalShortcut", "previousTerminalShortcut", "nextTerminalShortcut",
-	"moveTabLeftShortcut", "moveTabRightShortcut", "splitVerticalShortcut", "splitHorizontalShortcut",
+	"moveTabLeftShortcut", "moveTabRightShortcut", "splitVerticalShortcut", "splitHorizontalShortcut", "toggleInspectorShortcut",
 }
 
 // defaultAddedShortcut mirrors the shared Electron preference migration helpers.
@@ -65,7 +66,7 @@ func defaultAddedShortcut(input Preferences, field string) string {
 		if !ok {
 			continue
 		}
-		if field == "toggleSidebarShortcut" {
+		if field != "toggleTerminalFilesShortcut" {
 			if normalized, err := normalizeDesktopShortcut(value); err == nil {
 				value = normalized
 			}
@@ -78,6 +79,11 @@ func defaultAddedShortcut(input Preferences, field string) string {
 			candidates = append(candidates, "meta+b")
 		}
 		candidates = append(candidates, mod+"+shift+b", mod+"+alt+b", mod+"+alt+shift+b")
+	} else if field == "toggleInspectorShortcut" {
+		if mod == "meta" {
+			candidates = append(candidates, "meta+shift+b")
+		}
+		candidates = append(candidates, mod+"+alt+b", mod+"+alt+shift+b")
 	} else {
 		candidates = append(candidates, mod+"+shift+e", mod+"+alt+e", mod+"+alt+shift+e")
 	}
@@ -112,6 +118,9 @@ func ValidatePreferences(input Preferences) (Preferences, error) {
 		if input[field] == nil {
 			result[field] = defaultAddedShortcut(input, field)
 		}
+	}
+	if input["toggleInspectorShortcut"] == nil {
+		result["toggleInspectorShortcut"] = defaultAddedShortcut(result, "toggleInspectorShortcut")
 	}
 	switch result["language"] {
 	case "system", "en", "zh-CN", "zh-TW", "ja", "pt-BR", "es", "de", "fr", "ko":

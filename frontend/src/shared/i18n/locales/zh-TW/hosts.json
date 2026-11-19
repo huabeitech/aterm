@@ -217,6 +217,7 @@
   "welcomeConnections": "從側邊欄開啟連線，或新增連線開始使用。",
   "showSidebar": "展開側邊欄",
   "hideSidebar": "收起側邊欄",
+  "toggleInspector": "顯示／隱藏右側邊欄",
   "toggleSidebar": "顯示／隱藏側邊欄",
   "morePinned": "更多（{{count}}）",
   "collapsePinned": "收起",

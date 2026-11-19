@@ -402,6 +402,9 @@ function Workbench({
         cycleConnectionView.current?.()
         break
       }
+      case 'toggle-inspector':
+        setShowInspector((visible) => !visible)
+        break
       case 'toggle-sidebar':
         if (!isSettings) sidebar.toggle()
         break
@@ -736,6 +739,7 @@ function Workbench({
         onSidebarWidthCommit={sidebar.commitWidth}
         inspector={library.hostInspector}
         inspectorWidth={inspectorWidth}
+        toggleInspectorShortcut={settings.toggleInspectorShortcut}
         inspectorOpen={showInspector}
         onToggleInspector={() => setShowInspector((visible) => !visible)}
         onDismissInspector={dismissInspector}

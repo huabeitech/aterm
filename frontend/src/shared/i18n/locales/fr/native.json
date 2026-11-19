@@ -1,4 +1,6 @@
 {
+  "agent.openTitle": "Ouvrir un terminal SSH ?",
+  "agent.openMessage": "Un agent local souhaite ouvrir {{target}}. Destination et hôtes de rebond :\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "La connexion SFTP est fermée. Vos modifications restent dans cette fenêtre. Copiez-les avant de la fermer.",
   "unableToSaveFile": "Impossible d’enregistrer le fichier.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "Si vous fermez sans enregistrer, vos modifications seront perdues.",

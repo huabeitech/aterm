@@ -85,6 +85,7 @@ export namespace domain {
     commandPaletteShortcut: string
     commandSearchShortcut: string
     toggleSidebarShortcut: string
+    toggleInspectorShortcut: string
     toggleTerminalFilesShortcut: string
     newTerminalShortcut: string
     closeTerminalShortcut: string

@@ -9,6 +9,7 @@
   "terminalWordNavigation": "shell",
   "commandPaletteShortcut": "meta+p",
   "commandSearchShortcut": "meta+shift+p",
+  "toggleInspectorShortcut": "meta+shift+b",
   "toggleSidebarShortcut": "meta+b",
   "toggleTerminalFilesShortcut": "meta+shift+e",
   "newTerminalShortcut": "meta+t",

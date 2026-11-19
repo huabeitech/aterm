@@ -1,4 +1,6 @@
 {
+  "agent.openTitle": "SSH ターミナルを開きますか？",
+  "agent.openMessage": "ローカルエージェントが {{target}} を開こうとしています。接続先と踏み台ホスト：\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 接続が閉じられました。編集内容はこのウィンドウに残っています。閉じる前にコピーしてください。",
   "unableToSaveFile": "ファイルを保存できませんでした。",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "保存せずに閉じると、変更は失われます。",

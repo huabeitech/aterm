@@ -97,6 +97,7 @@ export function SettingsPage({
       items: [
         ['commandPaletteShortcut', t('settings:openHostSearch')],
         ['commandSearchShortcut', t('settings:openCommandPalette')],
+        ['toggleInspectorShortcut', t('hosts:toggleInspector')],
         ['toggleSidebarShortcut', t('hosts:toggleSidebar')],
         ['toggleTerminalFilesShortcut', t('commands:nextConnectionView')],
         ['previousTerminalShortcut', t('settings:previousWorkspaceTab')],

@@ -217,6 +217,7 @@
   "welcomeConnections": "Open a connection from the sidebar, or create one to get started.",
   "showSidebar": "Show sidebar",
   "hideSidebar": "Hide sidebar",
+  "toggleInspector": "Toggle Right Sidebar",
   "toggleSidebar": "Toggle sidebar",
   "morePinned": "More ({{count}})",
   "collapsePinned": "Show less",

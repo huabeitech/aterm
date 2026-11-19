@@ -14,6 +14,7 @@ func preferenceMigrationVectors() []Preferences {
 	for _, platform := range []string{"darwin", "win32", "linux"} {
 		for scenario := 0; scenario < 5; scenario++ {
 			input := DefaultPreferencesForPlatform(platform)
+			delete(input, "toggleInspectorShortcut")
 			delete(input, "toggleSidebarShortcut")
 			delete(input, "toggleTerminalFilesShortcut")
 			delete(input, "commandSearchShortcut")
@@ -108,6 +109,10 @@ func TestElectronPreferenceMigrationInteroperability(t *testing.T) {
 		got, err := ValidatePreferences(input)
 		if err != nil {
 			t.Fatal(err)
+		}
+		// The legacy Electron reference predates the inspector shortcut.
+		if _, exists := expected[index]["toggleInspectorShortcut"]; !exists {
+			delete(got, "toggleInspectorShortcut")
 		}
 		if !reflect.DeepEqual(got, expected[index]) {
 			t.Errorf("vector %d differs: Go=%v Electron=%v", index, got, expected[index])

@@ -22,6 +22,7 @@ type AppShellProps = {
   content: ReactNode
   inspector: ReactNode
   inspectorWidth: number
+  toggleInspectorShortcut: string
   inspectorOpen: boolean
   onToggleInspector: () => void
   onDismissInspector: () => void
@@ -42,6 +43,7 @@ export function AppShell({
   content,
   inspector,
   inspectorWidth,
+  toggleInspectorShortcut,
   inspectorOpen,
   onToggleInspector,
   onDismissInspector,
@@ -113,7 +115,7 @@ export function AppShell({
           </Tip>
         )}
         {header}
-        <Tip title={inspectorLabel}>
+        <Tip title={`${inspectorLabel} (${formatCommandPaletteShortcut(toggleInspectorShortcut)})`}>
           <IconButton
             className="ml-2 h-7 shrink-0 rounded-[7px] border border-transparent text-[var(--mac-secondary-text)] hover:bg-[var(--workspace-tab-hover-background)] aria-pressed:bg-[var(--workspace-tab-active-background)] aria-pressed:border-[var(--workspace-tab-active-border)] [-webkit-app-region:no-drag]"
             aria-label={inspectorLabel}

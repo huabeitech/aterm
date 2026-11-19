@@ -49,10 +49,19 @@ func (s *AppService) openNativeSSH(ctx context.Context, alias string, confirmer 
 // openNativeSSHHost receives a frozen destination so an approved plugin launch
 // cannot be retargeted by a concurrent edit between validation and the handshake.
 func (s *AppService) openNativeSSHHost(ctx context.Context, host Host, confirmer HostKeyConfirmer, interactions ...NativeSSHAuthOptions) (*NativeSSHClient, Host, error) {
+	route, err := s.resolveSSHRoute(host, 0)
+	if err != nil {
+		return nil, Host{}, err
+	}
+	return s.openSSHRoute(ctx, route, confirmer, interactions...)
+}
+
+func (s *AppService) openSSHRoute(ctx context.Context, route []Host, confirmer HostKeyConfirmer, interactions ...NativeSSHAuthOptions) (*NativeSSHClient, Host, error) {
+	host := route[0]
 	var client *NativeSSHClient
 	err := s.withSSHDirectory(ctx, func(paths sshPaths) error {
 		var dialErr error
-		client, dialErr = s.dialNativeSSH(ctx, host, paths.sshDir, confirmer, 0, interactions...)
+		client, dialErr = s.dialNativeSSHRoute(ctx, route, paths.sshDir, confirmer, interactions...)
 		return dialErr
 	})
 	if err != nil {
@@ -66,6 +75,14 @@ func (s *AppService) openNativeSSHHost(ctx context.Context, host Host, confirmer
 }
 
 func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string, confirmer HostKeyConfirmer, depth int, interactions ...NativeSSHAuthOptions) (*NativeSSHClient, error) {
+	route, err := s.resolveSSHRoute(host, depth)
+	if err != nil {
+		return nil, err
+	}
+	return s.dialNativeSSHRoute(ctx, route, sshDir, confirmer, interactions...)
+}
+
+func (s *AppService) resolveSSHRoute(host Host, depth int) ([]Host, error) {
 	if depth > maxProxyJumpDepth {
 		return nil, errors.New("SSH ProxyJump chain is too deep")
 	}
@@ -89,7 +106,7 @@ func (s *AppService) dialNativeSSH(ctx context.Context, host Host, sshDir string
 		}
 		route = append(route, host)
 	}
-	return s.dialNativeSSHRoute(ctx, route, sshDir, confirmer, interactions...)
+	return route, nil
 }
 
 func (s *AppService) dialNativeSSHRoute(ctx context.Context, route []Host, sshDir string, confirmer HostKeyConfirmer, interactions ...NativeSSHAuthOptions) (*NativeSSHClient, error) {

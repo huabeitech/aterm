@@ -1,4 +1,6 @@
 {
+  "agent.openTitle": "SSH-Terminal öffnen?",
+  "agent.openMessage": "Ein lokaler Agent möchte {{target}} öffnen. Ziel und Sprungserver:\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "Die SFTP-Verbindung wurde geschlossen. Ihre Änderungen bleiben in diesem Fenster erhalten. Kopieren Sie sie vor dem Schließen.",
   "unableToSaveFile": "Die Datei konnte nicht gespeichert werden.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "Wenn Sie ohne Speichern schließen, gehen Ihre Änderungen verloren.",

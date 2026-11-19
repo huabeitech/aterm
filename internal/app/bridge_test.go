@@ -232,6 +232,7 @@ func TestDesktopBootstrapMigratesMissingBindingsFromStoredPreferences(t *testing
 	preferences := desktop.DefaultPreferencesForPlatform("win32")
 	preferences["newTerminalShortcut"] = "ctrl+shift+b"
 	preferences["closeTerminalShortcut"] = "ctrl+shift+e"
+	delete(preferences, "toggleInspectorShortcut")
 	delete(preferences, "toggleSidebarShortcut")
 	delete(preferences, "toggleTerminalFilesShortcut")
 	delete(preferences, "commandSearchShortcut")
@@ -249,7 +250,7 @@ func TestDesktopBootstrapMigratesMissingBindingsFromStoredPreferences(t *testing
 	got := raw.(map[string]any)["preferences"].(desktop.Preferences)
 	for field, want := range map[string]string{
 		"newTerminalShortcut": "ctrl+shift+b", "closeTerminalShortcut": "ctrl+shift+e",
-		"toggleSidebarShortcut": "ctrl+alt+b", "toggleTerminalFilesShortcut": "ctrl+alt+e",
+		"toggleInspectorShortcut": "ctrl+alt+shift+b", "toggleSidebarShortcut": "ctrl+alt+b", "toggleTerminalFilesShortcut": "ctrl+alt+e",
 		"commandSearchShortcut": "ctrl+shift+p",
 	} {
 		if got[field] != want {

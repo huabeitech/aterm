@@ -1,4 +1,6 @@
 {
+  "agent.openTitle": "Open SSH terminal?",
+  "agent.openMessage": "A local agent wants to open {{target}}. Saved destination and jump hosts:\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP connection closed. Your edits are kept in this window. Copy them before closing.",
   "unableToSaveFile": "Unable to save file.",
   "yourChangesWillBeLostIfYouCloseWithoutSaving": "Your changes will be lost if you close without saving.",

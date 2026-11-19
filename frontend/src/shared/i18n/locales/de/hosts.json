@@ -217,6 +217,7 @@
   "welcomeConnections": "Öffne eine Verbindung in der Seitenleiste oder erstelle eine neue.",
   "showSidebar": "Seitenleiste anzeigen",
   "hideSidebar": "Seitenleiste ausblenden",
+  "toggleInspector": "Rechte Seitenleiste ein-/ausblenden",
   "toggleSidebar": "Seitenleiste umschalten",
   "morePinned": "Mehr ({{count}})",
   "collapsePinned": "Weniger anzeigen",

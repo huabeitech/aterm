@@ -17,6 +17,7 @@ export const defaultPreferences: Preferences = {
   commandPaletteShortcut: 'meta+p',
   commandSearchShortcut: 'meta+shift+p',
   toggleSidebarShortcut: 'meta+b',
+  toggleInspectorShortcut: 'meta+shift+b',
   toggleTerminalFilesShortcut: 'meta+shift+e',
   newTerminalShortcut: 'meta+t',
   closeTerminalShortcut: 'meta+w',
@@ -45,18 +46,20 @@ export const shortcutFields = [
   'moveTabLeftShortcut',
   'moveTabRightShortcut',
   'splitVerticalShortcut',
-  'splitHorizontalShortcut'
+  'splitHorizontalShortcut',
+  'toggleInspectorShortcut'
 ] as const
 export function platformDefaults(platform: string): Preferences {
   const result = { ...defaultPreferences }
   if (platform !== 'darwin') {
     for (const key of shortcutFields) result[key] = result[key].replace('meta+', 'ctrl+')
+    result.toggleInspectorShortcut = 'ctrl+alt+b'
     result.toggleSidebarShortcut = 'ctrl+shift+b'
   }
   return result
 }
 // Older preferences may already assign the new default to another action.
-export function defaultSidebarShortcut(input: Partial<Preferences>, platform?: string): string {
+export function defaultSidebarShortcut(input: Partial<Preferences>, platform?: string, field: 'toggleSidebarShortcut' | 'toggleInspectorShortcut' = 'toggleSidebarShortcut'): string {
   const mod = platform
     ? platform === 'darwin'
       ? 'meta'
@@ -66,14 +69,14 @@ export function defaultSidebarShortcut(input: Partial<Preferences>, platform?: s
       : 'meta'
   const occupied = new Set(
     shortcutFields
-      .filter((key) => key !== 'toggleSidebarShortcut')
+      .filter((key) => key !== field)
       .map((key) => input[key])
       .filter((value): value is string => typeof value === 'string')
       .map(normalizeShortcut)
   )
   const candidates = [
-    ...(mod === 'meta' ? ['meta+b'] : []),
-    `${mod}+shift+b`,
+    ...(field === 'toggleSidebarShortcut' && mod === 'meta' ? ['meta+b'] : []),
+    ...(field === 'toggleSidebarShortcut' || mod === 'meta' ? [`${mod}+shift+b`] : []),
     `${mod}+alt+b`,
     `${mod}+alt+shift+b`,
     ...Array.from({ length: 24 }, (_, index) => `${mod}+alt+f${index + 1}`)
@@ -183,7 +186,9 @@ export function validatePreferences(value: unknown): Preferences {
             ? defaultTerminalFilesShortcut(input)
             : key === 'toggleSidebarShortcut'
               ? defaultSidebarShortcut(input)
-              : undefined)
+              : key === 'toggleInspectorShortcut'
+                ? defaultSidebarShortcut(result, undefined, key)
+                : undefined)
     )
     if (seen.has(result[key])) throw appError('keyboardShortcutsMustBeUnique')
     seen.add(result[key])

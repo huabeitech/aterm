@@ -11,6 +11,7 @@ export type Command =
   | 'move-left'
   | 'move-right'
   | 'toggle-sidebar'
+  | 'toggle-inspector'
   | 'next-connection-view'
   | 'hosts'
   | 'settings'
@@ -65,6 +66,11 @@ export function getCommandDefinitions(settings: Preferences, platform: string) {
       id: 'toggle-sidebar',
       labelKey: 'hosts:toggleSidebar' as const,
       shortcut: settings.toggleSidebarShortcut
+    },
+    {
+      id: 'toggle-inspector',
+      labelKey: 'hosts:toggleInspector' as const,
+      shortcut: settings.toggleInspectorShortcut
     },
     {
       id: 'next-connection-view',

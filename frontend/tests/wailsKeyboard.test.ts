@@ -7,6 +7,7 @@ const key = (name: string, extra: Partial<KeyboardEvent> = {}) => ({key:name,met
 
 test('terminal and normal modes route numbered tabs and configurable commands', () => {
  for (const mode of ['normal','terminal'] as const) {
+  assert.equal(workspaceKeyCommand(key('B',{shiftKey:true}),mode,preferences,'darwin'),'toggle-inspector');
   assert.equal(workspaceKeyCommand(key('9'),mode,preferences,'darwin'),'tab-9');
   assert.equal(workspaceKeyCommand(key('t'),mode,preferences,'darwin'),'new-terminal');
   assert.equal(workspaceKeyCommand(key('E',{shiftKey:true}),mode,preferences,'darwin'),'next-connection-view');

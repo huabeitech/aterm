@@ -217,6 +217,7 @@
   "welcomeConnections": "サイドバーから接続を開くか、新しい接続を作成してください。",
   "showSidebar": "サイドバーを表示",
   "hideSidebar": "サイドバーを非表示",
+  "toggleInspector": "右サイドバーの表示切り替え",
   "toggleSidebar": "サイドバーの表示切り替え",
   "morePinned": "さらに表示（{{count}}）",
   "collapsePinned": "折りたたむ",

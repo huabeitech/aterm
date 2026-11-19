@@ -217,6 +217,7 @@
   "welcomeConnections": "从侧边栏打开连接，或新建连接开始使用。",
   "showSidebar": "展开侧边栏",
   "hideSidebar": "收起侧边栏",
+  "toggleInspector": "显示／隐藏右侧边栏",
   "toggleSidebar": "显示／隐藏侧边栏",
   "morePinned": "更多（{{count}}）",
   "collapsePinned": "收起",

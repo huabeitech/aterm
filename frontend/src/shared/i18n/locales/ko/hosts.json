@@ -217,6 +217,7 @@
   "welcomeConnections": "사이드바에서 연결을 열거나 새 연결을 만드세요.",
   "showSidebar": "사이드바 펼치기",
   "hideSidebar": "사이드바 접기",
+  "toggleInspector": "오른쪽 사이드바 표시 전환",
   "toggleSidebar": "사이드바 표시 전환",
   "morePinned": "더 보기 ({{count}})",
   "collapsePinned": "접기",

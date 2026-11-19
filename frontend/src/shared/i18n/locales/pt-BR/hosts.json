@@ -225,6 +225,7 @@
   "welcomeConnections": "Abra uma conexão na barra lateral ou crie uma para começar.",
   "showSidebar": "Mostrar barra lateral",
   "hideSidebar": "Ocultar barra lateral",
+  "toggleInspector": "Mostrar ou ocultar a barra lateral direita",
   "toggleSidebar": "Alternar barra lateral",
   "morePinned": "Mais ({{count}})",
   "collapsePinned": "Mostrar menos",

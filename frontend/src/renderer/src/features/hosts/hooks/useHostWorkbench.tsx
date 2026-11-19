@@ -11,7 +11,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog'
 import { useAppUI } from '@/components/ui/confirm-provider'
-import { Save } from 'lucide-react'
+import { Save, Server } from 'lucide-react'
 import { ScrollArea } from '../../../components/common/ScrollArea'
 import { HostEditorForm } from '../components/HostInspector/HostEditorForm'
 import { useHostRepository } from './useHostRepository'
@@ -276,17 +276,25 @@ export function useHostWorkbench(
   const editorOpen =
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
   function renderHostInspector() {
-    if (visibleSelectedIDs.length !== 1)
-      return (
-        <p className="p-4 text-sm text-muted-foreground">
-          {visibleSelectedIDs.length
-            ? t('hosts:hostsSelected', { count: visibleSelectedIDs.length })
-            : t('hosts:selectASingleHostToViewItsConnectionDetails')}
-        </p>
-      )
+    const count = visibleSelectedIDs.length
     const id = visibleSelectedIDs[0]
-    const host = hosts.find((item) => item.id === id)
-    if (!host) return <p className="p-4 text-muted-foreground">{t('hosts:thisHostNoLongerExists')}</p>
+    const host = count === 1 ? hosts.find((item) => item.id === id) : undefined
+    if (!host) {
+      const title = count > 1
+        ? t('hosts:hostsSelected', { count })
+        : count === 1
+          ? t('hosts:thisHostNoLongerExists')
+          : t('hosts:noHostSelected')
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-2 px-5 py-4 text-center">
+          <Server aria-hidden="true" size={30} strokeWidth={1.5} className="mb-1 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <p className="max-w-56 text-xs leading-relaxed text-muted-foreground">
+            {t('hosts:selectASingleHostToViewItsConnectionDetails')}
+          </p>
+        </div>
+      )
+    }
     return (
       <div key={id} className="h-full min-h-0 min-w-0">
         <HostDetails
