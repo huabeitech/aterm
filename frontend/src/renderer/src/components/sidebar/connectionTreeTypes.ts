@@ -20,7 +20,7 @@ export interface ConnectionTreeProps {
   draggingHostIDs: string[]
   directoryDropTarget: DirectoryDropTarget
   hostDropTargetID: string | null
-  onSelectHost: (id: string, ids: string[]) => void
+  onSelectHost: (id: string, ids: string[], revealDetails?: boolean) => void
   onSelectDirectory: (id: string) => void
   onCreateHost: (directoryID?: string) => void
   onRenameHost: (id: string, name: string) => Promise<string | null>

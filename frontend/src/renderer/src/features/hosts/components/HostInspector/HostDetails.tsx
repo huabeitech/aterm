@@ -9,7 +9,7 @@ import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
 
 const sectionHeading =
-  'm-0 border-y border-border/70 bg-muted/45 px-3 py-1.5 text-xs font-semibold text-foreground'
+  'm-0 border-y border-border/70 bg-muted/45 px-3 py-1.5 text-sm font-semibold text-foreground'
 
 export function HostDetails({
   host,
@@ -35,14 +35,14 @@ export function HostDetails({
   const jumpHost = jumpHostName || host.proxyJump ||
     (host.jumpHostID ? '—' : t('hosts:directConnection'))
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col text-[length:var(--app-text-13)]">
+    <div className="flex h-full min-h-0 min-w-0 flex-col text-sm">
       <div className="shrink-0 px-3 pt-3 pb-2">
         {actions(
           <div className="min-w-0">
             <h2 className="m-0 truncate text-sm leading-tight font-semibold text-[var(--mac-text)]" title={host.name}>
               {host.name}
             </h2>
-            <div className="flex min-w-0 font-mono text-xs text-[var(--mac-secondary-text)]">
+            <div className="flex min-w-0 font-mono text-sm text-[var(--mac-secondary-text)]">
               <CopyableDetailValue
                 value={endpoint}
                 copyValue={host.hostName}
@@ -102,7 +102,7 @@ export function HostDetails({
         </DetailGroup>
         {host.remark && (
           <CollapsibleSection title={t('hosts:notes')} initiallyOpen>
-            <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap px-3 py-2.5 text-xs leading-relaxed text-foreground">
+            <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap px-3 py-2.5 text-sm leading-relaxed text-foreground">
               {host.remark}
             </p>
           </CollapsibleSection>
@@ -300,7 +300,7 @@ function CopyableDetailValue({
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch text-xs">
+    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch text-sm">
       <dt className="min-w-0 wrap-anywhere border-r border-border/55 px-3 py-1.5 text-muted-foreground">{label}</dt>
       <dd className="m-0 min-w-0 select-text wrap-anywhere px-3 py-1.5 text-foreground">
         {children}

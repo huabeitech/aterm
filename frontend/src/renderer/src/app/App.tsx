@@ -141,7 +141,8 @@ function Workbench({
   const openingHostSessions = useRef(new Set<string>())
   const [pendingHostTabs, setPendingHostTabs] = useState<ReadonlySet<string>>(new Set())
   const [inspectorWidth, setInspectorWidth] = useState(320)
-  const [showInspector, setShowInspector] = useState(true)
+  const [showInspector, setShowInspector] = useState(false)
+  const dismissInspector = useCallback(() => setShowInspector(false), [])
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
@@ -709,6 +710,7 @@ function Workbench({
         inspectorWidth={inspectorWidth}
         inspectorOpen={showInspector}
         onToggleInspector={() => setShowInspector((visible) => !visible)}
+        onDismissInspector={dismissInspector}
         onInspectorWidthCommit={setInspectorWidth}
         header={
           <WorkspaceTabsBar

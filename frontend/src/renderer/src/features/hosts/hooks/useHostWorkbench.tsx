@@ -208,10 +208,11 @@ export function useHostWorkbench(
     hosts,
     loading,
     selectedHostIDs,
-    onSelectHost: (id: string, ids: string[]) => {
+    onSelectHost: (id: string, ids: string[], revealDetails?: boolean) => {
       setSelectedID(id)
       setSelectedHostIDs(ids)
       setInspectorOpen(false)
+      if (revealDetails) revealInspector()
     },
     onCreateHost: editor.startCreate,
     onEditHost: editor.startEditHost,

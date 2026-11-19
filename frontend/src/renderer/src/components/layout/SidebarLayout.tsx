@@ -6,6 +6,7 @@ import { useSidebarDrawerAnimation } from './useSidebarDrawerAnimation'
 
 type Props = {
   side?: 'left' | 'right'
+  sidebarID?: string
   preferredWidth: number
   hidden: boolean
   onWidthCommit: (width: number) => void
@@ -14,7 +15,7 @@ type Props = {
 }
 
 // Preferences flow into layout. Only explicit pointer/keyboard actions flow back out.
-export function SidebarLayout({ side = 'left', preferredWidth, hidden, onWidthCommit, sidebar, children }: Props) {
+export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden, onWidthCommit, sidebar, children }: Props) {
   useTranslation()
   const right = side === 'right'
   const direction = right ? -1 : 1
@@ -64,6 +65,7 @@ export function SidebarLayout({ side = 'left', preferredWidth, hidden, onWidthCo
       >
         <div
           ref={drawer}
+          id={sidebarID}
           className={`row-start-1 ${right ? 'col-start-3' : 'source-sidebar col-start-1'} relative z-[1] grid grid-rows-[minmax(0,_1fr)_auto] min-w-0 min-h-0 overflow-hidden bg-[var(--hosts-background)] [-webkit-app-region:no-drag]`}
           style={{ width, display: hidden ? 'none' : undefined }}
         >
@@ -72,6 +74,7 @@ export function SidebarLayout({ side = 'left', preferredWidth, hidden, onWidthCo
         {!hidden ? (
           <div
             role="separator"
+            aria-controls={sidebarID}
             aria-orientation="vertical"
             aria-label={t('common:resizePanels')}
             aria-valuemin={sidebarLayout.minWidth}

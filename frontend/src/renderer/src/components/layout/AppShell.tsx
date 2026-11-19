@@ -3,7 +3,7 @@ import { PanelLeft, PanelRight } from 'lucide-react'
 import { IconButton, Tip } from '@/components/ui/desktop'
 import { formatCommandPaletteShortcut } from '../common/commandPaletteShortcut'
 import { cn } from '@/lib/utils'
-import { type MouseEvent, type ReactNode } from 'react'
+import { useEffect, type MouseEvent, type ReactNode } from 'react'
 import { SidebarLayout } from './SidebarLayout'
 import { WindowToggleMaximise } from '../../api/runtime'
 
@@ -24,6 +24,7 @@ type AppShellProps = {
   inspectorWidth: number
   inspectorOpen: boolean
   onToggleInspector: () => void
+  onDismissInspector: () => void
   onInspectorWidthCommit: (width: number) => void
   onSidebarWidthCommit: (width: number) => void
 }
@@ -43,6 +44,7 @@ export function AppShell({
   inspectorWidth,
   inspectorOpen,
   onToggleInspector,
+  onDismissInspector,
   onInspectorWidthCommit,
   onSidebarWidthCommit
 }: AppShellProps) {
@@ -50,6 +52,23 @@ export function AppShell({
   const sidebarHidden = !sidebarAvailable || sidebarCollapsed
   const sidebarLabel = t(sidebarCollapsed ? 'hosts:showSidebar' : 'hosts:hideSidebar')
   const inspectorLabel = t(inspectorOpen ? 'hosts:hideHostDetails' : 'hosts:showHostDetails')
+  useEffect(() => {
+    if (!inspectorOpen) return
+
+    function dismissOnOutsideClick(event: globalThis.MouseEvent) {
+      if (!(event.target instanceof Element)) return
+      if (
+        event.target.closest('#host-inspector-sidebar, [aria-controls="host-inspector-sidebar"]')
+      ) {
+        return
+      }
+      onDismissInspector()
+    }
+
+    document.addEventListener('click', dismissOnOutsideClick, true)
+    return () => document.removeEventListener('click', dismissOnOutsideClick, true)
+  }, [inspectorOpen, onDismissInspector])
+
   const toggleWindowMaximise = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement
     const isEmptyTabStrip = target === target.closest('.workspace-tabs')
@@ -114,11 +133,12 @@ export function AppShell({
       >
         <SidebarLayout
           side="right"
+          sidebarID="host-inspector-sidebar"
           preferredWidth={inspectorWidth}
           hidden={!inspectorOpen}
           onWidthCommit={onInspectorWidthCommit}
           sidebar={
-            <aside id="host-inspector-sidebar" aria-label={t('hosts:hostDetails')} className="min-w-0 min-h-0">
+            <aside aria-label={t('hosts:hostDetails')} className="min-w-0 min-h-0">
               {inspectorOpen && inspector}
             </aside>
           }
