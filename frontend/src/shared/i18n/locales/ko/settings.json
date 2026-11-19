@@ -202,6 +202,7 @@
   "duplicateTheme": "복사본 만들기",
   "themeMode": "모양 모드",
   "fixedTheme": "고정 테마",
+  "lightDarkTerminalTheme": "Daylight",
   "themeList": "모든 테마",
   "builtinTheme": "기본 제공",
   "customTheme": "사용자 정의",

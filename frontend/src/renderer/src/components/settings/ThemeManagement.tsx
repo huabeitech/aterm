@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { t } from '../../../../shared/i18n'
 import type { Preferences } from '../../../../shared/contracts/preferences'
 import type { ThemeID } from '../../../../shared/contracts/themes'
@@ -19,6 +20,7 @@ export function ThemeManagement({
   settings: Preferences
   onChange: (next: Preferences) => Promise<void>
 }) {
+  useTranslation()
   useThemeRevision()
   const themes = availableThemes()
   const catalog = themeCatalog()

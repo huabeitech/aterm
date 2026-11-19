@@ -202,6 +202,7 @@
   "duplicateTheme": "Create a copy",
   "themeMode": "Appearance mode",
   "fixedTheme": "Fixed theme",
+  "lightDarkTerminalTheme": "Daylight",
   "themeList": "All themes",
   "builtinTheme": "Built in",
   "customTheme": "Custom",

@@ -3,6 +3,7 @@ export const themeIDs = [
   'system',
   'dark',
   'light',
+  'light-dark-terminal',
   'solarized-light',
   'solarized-dark',
   'gruvbox-dark',

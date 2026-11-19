@@ -202,6 +202,7 @@
   "duplicateTheme": "创建主题副本",
   "themeMode": "外观模式",
   "fixedTheme": "固定主题",
+  "lightDarkTerminalTheme": "Daylight",
   "themeList": "全部主题",
   "builtinTheme": "内置",
   "customTheme": "自定义",

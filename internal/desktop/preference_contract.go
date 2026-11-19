@@ -14,7 +14,7 @@ var functionKey = regexp.MustCompile(`^f([1-9]|1[0-9]|2[0-4])$`)
 // An external theme need not be installed while importing saved preferences.
 func isDesktopThemeID(value string) bool {
 	switch value {
-	case "system", "dark", "light", "solarized-light", "solarized-dark", "gruvbox-dark", "dracula":
+	case "system", "dark", "light", "light-dark-terminal", "solarized-light", "solarized-dark", "gruvbox-dark", "dracula":
 		return true
 	default:
 		return externalThemeID.MatchString(value)

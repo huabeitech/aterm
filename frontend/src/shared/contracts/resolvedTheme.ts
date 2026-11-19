@@ -38,12 +38,14 @@ export function resolveTheme(
   const base = appThemes[appearance]
   const cssVariables = { ...base.cssVariables }
   const colors = definition.colors ?? {}
-  const background =
-    colors['surface.window'] ??
-    definition.terminal?.background ??
-    cssVariables['--app-window-background']
-  const foreground =
-    colors['text.primary'] ?? definition.terminal?.foreground ?? cssVariables['--mac-text']
+  const palette = definition.terminal
+  const fallback = builtinThemePackage.themes.find((theme) => theme.id === appearance)!.terminal!
+  const background = colors['surface.window'] ?? cssVariables['--app-window-background']
+  const foreground = colors['text.primary'] ?? cssVariables['--mac-text']
+  const terminalBackground = palette?.background ?? colors['terminal.background'] ?? fallback.background
+  const terminalForeground = palette?.foreground ?? fallback.foreground
+  const terminalMix = (amount: number) =>
+    `color-mix(in srgb, ${terminalForeground} ${amount}%, ${terminalBackground})`
   const mix = (amount: number) => `color-mix(in srgb, ${foreground} ${amount}%, ${background})`
   Object.assign(cssVariables, {
     '--mac-text': foreground,
@@ -61,37 +63,33 @@ export function resolveTheme(
     '--mac-selection-background': mix(18),
     '--workspace-tab-active-background': mix(12),
     '--workspace-tab-hover-background': mix(8),
-    '--terminal-title-background': mix(4),
-    '--terminal-title-text': foreground,
-    '--terminal-title-secondary-text': mix(72),
-    '--terminal-title-hover': mix(8),
-    '--terminal-title-active': mix(12),
-    '--terminal-border': mix(12),
-    '--terminal-find-background': mix(4),
-    '--terminal-find-text': foreground,
-    '--terminal-find-muted-text': mix(72),
-    '--terminal-find-hover': mix(8)
+    '--terminal-title-background': terminalMix(4),
+    '--terminal-title-text': terminalForeground,
+    '--terminal-title-secondary-text': terminalMix(72),
+    '--terminal-title-hover': terminalMix(8),
+    '--terminal-title-active': terminalMix(12),
+    '--terminal-border': terminalMix(12),
+    '--terminal-find-background': terminalMix(4),
+    '--terminal-find-text': terminalForeground,
+    '--terminal-find-muted-text': terminalMix(72),
+    '--terminal-find-hover': terminalMix(8)
   })
   cssVariables['--app-window-background'] = background
   for (const key of [
     '--mac-content',
     '--workspace-background',
     '--hosts-background',
-    '--inspector-background',
-    '--terminal-background'
+    '--inspector-background'
   ])
     cssVariables[key as `--${string}`] = background
   for (const [key, value] of Object.entries(colors))
     cssVariables[colorTokens[key as keyof typeof colorTokens]] = value!
-  // A legacy component token must not reintroduce an independently themed terminal.
-  cssVariables['--terminal-background'] = background
-  const fallback = builtinThemePackage.themes.find((theme) => theme.id === appearance)!.terminal!
-  const palette = definition.terminal
+  cssVariables['--terminal-background'] = terminalBackground
   const terminal = {
-    background,
-    foreground,
-    cursor: palette?.cursor ?? foreground,
-    cursorAccent: background,
+    background: terminalBackground,
+    foreground: terminalForeground,
+    cursor: palette?.cursor ?? terminalForeground,
+    cursorAccent: terminalBackground,
     selectionBackground: palette?.selectionBackground ?? fallback.selectionBackground,
     ...Object.fromEntries(
       ansiNames.map((name, index) => [name, palette?.ansi?.[index] ?? fallback.ansi![index]])

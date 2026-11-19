@@ -164,6 +164,75 @@
           "#a6e8df",
           "#ffffff"
         ]
+      },
+      "colors": {
+        "surface.window": "#002b36",
+        "text.primary": "#839496"
+      }
+    },
+    {
+      "id": "light-dark-terminal",
+      "name": "Daylight",
+      "appearance": "light",
+      "terminal": {
+        "background": "#0d1117",
+        "foreground": "#e6edf3",
+        "cursor": "#e6edf3",
+        "selectionBackground": "#2f81f733",
+        "ansi": [
+          "#484f58",
+          "#ff7b72",
+          "#3fb950",
+          "#d29922",
+          "#58a6ff",
+          "#bc8cff",
+          "#39c5cf",
+          "#b1bac4",
+          "#6e7681",
+          "#ffa198",
+          "#56d364",
+          "#e3b341",
+          "#79c0ff",
+          "#d2a8ff",
+          "#56d4dd",
+          "#ffffff"
+        ]
+      },
+      "colors": {
+        "text.primary": "#1f2328",
+        "text.secondary": "#64748b",
+        "text.muted": "#94a3b8",
+        "text.disabled": "#a8b3c3",
+        "text.placeholder": "#8c9aad",
+        "surface.content": "#ffffff",
+        "surface.panel": "#f5f5f5",
+        "surface.sidebar": "#fafafa",
+        "surface.toolbar": "#ffffff",
+        "surface.control": "#fafafa",
+        "border.control": "#dedede",
+        "border.default": "#e8e8e8",
+        "interaction.hover": "#eaf1f9",
+        "interaction.selection": "#dbeafe",
+        "scrollbar.thumb": "#bdc9d8",
+        "scrollbar.hover": "#94a3b8",
+        "scrollbar.track": "#00000000",
+        "surface.window": "#ffffff",
+        "surface.workspace": "#ffffff",
+        "surface.hosts": "#ffffff",
+        "surface.inspector": "#ffffff",
+        "tabs.hover": "#f5f5f5",
+        "tabs.active": "#ededed",
+        "terminal.background": "#0d1117",
+        "terminal.title": "#29292c",
+        "terminal.titleHover": "#303034",
+        "terminal.titleActive": "#35353a",
+        "terminal.titleText": "#f5f5f7",
+        "terminal.titleSecondaryText": "#a1a1a6",
+        "terminal.border": "#ffffff1a",
+        "terminal.findBackground": "#2d2d30f5",
+        "terminal.findText": "#f5f5f7",
+        "terminal.findMutedText": "#a1a1a6",
+        "terminal.findHover": "#ffffff24"
       }
     },
     {
@@ -193,6 +262,10 @@
           "#a6e8df",
           "#ffffff"
         ]
+      },
+      "colors": {
+        "surface.window": "#fdf6e3",
+        "text.primary": "#657b83"
       }
     },
     {
@@ -222,6 +295,10 @@
           "#a6e8df",
           "#ffffff"
         ]
+      },
+      "colors": {
+        "surface.window": "#282828",
+        "text.primary": "#ebdbb2"
       }
     },
     {
@@ -251,6 +328,10 @@
           "#a6e8df",
           "#ffffff"
         ]
+      },
+      "colors": {
+        "surface.window": "#282a36",
+        "text.primary": "#f8f8f2"
       }
     }
   ]

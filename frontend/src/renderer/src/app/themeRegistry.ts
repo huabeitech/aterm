@@ -1,4 +1,5 @@
 import { builtinThemePackage } from '../../../shared/contracts/builtinThemes'
+import { t } from '../../../shared/i18n'
 import { useSyncExternalStore } from 'react'
 import type { Preferences } from '../../../shared/contracts/preferences'
 import type { ThemeCatalog, ThemeDefinition } from '../../../shared/contracts/themePackages'
@@ -27,6 +28,10 @@ export function availableThemes() {
   return [builtinThemePackage, ...catalog.packages].flatMap((pkg) =>
     pkg.themes.map((theme) => ({
       ...theme,
+      name:
+        pkg.id === builtinThemePackage.id && theme.id === 'light-dark-terminal'
+          ? t('settings:lightDarkTerminalTheme')
+          : theme.name,
       reference: pkg.id === builtinThemePackage.id ? theme.id : `${pkg.id}/${theme.id}`,
       packageID: pkg.id,
       packageName: pkg.name,
