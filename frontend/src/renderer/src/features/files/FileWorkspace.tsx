@@ -119,6 +119,8 @@ interface Props {
   session: FileSession
   transfers: FileTransfer[]
   onReconnect: () => void
+  showHiddenFiles: boolean
+  onShowHiddenFilesChange: (show: boolean) => void
 }
 function readInitialFileColumnsState() {
   if (typeof window === 'undefined') return FILE_COLUMNS_DEFAULT_STATE
@@ -136,6 +138,8 @@ export function FileWorkspace({
   session,
   transfers,
   onReconnect,
+  showHiddenFiles,
+  onShowHiddenFilesChange,
   statusTarget,
   transferRequest
 }: Props) {
@@ -153,8 +157,10 @@ export function FileWorkspace({
     [entries, setEntries] = useState<RemoteEntry[]>([])
   const [editingAddress, setEditingAddress] = useState(false)
   const [query, setQuery] = useState(''),
-    [hidden, setHidden] = useState(false),
     [selected, setSelected] = useState<string[]>([])
+  useEffect(() => {
+    setSelected([])
+  }, [showHiddenFiles])
   const [busy, setBusy] = useState(false),
     [transfersOpen, setTransfersOpen] = useState(false)
   useEffect(() => {
@@ -281,7 +287,8 @@ export function FileWorkspace({
   const visible = entries
     .filter(
       (e) =>
-        (hidden || !e.name.startsWith('.')) && e.name.toLowerCase().includes(query.toLowerCase())
+        (showHiddenFiles || !e.name.startsWith('.')) &&
+        e.name.toLowerCase().includes(query.toLowerCase())
     )
     .sort((a, b) => {
       if ((a.kind === 'directory') !== (b.kind === 'directory'))
@@ -925,12 +932,9 @@ export function FileWorkspace({
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{t('files:viewOptions')}</DropdownMenuLabel>
                   <DropdownMenuCheckboxItem
-                    checked={hidden}
+                    checked={showHiddenFiles}
                     onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={(checked) => {
-                      setHidden(checked)
-                      setSelected([])
-                    }}
+                    onCheckedChange={onShowHiddenFilesChange}
                   >
                     {t('files:hiddenFiles')}
                   </DropdownMenuCheckboxItem>

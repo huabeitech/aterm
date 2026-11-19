@@ -12,6 +12,9 @@ import {
   type FileTransfer
 } from '../../../../shared/contracts/files'
 import { FileWorkspace } from './FileWorkspace'
+
+const SHOW_HIDDEN_FILES_KEY = 'aterm-show-hidden-files'
+
 export function useFilesWorkbench(
   unlock: () => Promise<boolean>,
   onConnected: () => void,
@@ -20,6 +23,24 @@ export function useFilesWorkbench(
 ) {
   useTranslation()
   const { message, modal } = useAppUI()
+  const [showHiddenFiles, setShowHiddenFiles] = useState(
+    () => window.localStorage.getItem(SHOW_HIDDEN_FILES_KEY) === 'true'
+  )
+  useEffect(() => {
+    const syncVisibility = (event: StorageEvent) => {
+      if (event.storageArea === window.localStorage &&
+          (event.key === SHOW_HIDDEN_FILES_KEY || event.key === null)) {
+        setShowHiddenFiles(window.localStorage.getItem(SHOW_HIDDEN_FILES_KEY) === 'true')
+      }
+    }
+    window.addEventListener('storage', syncVisibility)
+    return () => window.removeEventListener('storage', syncVisibility)
+  }, [])
+  function updateHiddenFilesVisibility(show: boolean) {
+    setShowHiddenFiles(show)
+    window.localStorage.setItem(SHOW_HIDDEN_FILES_KEY, String(show))
+  }
+
   const [sessions, setSessions] = useState<
       (FileSession & { ownerID: string; terminalID?: string })[]
     >([]),
@@ -272,6 +293,8 @@ export function useFilesWorkbench(
           transfers={transfers.filter((t) => t.sessionID === session.id)}
           statusTarget={statusTarget}
           transferRequest={transferRequest}
+          showHiddenFiles={showHiddenFiles}
+          onShowHiddenFilesChange={updateHiddenFilesVisibility}
           onReconnect={() => void reconnect(session.id)}
         />
       ) : null
