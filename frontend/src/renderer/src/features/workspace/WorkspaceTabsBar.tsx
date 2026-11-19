@@ -373,7 +373,7 @@ function TerminalTabDetails({
       </dl>
       {host && (
         <div
-          className="mt-1 flex max-w-90 flex-wrap gap-1"
+          className="mt-1.5 flex max-w-90 flex-wrap gap-1 border-t border-border pt-1.5"
           role="group"
           aria-label={t('hosts:hostActions')}
         >
