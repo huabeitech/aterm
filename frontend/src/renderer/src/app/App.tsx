@@ -147,6 +147,13 @@ function Workbench({
   const { preferredWidth: inspectorWidth, commitWidth: commitInspectorWidth } =
     useSidebarWidth('aterm.hostInspector.width', 320)
   const [showInspector, setShowInspector] = useState(false)
+  const [inspectedHost, setInspectedHost] = useState<{
+    tabID: typeof tabs.activeWorkspaceTab
+    hostID: string
+  } | null>(null)
+  const inspectedHostID =
+    inspectedHost?.tabID === tabs.activeWorkspaceTab ? inspectedHost.hostID : undefined
+  if (inspectedHost && !inspectedHostID) setInspectedHost(null)
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
@@ -167,7 +174,10 @@ function Workbench({
   const library = useHostWorkbench(
     (id) => void connectHost(id),
     (id) => void openFiles(id),
-    () => setShowInspector(true),
+    (id) => {
+      if (activeHostID) setInspectedHost({ tabID: tabs.activeWorkspaceTab, hostID: id })
+      setShowInspector(true)
+    },
     (id) => <PluginActions location="host.details" hostID={id} onOpen={openPlugin} />,
   )
   const files = useFilesWorkbench(
@@ -240,7 +250,9 @@ function Workbench({
   const activeConnectionID = tabs.activeWorkspaceTab.startsWith('terminal:')
     ? tabs.activeWorkspaceTab.slice(9)
     : null
-  const activeHostTab = tabs.workspaceTabs.find((tab) => tab.id === tabs.activeWorkspaceTab)
+  const activeHostID =
+    tabs.workspaceTabs.find((tab) => tab.id === tabs.activeWorkspaceTab)?.hostID ??
+    terminal.tabSessions.find((session) => session.id === activeConnectionID)?.hostID
   const isFiles = !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
   const isConnectionPlugin =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:')
@@ -736,7 +748,7 @@ function Workbench({
                 : 'home'
         }
         onSidebarWidthCommit={sidebar.commitWidth}
-        inspector={library.hostInspector}
+        inspector={library.renderHostInspector(inspectedHostID ?? activeHostID)}
         inspectorWidth={inspectorWidth}
         toggleInspectorShortcut={settings.toggleInspectorShortcut}
         inspectorOpen={showInspector}
@@ -786,10 +798,7 @@ function Workbench({
           <SourceSidebar
             {...library.sidebarProps}
             platform={bootstrap.info.platform}
-            currentHostID={
-              activeHostTab?.hostID ??
-              (activeConnectionID ? terminal.sessionForGroup(activeConnectionID)?.hostID : undefined)
-            }
+            currentHostID={activeHostID}
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}

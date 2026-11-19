@@ -54,7 +54,7 @@ const emptyForm: FormState = {
 export function useHostWorkbench(
   connectHost: (id: string) => void,
   openFiles: (id: string) => void,
-  revealInspector: () => void,
+  revealInspector: (id: string) => void,
   renderPluginActions: (id: string) => import("react").ReactNode
 ) {
   useTranslation()
@@ -219,7 +219,7 @@ export function useHostWorkbench(
     onOpenHost: (id: string) => {
       setSelectedID(id)
       setSelectedHostIDs([id])
-      revealInspector()
+      revealInspector(id)
     },
     onConnectHost: connectHost,
     onOpenFiles: openFiles,
@@ -275,9 +275,9 @@ export function useHostWorkbench(
   }, [inspectorOpen, editorMode, busyAction, editor.saveHost])
   const editorOpen =
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
-  function renderHostInspector() {
-    const count = visibleSelectedIDs.length
-    const id = visibleSelectedIDs[0]
+  function renderHostInspector(activeHostID?: string) {
+    const count = activeHostID ? 1 : visibleSelectedIDs.length
+    const id = activeHostID ?? visibleSelectedIDs[0]
     const host = count === 1 ? hosts.find((item) => item.id === id) : undefined
     if (!host) {
       const title = count > 1
@@ -415,6 +415,6 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
-    hostInspector: renderHostInspector()
+    renderHostInspector
   }
 }
