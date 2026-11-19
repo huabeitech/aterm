@@ -18,18 +18,21 @@ export function HostDetails({
   directoryPath,
   jumpHostName,
   actions,
+  onCopySSHCommand,
   onGetHostPassword
 }: {
   host: domain.Host
   directoryPath?: string
   jumpHostName?: string
   actions: (identity: ReactNode) => ReactNode
+  onCopySSHCommand: () => void
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   const { i18n } = useTranslation()
   const seconds = new Intl.NumberFormat(i18n.language, { style: 'unit', unit: 'second' })
   const number = new Intl.NumberFormat(i18n.language)
   const defaultValue = t('hosts:default')
+  const copyCommandLabel = t('hosts:copySshCommand2')
   const address = host.hostName.includes(':') && !host.hostName.startsWith('[')
     ? `[${host.hostName}]`
     : host.hostName
@@ -47,8 +50,8 @@ export function HostDetails({
             <div className="flex min-w-0 font-mono text-sm text-[var(--mac-secondary-text)]">
               <CopyableDetailValue
                 value={endpoint}
-                copyValue={host.hostName}
-                label={t('hosts:address')}
+                copyLabel={copyCommandLabel}
+                onCopy={onCopySSHCommand}
               />
             </div>
           </div>
@@ -57,14 +60,24 @@ export function HostDetails({
       <div className="grid min-h-0 min-w-0 content-start overflow-y-auto">
         <DetailGroup sectionID="connection" title={t('hosts:connection')} initiallyOpen>
           <DetailRow label={t('hosts:address')}>
-            <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
+            <CopyableDetailValue
+              value={host.hostName}
+              copyLabel={copyCommandLabel}
+              onCopy={onCopySSHCommand}
+            />
           </DetailRow>
           <DetailRow label={t('hosts:port')}>{host.port || 22}</DetailRow>
           <DetailRow label={t('hosts:username')}>
-            <CopyableDetailValue value={host.user} label={t('hosts:username')} />
+            <CopyableDetailValue
+              value={host.user}
+              copyLabel={t('hosts:copyField', { label: t('hosts:username') })}
+            />
           </DetailRow>
           <DetailRow label={t('hosts:hostAlias')}>
-            <CopyableDetailValue value={host.alias} label={t('hosts:hostAlias')} />
+            <CopyableDetailValue
+              value={host.alias}
+              copyLabel={t('hosts:copyField', { label: t('hosts:hostAlias') })}
+            />
           </DetailRow>
           <DetailRow label={t('hosts:directory')}>
             {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
@@ -270,16 +283,16 @@ function PasswordDetailValue({
       </span>
       <span className="inline-flex gap-0.5">
         <IconButton
-          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-          icon={visible ? <EyeOff size={13} /> : <Eye size={13} />}
+          className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
+          icon={visible ? <EyeOff className="size-[1em]" /> : <Eye className="size-[1em]" />}
           loading={loading === 'reveal'}
           title={visible ? t('hosts:hidePassword') : t('hosts:revealPassword')}
           aria-label={visible ? t('hosts:hidePassword') : t('hosts:revealPassword')}
           onClick={revealPassword}
         />
         <IconButton
-          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-          icon={<Copy size={13} />}
+          className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
+          icon={<Copy className="size-[1em]" />}
           loading={loading === 'copy'}
           title={t('hosts:copyPassword')}
           aria-label={t('hosts:copyPassword')}
@@ -292,22 +305,26 @@ function PasswordDetailValue({
 
 function CopyableDetailValue({
   value,
-  copyValue = value,
-  label
+  copyLabel,
+  onCopy
 }: {
   value?: string
-  copyValue?: string
-  label: string
+  copyLabel: string
+  onCopy?: () => void
 }) {
   useTranslation()
   if (!value) return <>—</>
   async function copy(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
-    if (!copyValue) return
+    if (onCopy) {
+      onCopy()
+      return
+    }
+    if (!value) return
     try {
-      await ClipboardSetText(copyValue)
+      await ClipboardSetText(value)
     } catch {
-      await navigator.clipboard?.writeText(copyValue)
+      await navigator.clipboard?.writeText(value)
     }
     toast.add({ title: t('hosts:copied'), type: 'success' })
   }
@@ -318,9 +335,9 @@ function CopyableDetailValue({
       </span>
       <IconButton
         className="size-5 shrink-0 text-muted-foreground opacity-40 hover:text-foreground hover:opacity-100 focus-visible:opacity-100 group-hover/copy:opacity-100 group-focus-within/copy:opacity-100 [@media(hover:none)]:opacity-100"
-        icon={<Copy size={13} />}
-        title={t('hosts:copyField', { label })}
-        aria-label={t('hosts:copyField', { label })}
+        icon={<Copy className="size-[1em]" />}
+        title={copyLabel}
+        aria-label={copyLabel}
         onClick={copy}
       />
     </span>

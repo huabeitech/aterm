@@ -1,5 +1,5 @@
 name: Set up aTerm build tools
-description: Install the configured macOS Go toolchain, Node.js, and matching Wails CLI.
+description: Install the configured Go toolchain, Node.js, and matching Wails CLI.
 runs:
   using: composite
   steps:
@@ -7,7 +7,9 @@ runs:
       id: versions
       shell: bash
       run: |
-        python3 - <<'PY'
+        python_cmd=python3
+        if [[ "$RUNNER_OS" == Windows ]]; then python_cmd=python; fi
+        "$python_cmd" - <<'PY'
         import os, re, sys
         from pathlib import Path
         sys.path.insert(0, 'scripts')
@@ -31,8 +33,13 @@ runs:
       env:
         WAILS_VERSION: ${{ steps.versions.outputs.wails }}
       run: |
-        python3 scripts/go-macos.py install "github.com/wailsapp/wails/v3/cmd/wails3@${WAILS_VERSION}"
-        if ! command -v rg >/dev/null; then
-          brew install ripgrep
+        wails_package="github.com/wailsapp/wails/v3/cmd/wails3@${WAILS_VERSION}"
+        if [[ "$RUNNER_OS" == macOS ]]; then
+          python3 scripts/go-macos.py install "$wails_package"
+          if ! command -v rg >/dev/null; then
+            brew install ripgrep
+          fi
+        else
+          go install "$wails_package"
         fi
         wails3 version

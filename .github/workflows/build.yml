@@ -69,3 +69,77 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+
+  desktop:
+    name: ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows
+            runner: windows-2025
+            arch: amd64
+          - platform: Windows
+            runner: windows-11-arm
+            arch: arm64
+          - platform: Linux
+            runner: ubuntu-24.04
+            arch: amd64
+          - platform: Linux
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    timeout-minutes: 30
+    env:
+      BUILD_ARCH: ${{ matrix.arch }}
+      CGO_ENABLED: ${{ matrix.platform == 'Linux' && '1' || '0' }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev libx11-dev
+      - uses: ./.github/actions/setup
+      - name: Verify build architecture
+        run: |
+          test "$(go env GOHOSTARCH)" = "$BUILD_ARCH"
+          test "$(go env GOARCH)" = "$BUILD_ARCH"
+      - name: Build frontend and sync application metadata
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          python_cmd=python3
+          if [[ "$RUNNER_OS" == Windows ]]; then python_cmd=python; fi
+          "$python_cmd" scripts/sync-build-metadata.py --runtime-json internal/desktop/product/info.json
+          # Go's embed pattern needs a file before Vite generates the frontend.
+          mkdir -p frontend/dist
+          touch frontend/dist/.gitkeep
+          wails3 generate bindings -f '-tags production -buildvcs=false' -clean=true -ts -i
+          npm --prefix frontend ci
+          npm --prefix frontend run build
+      - name: Package Windows test application
+        if: runner.os == 'Windows'
+        run: |
+          app_name="$(python scripts/sync-build-metadata.py --print-field productName)"
+          mkdir -p build/bin build/artifacts
+          go build -tags production -trimpath -buildvcs=false -ldflags '-w -s -H=windowsgui' -o "build/bin/${app_name}.exe" .
+          archive="${app_name}-windows-${BUILD_ARCH}-${GITHUB_SHA:0:12}.zip"
+          (cd build/bin && python -m zipfile -c "../artifacts/$archive" "${app_name}.exe")
+          (cd build/artifacts && sha256sum "$archive" > "$archive.sha256")
+      - name: Package Linux test application
+        if: runner.os == 'Linux'
+        run: scripts/package-linux.sh "$BUILD_ARCH"
+      - name: Upload test application
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: aTerm-${{ runner.os }}-${{ matrix.arch }}-${{ github.sha }}
+          path: build/artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
