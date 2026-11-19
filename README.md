@@ -28,7 +28,7 @@ Group connections into directories and find hosts with search. Import SSH connec
 
 ## Access private services
 
-Open **SSH tunnels** in the sidebar or **Manage tunnels** in a host’s details. Save a local address and port, select an SSH host, and enter the target address as reached from that host. Start the tunnel and connect your browser or database tool to the local address. Tunnels stop when aTerm quits; saved configurations are included in encrypted backups. See [SSH tunnel management](docs/ssh-tunnels.md) for lifecycle and troubleshooting details.
+Open **Tunnels** in the bottom view bar of a saved SSH connection, or use **SSH tunnels** in the sidebar for the global view. Save a local address and port, select an SSH host, and enter the target address as reached from that host. Start the tunnel and connect your browser or database tool to the local address. Tunnels stop when aTerm quits; saved configurations are included in encrypted backups. See [SSH tunnel management](docs/ssh-tunnels.md) for lifecycle and troubleshooting details.
 
 ## Work with remote files
 

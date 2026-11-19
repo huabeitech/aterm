@@ -37,7 +37,13 @@ export function PluginActions({
   return (
     <>
       {catalog
-        .filter((p) => p.enabled && p.manifest.runtime === 'native')
+        .filter(
+          (p) =>
+            p.enabled &&
+            p.manifest.runtime === 'native' &&
+            // Older SSH tunnels manifests still contribute a host details action.
+            (location !== 'host.details' || p.manifest.id !== 'huabei.ssh-tunnels'),
+        )
         .flatMap((p) =>
           (p.manifest.contributes.views ?? [])
             .filter((v) => v.locations?.includes(location))

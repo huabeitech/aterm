@@ -8,7 +8,7 @@ Build or download the SSH tunnels `.aterm-plugin` for your platform and install 
 
 ## Configure and use
 
-1. Select **Tunnels** in the bottom view bar of a saved SSH connection. Use the plugin entry in the sidebar footer for the global workspace, or the plugin action in host details.
+1. Select **Tunnels** in the bottom view bar of a saved SSH connection. Use the plugin entry in the sidebar footer for the global workspace.
 2. Choose **New tunnel**. Enter a name and select a service preset. The selected SSH host is prefilled. Choose **This SSH host** for a local service, or **Another private host** to enter its address. Set the service and local ports; the listen address is under **Advanced**.
 3. Choose **Save** for later use, or **Save and start**. Unlock protected data and complete any SSH authentication or host verification prompts.
 4. Connect an external application to the displayed local address. **Copy local address** copies the address and port.
