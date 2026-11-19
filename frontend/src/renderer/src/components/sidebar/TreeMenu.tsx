@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ContextMenu, DropdownMenu } from 'radix-ui'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +27,13 @@ export function TreeMenu({
   dropdown?: boolean
 }) {
   const selectedAction = useRef<Action | null>(null)
+  const [open, setOpen] = useState(false)
+  const [anchorReady, setAnchorReady] = useState(false)
+  // Radix updates its pointer anchor in an effect. Mounting the popup in
+  // the same render can position its first frame against the previous click.
+  useEffect(() => {
+    if (open && !dropdown) setAnchorReady(true)
+  }, [open, dropdown])
   const Menu = dropdown ? DropdownMenu : ContextMenu
   const renderAction = (action: Action) => (
     <Menu.Item
@@ -48,29 +55,35 @@ export function TreeMenu({
       modal={dropdown}
       onOpenChange={(open) => {
         if (open) selectedAction.current = null
+        if (!dropdown) {
+          setOpen(open)
+          if (!open) setAnchorReady(false)
+        }
       }}
     >
       <Menu.Trigger asChild>{children}</Menu.Trigger>
-      <Menu.Portal>
-        <Menu.Content
-          className={menuClass}
-          onCloseAutoFocus={(event) => {
-            const action = selectedAction.current
-            selectedAction.current = null
-            if (action) {
-              event.preventDefault()
-              // Focus-moving actions must wait for the menu focus trap to close.
-              if (action.afterClose) action.run()
-            }
-          }}
-        >
-          {actions.filter((action) => !action.danger).map(renderAction)}
-          {actions.some((action) => action.danger) && (
-            <Menu.Separator className="my-1 h-px bg-border" />
-          )}
-          {actions.filter((action) => action.danger).map(renderAction)}
-        </Menu.Content>
-      </Menu.Portal>
+      {(dropdown || anchorReady) && (
+        <Menu.Portal>
+          <Menu.Content
+            className={menuClass}
+            onCloseAutoFocus={(event) => {
+              const action = selectedAction.current
+              selectedAction.current = null
+              if (action) {
+                event.preventDefault()
+                // Focus-moving actions must wait for the menu focus trap to close.
+                if (action.afterClose) action.run()
+              }
+            }}
+          >
+            {actions.filter((action) => !action.danger).map(renderAction)}
+            {actions.some((action) => action.danger) && (
+              <Menu.Separator className="my-1 h-px bg-border" />
+            )}
+            {actions.filter((action) => action.danger).map(renderAction)}
+          </Menu.Content>
+        </Menu.Portal>
+      )}
     </Menu.Root>
   )
 }
