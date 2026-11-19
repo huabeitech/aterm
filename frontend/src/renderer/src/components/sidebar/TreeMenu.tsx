@@ -42,8 +42,10 @@ export function TreeMenu({
       {action.label}
     </Menu.Item>
   )
+  // Locking page scroll when a context menu opens can shift the sidebar.
   return (
     <Menu.Root
+      modal={dropdown}
       onOpenChange={(open) => {
         if (open) selectedAction.current = null
       }}

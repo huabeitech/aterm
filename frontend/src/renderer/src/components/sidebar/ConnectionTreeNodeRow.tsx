@@ -5,7 +5,6 @@ import {
   Eye,
   Folder,
   FolderOpen,
-  Plus,
   Pencil,
   Server,
   Pin,
@@ -157,11 +156,6 @@ export function ConnectionTreeNodeRow({
           label: t('hosts:connect'),
           icon: <Zap size={14} />,
           run: () => props.onConnectHost(host.id)
-        },
-        {
-          label: t('hosts:connectInNewTab'),
-          icon: <Plus size={14} />,
-          run: () => props.onConnectHostInNewTab(host.id)
         },
         {
           label: t('hosts:details'),

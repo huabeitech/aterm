@@ -150,7 +150,6 @@
   "copySshCommand2": "SSH コマンドをコピー",
   "copied2": "コピーしました！",
   "openSftp": "SFTP を開く",
-  "connectInNewTab": "新しいタブで接続",
   "details": "詳細",
   "thisHostNoLongerExists": "このホストは存在しなくなりました。",
   "reviewTheHighlightedFields": "強調表示された項目を確認してください。",

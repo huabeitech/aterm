@@ -283,9 +283,9 @@ function Workbench({
   }
   async function connectHost(
     hostID: string,
-    { groupID, newTab = false }: { groupID?: string; newTab?: boolean } = {},
+    { groupID }: { groupID?: string } = {},
   ) {
-    const existing = newTab || groupID ? undefined : recentHostTab(hostID)
+    const existing = groupID ? undefined : recentHostTab(hostID)
     const existingID = existing?.id.slice(9)
     const id = groupID ?? (
       existingID && (!terminal.sessionForGroup(existingID) || openingHostSessions.current.has(existingID))
@@ -758,7 +758,6 @@ function Workbench({
           <SourceSidebar
             {...library.sidebarProps}
             platform={bootstrap.info.platform}
-            onConnectHostInNewTab={(id) => void connectHost(id, { newTab: true })}
             currentHostID={
               activeHostTab?.hostID ??
               (activeConnectionID ? terminal.sessionForGroup(activeConnectionID)?.hostID : undefined)

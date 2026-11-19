@@ -27,7 +27,6 @@ export interface ConnectionTreeProps {
   onEditHost: (id: string) => void
   onOpenHost: (id: string) => void
   onConnectHost: (id: string) => void
-  onConnectHostInNewTab: (id: string) => void
   onOpenFiles: (id: string) => void
   onDeleteHosts: (ids: string[]) => void
   onToggleFavoriteHost: (id: string) => void
