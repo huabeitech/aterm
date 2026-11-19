@@ -127,6 +127,12 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 	s := &a.agents
 	s.mu.Lock()
 	result := agentbridge.Result{}
+	var revokeLease context.CancelFunc
+	defer func() {
+		if revokeLease != nil {
+			revokeLease()
+		}
+	}()
 	switch {
 	case !s.config.Enabled:
 		result.Error = "AGENT_DISABLED"
@@ -169,10 +175,8 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if err == nil && ctx.Err() == nil {
 			lease, revoke := context.WithTimeout(root, 2*time.Minute)
+			revokeLease = revoke
 			result.Connection, err = a.agentCommand(ctx, lease, route)
-			if err != nil || ctx.Err() != nil {
-				revoke()
-			}
 		}
 		s.mu.Lock()
 		if err != nil || ctx.Err() != nil || !s.config.Enabled {
@@ -186,7 +190,9 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 		s.pending = nil
 	}
 	s.mu.Unlock()
-	_ = json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err == nil && result.Connection != nil {
+		revokeLease = nil
+	}
 }
 func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 	s := &a.agents

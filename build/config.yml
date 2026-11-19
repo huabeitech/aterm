@@ -7,8 +7,8 @@ info:
   description: "Native SSH client"
   copyright: "Copyright © 2026 Wuhan Huabei Technology Co., Ltd. All rights reserved."
   comments: ""
-  version: "2.5.6"
-  buildNumber: "67"
+  version: "2.5.7"
+  buildNumber: "68"
   macOSMinimumVersion: "12.0"
   macOSGoToolchain: "go1.26.11"
 

@@ -1,7 +1,7 @@
 {
   "name": "aTerm",
-  "version": "2.5.6",
-  "buildNumber": "67",
+  "version": "2.5.7",
+  "buildNumber": "68",
   "identifier": "pro.huabei.sshconfig",
   "description": "Native SSH client"
 }
