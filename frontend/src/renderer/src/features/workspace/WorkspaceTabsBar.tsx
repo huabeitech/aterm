@@ -336,7 +336,7 @@ function TerminalTabDetails({
     ])
   }
   const copyLabel = t('hosts:copySshCommand')
-  const locateLabel = t('hosts:locateHost')
+  const locateLabel = t('hosts:locate')
   return (
     <div className="text-[length:var(--app-text-13)] [-webkit-app-region:no-drag]">
       <dl

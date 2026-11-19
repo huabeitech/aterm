@@ -230,6 +230,7 @@
   "morePinned": "Más ({{count}})",
   "collapsePinned": "Mostrar menos",
   "expandAll": "Expandir todo",
+  "locate": "Localizar",
   "locateHost": "Localizar host",
   "selectedConnections": "{{count}} seleccionados",
   "searchDragHint": "Con la búsqueda activa, suelte en una carpeta para mover. Borre la búsqueda para ordenar.",

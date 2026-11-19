@@ -222,6 +222,7 @@
   "morePinned": "More ({{count}})",
   "collapsePinned": "Show less",
   "expandAll": "Expand all",
+  "locate": "Locate",
   "locateHost": "Locate host",
   "selectedConnections": "{{count}} selected",
   "searchDragHint": "Search active: drop onto a folder to move. Clear search to reorder.",

@@ -222,6 +222,7 @@
   "morePinned": "Mehr ({{count}})",
   "collapsePinned": "Weniger anzeigen",
   "expandAll": "Alle ausklappen",
+  "locate": "Finden",
   "locateHost": "Host finden",
   "selectedConnections": "{{count}} ausgewählt",
   "searchDragHint": "Bei aktiver Suche auf einen Ordner ziehen. Zum Sortieren die Suche löschen.",

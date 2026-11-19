@@ -222,6 +222,7 @@
   "morePinned": "さらに表示（{{count}}）",
   "collapsePinned": "折りたたむ",
   "expandAll": "すべて展開",
+  "locate": "場所を表示",
   "locateHost": "ホストを表示",
   "selectedConnections": "{{count}} 件選択中",
   "searchDragHint": "検索中はフォルダーへの移動が可能です。並べ替えるには検索をクリアしてください。",

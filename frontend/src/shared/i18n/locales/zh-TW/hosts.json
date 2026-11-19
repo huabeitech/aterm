@@ -222,6 +222,7 @@
   "morePinned": "更多（{{count}}）",
   "collapsePinned": "收起",
   "expandAll": "展開全部",
+  "locate": "定位",
   "locateHost": "定位主機",
   "selectedConnections": "已選 {{count}} 項",
   "searchDragHint": "搜尋中可拖入資料夾，清空搜尋後可排序",

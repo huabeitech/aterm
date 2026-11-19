@@ -222,6 +222,7 @@
   "morePinned": "더 보기 ({{count}})",
   "collapsePinned": "접기",
   "expandAll": "모두 펼치기",
+  "locate": "위치 표시",
   "locateHost": "호스트 위치 표시",
   "selectedConnections": "{{count}}개 선택됨",
   "searchDragHint": "검색 중에는 폴더로 이동할 수 있습니다. 정렬하려면 검색을 지우세요.",
