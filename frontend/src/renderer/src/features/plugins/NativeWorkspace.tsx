@@ -12,7 +12,7 @@ import { desktop } from '../../api/app'
 import { PluginView } from './PluginView'
 import { usePluginCatalog } from './pluginCatalog'
 import { Button } from '@/components/ui/button'
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { IconButton, Tip } from '@/components/ui/desktop'
 export function pluginTitle(plugin: PluginInfo, key: string, locale: string): string {
   const bundle = plugin.localizations
   return bundle?.messages[locale]?.[key] ?? bundle?.messages[bundle.defaultLocale]?.[key] ?? key
@@ -25,10 +25,12 @@ export function PluginActions({
   location,
   hostID,
   onOpen,
+  disabled,
 }: {
   location: string
   hostID?: string
   onOpen: OpenNativePlugin
+  disabled?: boolean
 }) {
   const catalog = usePluginCatalog()
   const { i18n } = useTranslation()
@@ -59,10 +61,15 @@ export function PluginActions({
                   </TooltipContent>
                 </Tooltip>
               ) : location === 'host.details' ? (
-                <DropdownMenuItem key={`${p.manifest.id}:${v.id}`} onSelect={open}>
-                  <PluginIcon view={v} />
-                  {label}
-                </DropdownMenuItem>
+                <Tip key={`${p.manifest.id}:${v.id}`} title={label}>
+                  <IconButton
+                    className="size-6 min-w-6 rounded-md p-0 text-muted-foreground"
+                    icon={<PluginIcon view={v} />}
+                    aria-label={label}
+                    disabled={disabled}
+                    onClick={open}
+                  />
+                </Tip>
               ) : (
                 <Button key={`${p.manifest.id}:${v.id}`} variant="ghost" size="sm" onClick={open}>
                   <PluginIcon view={v} />

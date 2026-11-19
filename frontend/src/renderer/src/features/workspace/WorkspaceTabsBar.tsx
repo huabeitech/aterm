@@ -338,12 +338,13 @@ function TerminalTabDetails({
   const copyLabel = t('hosts:copySshCommand')
   const locateLabel = t('hosts:locateHost')
   return (
-    <div className="grid gap-2 text-[length:var(--app-text-13)] [-webkit-app-region:no-drag]">
+    <div className="relative text-[length:var(--app-text-13)] [-webkit-app-region:no-drag]">
       <dl
         className={cn(
           'workspace-host-details grid min-w-60 max-w-90 gap-1.5 m-0 [&_>_div]:grid [&_>_div]:grid-cols-[64px_minmax(0,_1fr)] [&_>_div]:gap-2.5',
           '[&_dt]:text-[var(--mac-secondary-text)] [&_dd]:min-w-0 [&_dd]:m-0 [&_dd]:text-[var(--mac-text)]',
           '[&_dd]:wrap-anywhere',
+          host && '[&>div:first-child]:min-h-6 [&>div:first-child]:items-center [&>div:first-child]:pr-14',
         )}
       >
         {rows.map(([label, value]) => (
@@ -373,21 +374,23 @@ function TerminalTabDetails({
       </dl>
       {host && (
         <div
-          className="flex justify-end gap-1 border-t border-border pt-2"
+          className="absolute right-0 top-0 flex gap-0.5"
           role="group"
           aria-label={t('hosts:hostActions')}
         >
           <Tip title={copyLabel}>
             <IconButton
+              className="size-6 text-muted-foreground"
               aria-label={copyLabel}
-              icon={<Copy aria-hidden="true" />}
+              icon={<Copy className="size-3.5" aria-hidden="true" />}
               onClick={() => onCopyCommand(host)}
             />
           </Tip>
           <Tip title={locateLabel}>
             <IconButton
+              className="size-6 text-muted-foreground"
               aria-label={locateLabel}
-              icon={<Crosshair aria-hidden="true" />}
+              icon={<Crosshair className="size-3.5" aria-hidden="true" />}
               onClick={() => onLocateHost(host.id)}
             />
           </Tip>

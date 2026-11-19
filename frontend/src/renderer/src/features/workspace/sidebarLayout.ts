@@ -1,6 +1,7 @@
 export const sidebarLayout = {
   defaultWidth: 260,
   minWidth: 180,
+  inspectorMinWidth: 280,
   maxWidth: 560,
   minimumContentWidth: 580
 } as const

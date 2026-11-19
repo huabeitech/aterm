@@ -184,7 +184,7 @@ function Workbench({
       if (activeHostID) setInspectedHost({ tabID: tabs.activeWorkspaceTab, hostID: id })
       setShowInspector(true)
     },
-    (id) => <PluginActions location="host.details" hostID={id} onOpen={openPlugin} />,
+    (id, disabled) => <PluginActions location="host.details" hostID={id} onOpen={openPlugin} disabled={disabled} />,
   )
   const files = useFilesWorkbench(
     library.unlockForConnection,

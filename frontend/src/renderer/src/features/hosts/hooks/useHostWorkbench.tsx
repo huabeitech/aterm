@@ -55,7 +55,7 @@ export function useHostWorkbench(
   connectHost: (id: string) => void,
   openFiles: (id: string) => void,
   revealInspector: (id: string) => void,
-  renderPluginActions: (id: string) => import("react").ReactNode
+  renderPluginActions: (id: string, disabled: boolean) => import("react").ReactNode
 ) {
   useTranslation()
   const { modal, message, notification } = useAppUI()
@@ -303,7 +303,7 @@ export function useHostWorkbench(
               identity={identity}
               favorite={host.favorite}
               disabled={!!busyAction}
-              pluginActions={renderPluginActions(id)}
+              pluginActions={renderPluginActions(id, !!busyAction)}
               onConnect={() => connectHost(id)}
               onEdit={() => editor.startEditHost(id)}
               onOpenFiles={() => openFiles(id)}

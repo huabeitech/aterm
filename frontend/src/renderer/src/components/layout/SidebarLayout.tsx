@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { t } from '../../../../shared/i18n'
-import { sidebarLayout, constrainSidebarWidth } from '../../features/workspace/sidebarLayout'
+import { sidebarLayout } from '../../features/workspace/sidebarLayout'
 import { useSidebarDrawerAnimation } from './useSidebarDrawerAnimation'
 
 type Props = {
@@ -18,6 +18,7 @@ type Props = {
 export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden, onWidthCommit, sidebar, children }: Props) {
   useTranslation()
   const right = side === 'right'
+  const minimum = right ? sidebarLayout.inspectorMinWidth : sidebarLayout.minWidth
   const direction = right ? -1 : 1
   const root = useRef<HTMLDivElement>(null)
   const drawer = useRef<HTMLDivElement>(null)
@@ -28,10 +29,11 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
     availableWidth === null
       ? sidebarLayout.maxWidth
       : Math.max(
-          sidebarLayout.minWidth,
+          minimum,
           Math.min(sidebarLayout.maxWidth, availableWidth - (right ? 440 : sidebarLayout.minimumContentWidth) - 1)
         )
-  const width = Math.min(dragWidth ?? preferredWidth, maximum)
+  const clampWidth = (value: number) => Math.max(minimum, Math.min(value, maximum))
+  const width = clampWidth(dragWidth ?? preferredWidth)
   useLayoutEffect(() => {
     const element = root.current!
     const observer = new ResizeObserver(() => setAvailableWidth(element.clientWidth))
@@ -49,7 +51,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
   useSidebarDrawerAnimation(root, drawer, hidden, width, right)
 
   function commit(value: number) {
-    onWidthCommit(Math.min(constrainSidebarWidth(value), maximum))
+    onWidthCommit(clampWidth(value))
   }
 
   return (
@@ -76,7 +78,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
             aria-controls={sidebarID}
             aria-orientation="vertical"
             aria-label={t('common:resizePanels')}
-            aria-valuemin={sidebarLayout.minWidth}
+            aria-valuemin={minimum}
             aria-valuemax={maximum}
             aria-valuenow={Math.round(width)}
             tabIndex={0}
@@ -95,12 +97,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
             onPointerMove={(event) => {
               const current = drag.current
               if (!current || current.pointerId !== event.pointerId) return
-              setDragWidth(
-                Math.min(
-                  constrainSidebarWidth(current.startWidth + direction * (event.clientX - current.startX)),
-                  maximum
-                )
-              )
+              setDragWidth(clampWidth(current.startWidth + direction * (event.clientX - current.startX)))
             }}
             onPointerUp={(event) => {
               const current = drag.current
@@ -118,7 +115,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
             onKeyDown={(event) => {
               const next =
                 event.key === 'Home'
-                  ? sidebarLayout.minWidth
+                  ? minimum
                   : event.key === 'End'
                     ? maximum
                     : event.key === 'ArrowLeft'
