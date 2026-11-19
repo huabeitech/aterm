@@ -171,7 +171,7 @@ export function ConnectionTree(props: ConnectionTreeProps) {
         ? props.selectedHostIDs.filter((h) => h !== id)
         : [...props.selectedHostIDs, id]
     if (!range) anchor.current = id
-    props.onSelectHost(id, ids, ids.includes(id))
+    props.onSelectHost(id, ids)
   }
   const selectedHostID = props.selectedHostIDs.includes(props.selectedHostID ?? '')
     ? props.selectedHostID
