@@ -122,7 +122,7 @@ export function AppShell({
           onWidthCommit={onInspectorWidthCommit}
           sidebar={
             <aside aria-label={t('hosts:hostDetails')} className="min-w-0 min-h-0">
-              {inspectorOpen && inspector}
+              {inspector}
             </aside>
           }
         >

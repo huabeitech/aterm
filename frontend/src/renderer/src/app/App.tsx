@@ -155,7 +155,8 @@ function Workbench({
     inspectedHost?.tabID === tabs.activeWorkspaceTab ? inspectedHost.hostID : undefined
   if (inspectedHost && !inspectedHostID) setInspectedHost(null)
   function toggleInspector() {
-    setInspectedHost(null)
+    // Keep the displayed host in place while the drawer slides out.
+    if (!showInspector) setInspectedHost(null)
     setShowInspector((visible) => !visible)
   }
   const closingConnections = useRef(new Set<string>())

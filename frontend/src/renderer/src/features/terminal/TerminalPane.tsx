@@ -215,9 +215,8 @@ export function TerminalPane(props: Props) {
         container.current.clientHeight < 32
       )
         return
-      // The drawer translates the workspace during its transition. Keep the terminal's
-      // character grid stable until it settles to avoid repeated reflow and PTY
-      // redraws. Check again even if the final frame causes no ResizeObserver event.
+      // Keep the terminal's character grid stable while a drawer is sliding to avoid
+      // PTY redraws. Check again even if the final frame causes no ResizeObserver event.
       if (container.current.closest('.workspace-body[data-sidebar-animating]')) {
         raf = requestAnimationFrame(resize)
         return

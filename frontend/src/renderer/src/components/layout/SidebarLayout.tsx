@@ -21,7 +21,6 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
   const direction = right ? -1 : 1
   const root = useRef<HTMLDivElement>(null)
   const drawer = useRef<HTMLDivElement>(null)
-  const content = useRef<HTMLDivElement>(null)
   const drag = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null)
   const [availableWidth, setAvailableWidth] = useState<number | null>(null)
   const [dragWidth, setDragWidth] = useState<number | null>(null)
@@ -47,7 +46,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
     }
     drawer.current!.inert = hidden
   }, [hidden])
-  useSidebarDrawerAnimation(root, drawer, content, hidden, width, right)
+  useSidebarDrawerAnimation(root, drawer, hidden, width, right)
 
   function commit(value: number) {
     onWidthCommit(Math.min(constrainSidebarWidth(value), maximum))
@@ -66,7 +65,7 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
         <div
           ref={drawer}
           id={sidebarID}
-          className={`row-start-1 ${right ? 'col-start-3' : 'source-sidebar col-start-1'} relative z-[1] grid grid-rows-[minmax(0,_1fr)_auto] min-w-0 min-h-0 overflow-hidden bg-[var(--hosts-background)] [-webkit-app-region:no-drag]`}
+          className={`row-start-1 ${right ? 'col-start-3 justify-self-end' : 'source-sidebar col-start-1'} relative z-[1] grid grid-rows-[minmax(0,_1fr)_auto] min-w-0 min-h-0 overflow-hidden bg-[var(--hosts-background)] [-webkit-app-region:no-drag]`}
           style={{ width, display: hidden ? 'none' : undefined }}
         >
           {sidebar}
@@ -138,7 +137,6 @@ export function SidebarLayout({ side = 'left', sidebarID, preferredWidth, hidden
           <div className="row-start-1 col-start-2" />
         )}
         <div
-          ref={content}
           className={`workspace-content row-start-1 ${right ? 'col-start-1' : 'col-start-3'} min-w-0 min-h-0 relative overflow-hidden`}
         >
           {children}
