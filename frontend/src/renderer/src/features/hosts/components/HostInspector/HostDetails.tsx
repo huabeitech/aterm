@@ -36,13 +36,13 @@ export function HostDetails({
     (host.jumpHostID ? '—' : t('hosts:directConnection'))
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col text-[length:var(--app-text-13)]">
-      <div className="grid shrink-0 gap-3 border-b border-border px-4 py-3">
+      <div className="shrink-0 px-3 pt-3 pb-2">
         {actions(
           <div className="min-w-0">
-            <h2 className="m-0 wrap-anywhere text-base leading-tight font-semibold text-[var(--mac-text)]">
+            <h2 className="m-0 truncate text-sm leading-tight font-semibold text-[var(--mac-text)]" title={host.name}>
               {host.name}
             </h2>
-            <div className="flex font-mono text-[var(--mac-secondary-text)]">
+            <div className="flex min-w-0 font-mono text-xs text-[var(--mac-secondary-text)]">
               <CopyableDetailValue
                 value={endpoint}
                 copyValue={host.hostName}
