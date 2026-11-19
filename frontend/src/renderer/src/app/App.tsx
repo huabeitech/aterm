@@ -154,6 +154,10 @@ function Workbench({
   const inspectedHostID =
     inspectedHost?.tabID === tabs.activeWorkspaceTab ? inspectedHost.hostID : undefined
   if (inspectedHost && !inspectedHostID) setInspectedHost(null)
+  function toggleInspector() {
+    setInspectedHost(null)
+    setShowInspector((visible) => !visible)
+  }
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
@@ -414,7 +418,7 @@ function Workbench({
         break
       }
       case 'toggle-inspector':
-        setShowInspector((visible) => !visible)
+        toggleInspector()
         break
       case 'toggle-sidebar':
         if (!isSettings) sidebar.toggle()
@@ -752,7 +756,7 @@ function Workbench({
         inspectorWidth={inspectorWidth}
         toggleInspectorShortcut={settings.toggleInspectorShortcut}
         inspectorOpen={showInspector}
-        onToggleInspector={() => setShowInspector((visible) => !visible)}
+        onToggleInspector={toggleInspector}
         onInspectorWidthCommit={commitInspectorWidth}
         header={
           <WorkspaceTabsBar
