@@ -38,6 +38,7 @@ export default function FileEditorWindow() {
     }
     window.addEventListener('focus', syncPreferences)
     const unpackages = desktop.themes.onChanged(syncPreferences)
+    const unlocale = desktop.onLocaleChanged(syncPreferences)
     const untheme = desktop.onThemeChanged((resolvedTheme) => {
       void desktop
         .bootstrap()
@@ -50,6 +51,7 @@ export default function FileEditorWindow() {
     })
     return () => {
       unpackages()
+      unlocale()
       window.removeEventListener('focus', syncPreferences)
       unclose()
       unsubscribe()
@@ -72,6 +74,7 @@ export default function FileEditorWindow() {
       />
       <section
         className="files-workspace files-editor flex h-screen min-h-0 flex-col bg-[var(--files-bg)]"
+        data-platform={bootstrap?.info.platform}
         aria-label={t('files:remoteTextEditor')}
         onKeyDownCapture={(event) => {
           if (event.nativeEvent.isComposing || !(event.metaKey || event.ctrlKey) || event.altKey)

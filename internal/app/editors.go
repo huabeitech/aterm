@@ -75,6 +75,7 @@ func (a *App) openEditor(sessionID, name string) error {
 	id := "file-editor-" + uuid.NewString()
 	window := a.wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name: id, Title: path.Base(name) + " — " + session.Info.Title, Width: 960, Height: 720, MinWidth: 560, MinHeight: 360, URL: "/#file-editor", Hidden: true,
+		Mac: application.MacWindow{TitleBar: application.MacTitleBarHidden},
 	})
 	entry := &editorWindow{window: window, sessionID: sessionID, editor: desktopfiles.NewEditor(document, session.Info.Title, func(document desktopfiles.Text) (desktopfiles.Text, error) {
 		result, err := a.fileManager().SaveText(sessionID, document)

@@ -267,6 +267,13 @@
 .files-input-label input {
   font-size: var(--app-text-14);
 }
+.files-editor {
+  border: 1px solid var(--mac-separator);
+}
+.files-editor[data-platform='darwin'] .remote-editor-titlebar {
+  padding-left: 80px;
+  --wails-draggable: drag;
+}
 .remote-editor-titlebar {
   display: flex;
   flex: 0 0 auto;
