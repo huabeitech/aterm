@@ -290,8 +290,9 @@ export function useHostWorkbench(
     return (
       <div key={id} className="h-full min-h-0 min-w-0">
         <HostDetails
-          actions={
+          actions={(identity) => (
             <HostDetailsToolbar
+              identity={identity}
               favorite={host.favorite}
               disabled={!!busyAction}
               pluginActions={renderPluginActions(id)}
@@ -301,12 +302,12 @@ export function useHostWorkbench(
               onCopy={() => void copySSHCommand(id)}
               onFavorite={() => void editor.toggleFavoriteHost(id)}
             />
-            }
-            host={host}
-            directoryPath={directoryOptions.find((option) => option.id === host.directoryID)?.label}
-            jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
-            onGetHostPassword={getPassword}
-          />
+          )}
+          host={host}
+          directoryPath={directoryOptions.find((option) => option.id === host.directoryID)?.label}
+          jumpHostName={hosts.find((item) => item.id === host.jumpHostID)?.name}
+          onGetHostPassword={getPassword}
+        />
       </div>
     )
   }

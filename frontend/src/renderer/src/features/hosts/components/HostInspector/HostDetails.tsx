@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
-import { Copy, Eye, EyeOff, Server } from 'lucide-react'
+import { Copy, Eye, EyeOff } from 'lucide-react'
 import { domain } from '../../../../api/types'
 import { desktop } from '../../../../api/app'
 import { ClipboardSetText } from '../../../../api/runtime'
@@ -18,7 +18,7 @@ export function HostDetails({
   host: domain.Host
   directoryPath?: string
   jumpHostName?: string
-  actions?: ReactNode
+  actions: (identity: ReactNode) => ReactNode
   onGetHostPassword: (id: string) => Promise<string | null>
 }) {
   const { i18n } = useTranslation()
@@ -35,10 +35,7 @@ export function HostDetails({
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col text-[length:var(--app-text-13)]">
       <div className="grid shrink-0 gap-3 border-b border-border px-4 py-3">
-        <header className="flex min-w-0 items-center gap-2">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--mac-separator)] bg-[var(--mac-content)] text-primary">
-            <Server size={18} aria-hidden="true" />
-          </div>
+        {actions(
           <div className="min-w-0">
             <h2 className="m-0 wrap-anywhere text-base leading-tight font-semibold text-[var(--mac-text)]">
               {host.name}
@@ -51,8 +48,7 @@ export function HostDetails({
               />
             </div>
           </div>
-        </header>
-        {actions}
+        )}
       </div>
       <div className="grid min-h-0 min-w-0 content-start gap-4 overflow-auto px-4 py-3">
         <DetailGroup title={t('hosts:connection')}>

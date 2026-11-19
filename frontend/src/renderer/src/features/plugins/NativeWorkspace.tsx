@@ -12,6 +12,7 @@ import { desktop } from '../../api/app'
 import { PluginView } from './PluginView'
 import { usePluginCatalog } from './pluginCatalog'
 import { Button } from '@/components/ui/button'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 export function pluginTitle(plugin: PluginInfo, key: string, locale: string): string {
   const bundle = plugin.localizations
   return bundle?.messages[locale]?.[key] ?? bundle?.messages[bundle.defaultLocale]?.[key] ?? key
@@ -57,8 +58,13 @@ export function PluginActions({
                     {label}
                   </TooltipContent>
                 </Tooltip>
+              ) : location === 'host.details' ? (
+                <DropdownMenuItem key={`${p.manifest.id}:${v.id}`} onSelect={open}>
+                  <PluginIcon view={v} />
+                  {label}
+                </DropdownMenuItem>
               ) : (
-                <Button key={`${p.manifest.id}:${v.id}`} variant={location === 'host.details' ? 'outline' : 'ghost'} size="sm" onClick={open}>
+                <Button key={`${p.manifest.id}:${v.id}`} variant="ghost" size="sm" onClick={open}>
                   <PluginIcon view={v} />
                   {label}
                 </Button>
