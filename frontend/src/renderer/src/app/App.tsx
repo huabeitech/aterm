@@ -147,7 +147,6 @@ function Workbench({
   const { preferredWidth: inspectorWidth, commitWidth: commitInspectorWidth } =
     useSidebarWidth('aterm.hostInspector.width', 320)
   const [showInspector, setShowInspector] = useState(false)
-  const dismissInspector = useCallback(() => setShowInspector(false), [])
   const closingConnections = useRef(new Set<string>())
   const settingsOpen = tabs.workspaceTabs.some((tab) => tab.id === 'settings')
   const isSettings = tabs.activeWorkspaceTab === 'settings'
@@ -742,7 +741,6 @@ function Workbench({
         toggleInspectorShortcut={settings.toggleInspectorShortcut}
         inspectorOpen={showInspector}
         onToggleInspector={() => setShowInspector((visible) => !visible)}
-        onDismissInspector={dismissInspector}
         onInspectorWidthCommit={commitInspectorWidth}
         header={
           <WorkspaceTabsBar

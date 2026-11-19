@@ -1,4 +1,6 @@
 {
+  "agent.access": "Agentenzugriff",
+  "agent.enable": "Lokalen Agenten erlauben, SSH-Terminals für ausgewählte Hosts anzufordern",
   "agent.openTitle": "SSH-Terminal öffnen?",
   "agent.openMessage": "Ein lokaler Agent möchte {{target}} öffnen. Ziel und Sprungserver:\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "Die SFTP-Verbindung wurde geschlossen. Ihre Änderungen bleiben in diesem Fenster erhalten. Kopieren Sie sie vor dem Schließen.",

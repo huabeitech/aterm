@@ -1,3 +1,4 @@
+import { AgentAccess } from './AgentAccess'
 import { platformFeatures } from '../../../../shared/platformFeatures'
 import { PluginManagement } from '../../features/plugins/PluginManagement'
 import { ThemeManagement } from './ThemeManagement'
@@ -355,6 +356,7 @@ export function SettingsPage({
                     )}
                   </>
                 )}
+                {activeSection === 'security' && platform === 'darwin' && status && !macAppStoreBuild && <AgentAccess />}
                 {activeSection === 'security' && (
                   <>
                     <SettingsGroup

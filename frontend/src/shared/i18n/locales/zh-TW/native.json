@@ -1,4 +1,6 @@
 {
+  "agent.access": "代理程式存取",
+  "agent.enable": "允許本機代理程式要求開啟所選主機的 SSH 終端機",
   "agent.openTitle": "開啟 SSH 終端機？",
   "agent.openMessage": "本機代理程式要求開啟 {{target}}。目標主機與跳板主機如下。\n{{route}}",
   "sftpConnectionClosedYourEditsAreKeptInThisWindowCopyThemBeforeClosing": "SFTP 連線已關閉。修改仍保留在此視窗中，請在關閉前複製儲存。",

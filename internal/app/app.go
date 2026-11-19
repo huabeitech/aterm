@@ -27,6 +27,7 @@ import (
 
 // App struct
 type App struct {
+	agents                      agentState
 	desktopPluginLock           *desktopplugins.ProfileLock
 	ctx                         context.Context
 	wailsApp                    *application.App
@@ -184,7 +185,7 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	a.remoteTransfer = newRemoteTransferService(ctx, a.svc, func(name string, payload any) {
 		a.emitEvent(name, payload)
 	})
-	return nil
+	return a.startAgents(paths.appSupportDir)
 }
 
 func (a *App) confirmHostKey(ctx context.Context, key service.HostKeyInfo) bool {
@@ -216,6 +217,7 @@ func (a *App) emitEvent(name string, payload any) {
 }
 
 func (a *App) ServiceShutdown() error {
+	a.stopAgents()
 	a.mainWindowPlacement.close()
 	a.stopDesktopAccessibility()
 	platform.StopInputModes()

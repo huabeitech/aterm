@@ -48,6 +48,8 @@ export function DesktopConfirmations() {
   const text = (key: string | undefined, fallback: string | undefined) =>
     key
       ? nativeText(key as keyof typeof resources.en.native, {
+          target: options.parameters?.target ?? '',
+          route: options.parameters?.route ?? '',
           plugin: options.parameters?.plugin ?? '',
           host: options.parameters?.host ?? '',
           source: options.parameters?.source ?? '',

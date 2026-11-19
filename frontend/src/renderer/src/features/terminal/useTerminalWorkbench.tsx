@@ -1,3 +1,4 @@
+import { agentRequest, onAgentOpen } from '../../api/agent'
 import { usePluginCatalog } from '../plugins/pluginCatalog'
 import type { ConnectionView } from '../workspace/ConnectionWorkspace'
 import { TerminalPluginWorkspace } from '../plugins/TerminalPluginBars'
@@ -172,11 +173,23 @@ export function useTerminalWorkbench(
         ])
         tabs.openWorkspaceTab(`terminal:${id}`)
         tabs.setActiveWorkspaceTab(`terminal:${id}`)
+        return true
       } catch (error) {
         report(error)
       }
     }
-    return desktop.plugins.onTerminalOpened(adopt)
+    const offPlugin = desktop.plugins.onTerminalOpened(id => { void adopt(id) })
+    const offAgent = onAgentOpen(async ({id, locked}) => {
+      let opened = false
+      try {
+        if (!locked || await current.current.unlock()) {
+          const session = await agentRequest<string>('claim', id)
+          opened = !!await adopt(session)
+        }
+      } catch (error) { report(error) }
+      finally { await agentRequest('finish', id, opened).catch(() => {}) }
+    })
+    return () => { offAgent(); offPlugin() }
   }, [])
   function activate(id: string) {
     tabs.setActiveWorkspaceTab(`terminal:${id}`)

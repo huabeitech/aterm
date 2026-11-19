@@ -26,12 +26,14 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"ssh-connect/internal/db"
+	desktopkeys "ssh-connect/internal/desktop/keys"
 	"ssh-connect/internal/desktop/terminalmeta"
 	"ssh-connect/internal/domain"
 	"ssh-connect/internal/service"
 )
 
 func main() {
+	managed := flag.Bool("managed-jump-key", false, "store the disposable jump identity in the fixture vault (requires tunnels)")
 	tunnels := flag.Bool("tunnels", false, "seed a disposable HTTP target and a tunnel reached through a jump host")
 	profile := flag.String("profile", "", "new disposable profile under the system temporary directory")
 	remoteCwd := flag.String("cwd", "", "fixture remote cwd reported to metadata probes")
@@ -172,6 +174,22 @@ func main() {
 		vault := service.NewAppService(service.AppServiceOptions{Store: store, PasswordStore: fixtureSecrets{}, DatabasePath: database, LocalVaultPath: filepath.Join(*profile, "vault.enc")})
 		if _, err := vault.SetUpSecureData(context.Background(), "fixture-vault-password"); err != nil {
 			log.Fatal(err)
+		}
+		if *managed {
+			catalog := desktopkeys.NewStore(vault.SyncService)
+			preview, err := catalog.Preview("fixture", pem.EncodeToMemory(block))
+			if err != nil {
+				log.Fatal(err)
+			}
+			key, err := catalog.Import(preview.Token, "fixture", "")
+			if err != nil {
+				log.Fatal(err)
+			}
+			_, err = store.UpdateHost(jumpHost.ID, domain.HostInput{Name: jumpHost.Name, Alias: jumpHost.Alias, HostName: jumpHost.HostName, User: jumpHost.User, Port: jumpHost.Port, JumpHostID: host.ID, IdentityFile: desktopkeys.Prefix + key.ID})
+			if err != nil {
+				log.Fatal(err)
+			}
+			catalog.Close()
 		}
 		fmt.Printf("Tunnel fixture: local=http://127.0.0.1:%d target=%s via=%s\n", localPort, target.Addr(), jumpHost.Alias)
 	}

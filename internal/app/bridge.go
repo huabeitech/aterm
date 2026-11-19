@@ -3,13 +3,26 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // DesktopRequest is the runtime boundary shared by the migrated React renderer.
 // Dispatch is explicit: the webview cannot reflectively invoke arbitrary Go methods.
 func (a *App) DesktopRequest(ctx context.Context, channel string, args []json.RawMessage) (any, error) {
 	switch channel {
+	case "agent:request":
+		window, _ := ctx.Value(application.WindowKey).(application.Window)
+		main := a.mainWindow()
+		if window == nil || main == nil || window.ID() != main.ID() {
+			return nil, errors.New("MAIN_WINDOW_REQUIRED")
+		}
+		op, rest, err := operation(args)
+		if err != nil {
+			return nil, err
+		}
+		return a.agentDesktop(op, rest)
 	case "app:bootstrap":
 		return a.desktopBootstrap()
 	case "app:info":

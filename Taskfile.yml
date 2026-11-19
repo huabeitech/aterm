@@ -94,6 +94,7 @@ tasks:
       - mkdir -p "{{.APP_BUNDLE}}/Contents/MacOS"
       - mkdir -p "{{.APP_BUNDLE}}/Contents/Resources"
       - python3 scripts/go-macos.py build {{.BUILD_FLAGS}} -o "{{.BIN_DIR}}/{{.APP_NAME}}"
+      - '{{if has "mas" (splitList "," .TAGS)}}true{{else}}python3 scripts/go-macos.py build {{.BUILD_FLAGS}} -o "{{.APP_BUNDLE}}/Contents/MacOS/aterm-mcp" ./cmd/aterm-mcp{{end}}'
       - cp "{{.BIN_DIR}}/{{.APP_NAME}}" "{{.APP_BUNDLE}}/Contents/MacOS/{{.APP_NAME}}"
       - cp build/darwin/Info.plist "{{.APP_BUNDLE}}/Contents/Info.plist"
       - cp build/darwin/iconfile.icns "{{.APP_BUNDLE}}/Contents/Resources/iconfile.icns"
