@@ -1,4 +1,9 @@
 {
+  "agent.skillLabel": "代理程式技能",
+  "agent.skillInstall": "安裝 Skill",
+  "agent.skillInstalled": "已安裝",
+  "agent.skillHelp": "安裝後，開啟新的代理程式工作階段，即可要求它查找或連線至 aTerm 中的主機。",
+  "agent.skillError": "安裝失敗，請檢查 ~/.agents/skills 下的 aterm-ssh 目錄。",
   "agent.section": "AI",
   "agent.access": "代理程式存取",
   "agent.enable": "允許本機代理程式存取所有已儲存的主機及其備註",

@@ -1,4 +1,9 @@
 {
+  "agent.skillLabel": "에이전트 스킬",
+  "agent.skillInstall": "스킬 설치",
+  "agent.skillInstalled": "설치됨",
+  "agent.skillHelp": "새 세션에서 에이전트에게 aTerm 호스트 검색이나 연결을 요청하세요.",
+  "agent.skillError": "설치하지 못했습니다. ~/.agents/skills의 aterm-ssh 디렉터리를 확인하세요.",
   "agent.section": "AI",
   "agent.access": "에이전트 접근",
   "agent.enable": "로컬 에이전트가 저장된 모든 호스트와 메모에 접근하도록 허용",

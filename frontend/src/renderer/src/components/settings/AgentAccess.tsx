@@ -1,4 +1,5 @@
 import { SettingsGroup, SettingRow } from './SettingsGroup'
+import { ActionButton } from '../ui/workbench-controls'
 import { Switch } from '../ui/switch'
 import { t } from '../../../../shared/i18n'
 import { useEffect, useState } from 'react'
@@ -10,15 +11,15 @@ export function AgentAccess() {
   const [config, setConfig] = useState<AgentConfig>()
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [command, setCommand] = useState('')
+  const [installed, setInstalled] = useState(false)
+  const [installFailed, setInstallFailed] = useState(false)
   useEffect(() => {
     let active = true
-    agentRequest<{config: AgentConfig; socket: string; helper: string}>('config')
+    agentRequest<{config: AgentConfig; skillInstalled: boolean}>('config')
       .then((result) => {
         if (!active) return
         setConfig(result.config)
-        const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'"
-        setCommand('codex mcp add aterm -- ' + quote(result.helper) + ' --socket ' + quote(result.socket))
+        setInstalled(result.skillInstalled)
       }).catch(() => { if (active) setFailed(true) })
     return () => { active = false }
   }, [])
@@ -28,6 +29,18 @@ export function AgentAccess() {
     try { await agentRequest('save', next); setConfig(next) }
     catch { setFailed(true) }
     finally { setBusy(false) }
+  }
+  async function installSkill() {
+    setBusy(true)
+    setInstallFailed(false)
+    try {
+      await agentRequest('installSkill')
+      setInstalled(true)
+    } catch {
+      setInstallFailed(true)
+    } finally {
+      setBusy(false)
+    }
   }
   const label = t('native:agent.enable')
   return (
@@ -43,8 +56,12 @@ export function AgentAccess() {
         </SettingRow>
       </SettingsGroup>
       {config?.enabled && (
-        <SettingsGroup title="Codex">
-          <pre className="settings-agent-command"><code>{command}</code></pre>
+        <SettingsGroup title="aterm-ssh" footer={t('native:agent.skillHelp')}>
+          <SettingRow label={t('native:agent.skillLabel')} error={installFailed ? t('native:agent.skillError') : undefined}>
+            <ActionButton disabled={busy || installed} onClick={() => void installSkill()}>
+              {t(installed ? 'native:agent.skillInstalled' : 'native:agent.skillInstall')}
+            </ActionButton>
+          </SettingRow>
         </SettingsGroup>
       )}
     </>

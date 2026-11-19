@@ -1,4 +1,9 @@
 {
+  "agent.skillLabel": "Compétence de l’agent",
+  "agent.skillInstall": "Installer",
+  "agent.skillInstalled": "Installée",
+  "agent.skillHelp": "Ouvrez une nouvelle session et demandez à votre agent de rechercher un hôte aTerm ou de s’y connecter.",
+  "agent.skillError": "Installation impossible. Vérifiez le dossier aterm-ssh dans ~/.agents/skills.",
   "agent.section": "IA",
   "agent.access": "Accès des agents",
   "agent.enable": "Autoriser les agents locaux à accéder à tous les hôtes enregistrés et à leurs notes",

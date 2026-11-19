@@ -194,11 +194,17 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 	defer s.mu.Unlock()
 	switch op {
 	case "config":
-		exe, err := os.Executable()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"config": s.config, "socket": s.socket(), "helper": filepath.Join(filepath.Dir(exe), "aterm-mcp")}, nil
+		return map[string]any{"config": s.config, "skillInstalled": agentbridge.SkillInstalled(home, s.socket())}, nil
+	case "installSkill":
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		return nil, agentbridge.InstallSkill(home, s.socket())
 	case "save":
 		cfg, err := argument[agentConfig](args, 0)
 		if err != nil {

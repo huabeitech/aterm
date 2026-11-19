@@ -1,4 +1,9 @@
 {
+  "agent.skillLabel": "エージェントのスキル",
+  "agent.skillInstall": "インストール",
+  "agent.skillInstalled": "インストール済み",
+  "agent.skillHelp": "新しいセッションで、エージェントに aTerm のホストの検索や接続を依頼できます。",
+  "agent.skillError": "インストールできませんでした。~/.agents/skills の aterm-ssh ディレクトリを確認してください。",
   "agent.section": "AI",
   "agent.access": "エージェントアクセス",
   "agent.enable": "ローカルエージェントに保存済みのすべてのホストとそのメモへのアクセスを許可する",

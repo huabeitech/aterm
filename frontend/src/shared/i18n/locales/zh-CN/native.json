@@ -1,4 +1,9 @@
 {
+  "agent.skillLabel": "Agent 技能",
+  "agent.skillInstall": "安装 Skill",
+  "agent.skillInstalled": "已安装",
+  "agent.skillHelp": "安装后，新开一个 Agent 会话，直接让它查找或连接 aTerm 中的主机。",
+  "agent.skillError": "安装失败，请检查 ~/.agents/skills 下的 aterm-ssh 目录。",
   "agent.section": "AI",
   "agent.access": "Agent 访问",
   "agent.enable": "允许本地 Agent 访问所有已保存的主机及其备注",
