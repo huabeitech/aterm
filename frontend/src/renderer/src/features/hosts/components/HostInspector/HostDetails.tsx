@@ -1,6 +1,6 @@
 import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/desktop'
 import { toast } from '@/components/ui/toast'
 import { ChevronRight, Copy, Eye, EyeOff } from 'lucide-react'
@@ -53,7 +53,7 @@ export function HostDetails({
         )}
       </div>
       <div className="grid min-h-0 min-w-0 content-start overflow-y-auto">
-        <DetailGroup title={t('hosts:connection')} collapsible>
+        <DetailGroup title={t('hosts:connection')} initiallyOpen>
           <DetailRow label={t('hosts:address')}>
             <CopyableDetailValue value={host.hostName} label={t('hosts:address')} />
           </DetailRow>
@@ -68,7 +68,7 @@ export function HostDetails({
             {host.directoryID ? directoryPath || '—' : t('hosts:rootDirectory')}
           </DetailRow>
         </DetailGroup>
-        <DetailGroup title={t('hosts:authentication')} collapsible>
+        <DetailGroup title={t('hosts:authentication')} initiallyOpen>
           <DetailRow label={t('hosts:method')}>
             {host.passwordAuth ? t('hosts:password') : t('hosts:publicKey')}
           </DetailRow>
@@ -82,30 +82,24 @@ export function HostDetails({
             </DetailRow>
           )}
         </DetailGroup>
-        <CollapsibleSection title={t('hosts:advancedSettings')}>
-          <div>
-            <DetailGroup title={t('hosts:connectionOptions')}>
-              <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
-              <DetailRow label={t('hosts:agentForwarding')}>
-                {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
-              </DetailRow>
-              <DetailRow label={t('hosts:compression')}>
-                {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
-              </DetailRow>
-            </DetailGroup>
-            <DetailGroup title={t('hosts:reliability')}>
-              <DetailRow label={t('hosts:keepaliveInterval')}>
-                {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
-              </DetailRow>
-              <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
-                {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
-              </DetailRow>
-              <DetailRow label={t('hosts:connectionTimeout')}>
-                {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
-              </DetailRow>
-            </DetailGroup>
-          </div>
-        </CollapsibleSection>
+        <DetailGroup title={t('hosts:advancedSettings')}>
+          <DetailRow label={t('hosts:jumpHost')}>{jumpHost}</DetailRow>
+          <DetailRow label={t('hosts:agentForwarding')}>
+            {host.forwardAgent ? t('hosts:enabled') : t('hosts:disabled')}
+          </DetailRow>
+          <DetailRow label={t('hosts:compression')}>
+            {host.compression ? t('hosts:enabled') : t('hosts:disabled')}
+          </DetailRow>
+          <DetailRow label={t('hosts:connectionTimeout')}>
+            {host.connectTimeout > 0 ? seconds.format(host.connectTimeout) : defaultValue}
+          </DetailRow>
+          <DetailRow label={t('hosts:keepaliveInterval')}>
+            {host.serverAliveInterval > 0 ? seconds.format(host.serverAliveInterval) : defaultValue}
+          </DetailRow>
+          <DetailRow label={t('hosts:maxUnansweredKeepalives')}>
+            {host.serverAliveCountMax > 0 ? number.format(host.serverAliveCountMax) : defaultValue}
+          </DetailRow>
+        </DetailGroup>
         {host.remark && (
           <CollapsibleSection title={t('hosts:notes')} initiallyOpen>
             <p className="m-0 select-text wrap-anywhere whitespace-pre-wrap px-3 py-2.5 text-xs leading-relaxed text-foreground">
@@ -141,23 +135,16 @@ function CollapsibleSection({
 function DetailGroup({
   title,
   children,
-  collapsible = false
+  initiallyOpen
 }: {
   title: string
   children: ReactNode
-  collapsible?: boolean
+  initiallyOpen?: boolean
 }) {
-  const headingID = useId()
-  const properties = <dl className="m-0 divide-y divide-border/55">{children}</dl>
-  if (collapsible)
-    return <CollapsibleSection title={title} initiallyOpen>{properties}</CollapsibleSection>
   return (
-    <section aria-labelledby={headingID} className="min-w-0">
-      <h3 id={headingID} className="mb-2 text-sm font-semibold text-[var(--mac-text)]">
-        {title}
-      </h3>
-      {properties}
-    </section>
+    <CollapsibleSection title={title} initiallyOpen={initiallyOpen}>
+      <dl className="m-0 divide-y divide-border/55">{children}</dl>
+    </CollapsibleSection>
   )
 }
 
