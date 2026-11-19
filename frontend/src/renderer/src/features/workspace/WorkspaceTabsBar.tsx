@@ -4,7 +4,7 @@ import { hasRemoteConnection } from '../../../../shared/contracts/terminal'
 import { t } from '../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { Tip } from '@/components/ui/desktop'
+import { IconButton, Tip } from '@/components/ui/desktop'
 import { HoverDetailsGroup, type MenuAction } from '@/components/ui/workbench-controls'
 import { useAppUI } from '@/components/ui/confirm-provider'
 import type { DragEvent, RefObject, WheelEvent } from 'react'
@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Crosshair,
   FolderOpen,
   Plus,
   Search,
@@ -55,6 +56,7 @@ interface WorkspaceTabsBarProps {
   onOpenFiles: (host: domain.Host, afterTab: WorkspaceTabID) => void
   onOpenFilesSplit: (host: domain.Host, terminalID: string) => void
   onCopyCommand: (host: domain.Host) => void
+  onLocateHost: (hostID: string, tab: WorkspaceTabID) => void
   onReconnect: (host: domain.Host) => void
   onCloseAll: () => void
   onCloseOther: (tab: WorkspaceTabID) => void
@@ -173,7 +175,14 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
                 session?.customTitle ? () => props.onResetTerminalName(session.id) : undefined
               }
               tooltip={
-                session ? <TerminalTabDetails session={session} host={host ?? null} /> : undefined
+                session || host ? (
+                  <TerminalTabDetails
+                    session={session}
+                    host={host}
+                    onCopyCommand={props.onCopyCommand}
+                    onLocateHost={(hostID) => props.onLocateHost(hostID, tab)}
+                  />
+                ) : undefined
               }
               icon={hostID || (session && hasRemoteConnection(session)) ? <Server size={14} /> : <Terminal size={14} />}
               active={props.activeTab === tab}
@@ -277,9 +286,13 @@ export function WorkspaceTabsBar(props: WorkspaceTabsBarProps) {
 function TerminalTabDetails({
   session,
   host,
+  onCopyCommand,
+  onLocateHost,
 }: {
-  session: TerminalSession
-  host: domain.Host | null
+  session?: TerminalSession
+  host?: domain.Host
+  onCopyCommand: (host: domain.Host) => void
+  onLocateHost: (hostID: string) => void
 }) {
   useTranslation()
   const { message } = useAppUI()
@@ -289,79 +302,98 @@ function TerminalTabDetails({
       () => message.error(t('terminal:copyFailed', { label })),
     )
   }
-  const rows = hasRemoteConnection(session)
+  const remote = session?.remote
+  const user = remote?.user || host?.user
+  const rows = (session ? hasRemoteConnection(session) : !!host)
     ? [
         [t('terminal:type'), 'SSH'],
         ...(host?.alias ? [[t('hosts:hostAlias'), host.alias]] : []),
-        [t('hosts:address'), session.remote?.host || host?.hostName || t('terminal:unavailable')],
+        [t('hosts:address'), remote?.host || host?.hostName || t('terminal:unavailable')],
         [
           t('terminal:port'),
-          session.remote
-            ? String(session.remote.port)
+          remote
+            ? String(remote.port)
             : host
               ? String(host.port)
               : t('terminal:unavailable'),
         ],
-        ...(session.remote?.user || host?.user
-          ? [[t('terminal:username'), session.remote?.user || host!.user]]
-          : []),
-        [
-          t('terminal:status'),
-          {
-            connecting: t('terminal:sessionConnecting'),
-            running: t('terminal:sessionRunning'),
-            exited: t('terminal:sessionExited'),
-            error: t('terminal:sessionError'),
-          }[session.state],
-        ],
+        ...(user ? [[t('terminal:username'), user]] : []),
       ]
     : [
         [t('terminal:type'), t('terminal:localTerminal')],
-        [t('terminal:directory'), session.cwd || t('terminal:unavailable')],
-        [t('terminal:shell'), session.shell || t('terminal:starting')],
-        [
-          t('terminal:status'),
-          {
-            connecting: t('terminal:sessionConnecting'),
-            running: t('terminal:sessionRunning'),
-            exited: t('terminal:sessionExited'),
-            error: t('terminal:sessionError'),
-          }[session.state],
-        ],
+        [t('terminal:directory'), session?.cwd || t('terminal:unavailable')],
+        [t('terminal:shell'), session?.shell || t('terminal:starting')],
       ]
+  if (session) {
+    rows.push([
+      t('terminal:status'),
+      {
+        connecting: t('terminal:sessionConnecting'),
+        running: t('terminal:sessionRunning'),
+        exited: t('terminal:sessionExited'),
+        error: t('terminal:sessionError'),
+      }[session.state],
+    ])
+  }
+  const copyLabel = t('hosts:copySshCommand')
+  const locateLabel = t('hosts:locateHost')
   return (
-    <dl
-      className={cn(
-        'workspace-host-details grid min-w-60 max-w-90 gap-1.5 m-0 [&_>_div]:grid [&_>_div]:grid-cols-[64px_minmax(0,_1fr)] [&_>_div]:gap-2.5',
-        '[&_dt]:text-[var(--mac-secondary-text)] [&_dt]:text-xs [&_dd]:min-w-0 [&_dd]:m-0 [&_dd]:text-[var(--mac-text)] [&_dd]:text-xs',
-        '[&_dd]:wrap-anywhere',
-      )}
-    >
-      {rows.map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>
-            {label === t('terminal:type') ||
-            label === t('terminal:status') ||
-            value === t('terminal:unavailable') ||
-            value === t('terminal:starting') ? (
-              value
-            ) : (
-              <button
-                type="button"
-                className="group inline-flex max-w-full items-start gap-1 p-0 text-left text-inherit bg-transparent border-0 cursor-copy hover:text-[var(--terminal-accent,#0a84ff)]"
-                aria-label={t('terminal:copyField', { label })}
-                title={t('terminal:copyField', { label })}
-                onClick={() => copy(label ?? '', value ?? '')}
-              >
-                <span className="min-w-0 wrap-anywhere">{value}</span>
-                <Copy className="mt-px size-3 shrink-0 opacity-0 group-hover:opacity-100" />
-              </button>
-            )}
-          </dd>
+    <div className="grid gap-2 text-[length:var(--app-text-13)] [-webkit-app-region:no-drag]">
+      <dl
+        className={cn(
+          'workspace-host-details grid min-w-60 max-w-90 gap-1.5 m-0 [&_>_div]:grid [&_>_div]:grid-cols-[64px_minmax(0,_1fr)] [&_>_div]:gap-2.5',
+          '[&_dt]:text-[var(--mac-secondary-text)] [&_dd]:min-w-0 [&_dd]:m-0 [&_dd]:text-[var(--mac-text)]',
+          '[&_dd]:wrap-anywhere',
+        )}
+      >
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>
+              {label === t('terminal:type') ||
+              label === t('terminal:status') ||
+              value === t('terminal:unavailable') ||
+              value === t('terminal:starting') ? (
+                value
+              ) : (
+                <button
+                  type="button"
+                  className="group inline-flex max-w-full items-start gap-1 p-0 text-left text-inherit bg-transparent border-0 cursor-copy hover:text-[var(--terminal-accent,#0a84ff)]"
+                  aria-label={t('terminal:copyField', { label })}
+                  title={t('terminal:copyField', { label })}
+                  onClick={() => copy(label ?? '', value ?? '')}
+                >
+                  <span className="min-w-0 wrap-anywhere">{value}</span>
+                  <Copy className="mt-px size-3 shrink-0 opacity-0 group-hover:opacity-100" />
+                </button>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {host && (
+        <div
+          className="flex justify-end gap-1 border-t border-border pt-2"
+          role="group"
+          aria-label={t('hosts:hostActions')}
+        >
+          <Tip title={copyLabel}>
+            <IconButton
+              aria-label={copyLabel}
+              icon={<Copy aria-hidden="true" />}
+              onClick={() => onCopyCommand(host)}
+            />
+          </Tip>
+          <Tip title={locateLabel}>
+            <IconButton
+              aria-label={locateLabel}
+              icon={<Crosshair aria-hidden="true" />}
+              onClick={() => onLocateHost(host.id)}
+            />
+          </Tip>
         </div>
-      ))}
-    </dl>
+      )}
+    </div>
   )
 }
 

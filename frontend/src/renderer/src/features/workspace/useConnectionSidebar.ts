@@ -50,9 +50,13 @@ export function useConnectionSidebar() {
     if (element) element.scrollTop = scrollTop.current
   }, [collapsed])
 
-  function revealSearch() {
+  function reveal() {
     collapsedRef.current = false
     setCollapsed(false)
+  }
+
+  function revealSearch() {
+    reveal()
     const deadline = performance.now() + 1000
     function focusSearch() {
       if (collapsedRef.current || performance.now() > deadline) return
@@ -71,5 +75,5 @@ export function useConnectionSidebar() {
     requestAnimationFrame(focusSearch)
   }
 
-  return { preferredWidth, collapsed, toggle, revealSearch, commitWidth }
+  return { preferredWidth, collapsed, toggle, reveal, revealSearch, commitWidth }
 }

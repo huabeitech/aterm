@@ -9,6 +9,7 @@ import type {
 
 export interface ConnectionTreeProps {
   currentHostID?: string
+  locateRequest?: { hostID: string } | null
   hosts: domain.Host[]
   loading: boolean
   directoryTree: DirectoryTreeItem[]

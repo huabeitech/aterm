@@ -59,6 +59,13 @@ export function ConnectionTree(props: ConnectionTreeProps) {
     setLocateID(id)
     setRevealRequest((n) => n + 1)
   }
+  function locateHost(id: string) {
+    if (!props.selectedHostIDs.includes(id)) props.onSelectHost(id, [id])
+    revealHost(id)
+  }
+  useEffect(() => {
+    if (props.locateRequest) locateHost(props.locateRequest.hostID)
+  }, [props.locateRequest])
   useEffect(() => {
     if (!locateID) return
     const row = Array.from(
@@ -221,10 +228,7 @@ export function ConnectionTree(props: ConnectionTreeProps) {
           busy={disabled}
           createActions={rootActions}
           onLocate={() => {
-            if (!locateHostID) return
-            if (!props.selectedHostIDs.includes(locateHostID))
-              props.onSelectHost(locateHostID, [locateHostID])
-            revealHost(locateHostID)
+            if (locateHostID) locateHost(locateHostID)
           }}
         />
         {/* Keep drag feedback out of flow: moving the source row can cancel native dragging. */}

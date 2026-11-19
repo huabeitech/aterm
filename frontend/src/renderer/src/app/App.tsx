@@ -132,6 +132,7 @@ function Workbench({
     [],
   )
   const sidebar = useConnectionSidebar()
+  const [locateRequest, setLocateRequest] = useState<{ hostID: string } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const plugins = usePluginCatalog()
   const [pluginHostIDs, setPluginHostIDs] = useState<Record<string, string | undefined>>({})
@@ -784,7 +785,12 @@ function Workbench({
             onCloseFiles={(id) => closeTabs([id])}
             onOpenFiles={(host) => void openFiles(host.id)}
             onOpenFilesSplit={unavailable}
-            onCopyCommand={unavailable}
+            onCopyCommand={(host) => void library.sidebarProps.onCopySSHCommand(host.id)}
+            onLocateHost={(hostID, tabID) => {
+              if (isSettings) tabs.setActiveWorkspaceTab(tabID)
+              sidebar.reveal()
+              setLocateRequest({ hostID })
+            }}
             onReconnect={unavailable}
             onCloseAll={() => closeTabs(tabs.closableTabs())}
             onCloseOther={(id) => closeTabs(tabs.closableTabs().filter((tab) => tab !== id))}
@@ -804,6 +810,7 @@ function Workbench({
             {...library.sidebarProps}
             platform={bootstrap.info.platform}
             currentHostID={activeHostID}
+            locateRequest={locateRequest}
             activeView={isSettings ? 'settings' : library.activeView}
             syncStatus={integration.status?.sync ?? null}
             quickBackupPhase={null}
