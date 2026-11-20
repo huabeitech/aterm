@@ -370,6 +370,12 @@ export function FileWorkspace({
     }
   }
   const refresh = () => load(path, 'refresh')
+  function upload(folder = false) {
+    void run(async () => {
+      await desktop.files.upload(session.id, path, folder)
+      setTransfersOpen(true)
+    })
+  }
   function startAddressEditing() {
     setAddress(path)
     setEditingAddress(true)
@@ -839,12 +845,7 @@ export function FileWorkspace({
                 className="rounded-r-none px-3"
                 size="sm"
                 disabled={!ready || !path}
-                onClick={() =>
-                  void run(async () => {
-                    await desktop.files.upload(session.id, path)
-                    setTransfersOpen(true)
-                  })
-                }
+                onClick={() => upload()}
               >
                 <Upload size={15} />
                 {t('files:uploads')}
@@ -855,11 +856,7 @@ export function FileWorkspace({
                     key: 'folder',
                     label: t('files:uploadFolder'),
                     icon: <FolderUp size={15} />,
-                    onClick: () =>
-                      void run(async () => {
-                        await desktop.files.upload(session.id, path, true)
-                        setTransfersOpen(true)
-                      })
+                    onClick: () => upload(true)
                   }
                 ]}
               >
@@ -991,7 +988,33 @@ export function FileWorkspace({
             }
           />
         )}
-        <div className="files-browser flex-1 flex min-h-0 overflow-hidden">
+        <ActionMenu
+          context
+          actions={[
+            { key: 'folder', label: t('files:newFolder'), icon: <Folder size={15} />, disabled: busy, onClick: () => create('mkdir') },
+            { key: 'file', label: t('files:newFile'), icon: <FileText size={15} />, disabled: busy, onClick: () => create('touch') },
+            { type: 'divider' },
+            { key: 'upload', label: t('files:uploadFiles'), icon: <Upload size={15} />, onClick: () => upload() },
+            { key: 'upload-folder', label: t('files:uploadFolder'), icon: <FolderUp size={15} />, onClick: () => upload(true) },
+            { type: 'divider' },
+            { key: 'refresh', label: t('files:refresh'), icon: <RefreshCw size={15} />, onClick: () => void refresh() }
+          ]}
+        >
+          <div
+            className="files-browser flex-1 flex min-h-0 overflow-hidden"
+            onContextMenu={(event) => {
+              const target = event.target
+              if (!ready || !path || !(target instanceof Element) || !event.currentTarget.contains(target)
+                || target.closest('[data-remote-path], thead, button, input, label')) {
+                event.preventDefault()
+                return
+              }
+              setSelected([])
+              anchor.current = undefined
+              focusedPath.current = undefined
+              selection.container.current?.focus({ preventScroll: true })
+            }}
+          >
           <div
             ref={selection.container}
             {...selection.handlers}
@@ -1209,12 +1232,7 @@ export function FileWorkspace({
                         <>
                           <ActionButton
                             variant="default"
-                            onClick={() =>
-                              void run(async () => {
-                                await desktop.files.upload(session.id, path)
-                                setTransfersOpen(true)
-                              })
-                            }
+                            onClick={() => upload()}
                             icon={<Upload size={16} />}
                           >
                             {t('files:uploadFiles')}
@@ -1230,7 +1248,8 @@ export function FileWorkspace({
               </>
             )}
           </div>
-        </div>
+          </div>
+        </ActionMenu>
         {statusTarget
           ? createPortal(
               <div className="files-status connection-file-status">
