@@ -39,6 +39,8 @@ type transferTask struct {
 	closers   []io.Closer
 	started   time.Time
 	notified  time.Time
+	resume    chan struct{}
+	pausedAt  time.Time
 }
 type transferJob struct {
 	task    *transferTask
@@ -161,6 +163,45 @@ func (m *Transfers) Cancel(sessionID, id string) error {
 	}
 	return nil
 }
+func (m *Transfers) SetPaused(sessionID, id string, paused bool) error {
+	task, err := m.task(sessionID, id)
+	if err != nil {
+		return err
+	}
+	task.mu.Lock()
+	defer task.mu.Unlock()
+	if paused && task.info.State == "running" {
+		task.resume = make(chan struct{})
+		task.pausedAt = time.Now()
+		task.info.State = "paused"
+	} else if !paused && task.info.State == "paused" {
+		close(task.resume)
+		task.resume = nil
+		task.started = task.started.Add(time.Since(task.pausedAt))
+		task.info.State = "running"
+	} else {
+		return nil
+	}
+	m.send(task.info)
+	return nil
+}
+
+func (task *transferTask) waitReady(ctx context.Context) error {
+	for {
+		task.mu.Lock()
+		resume := task.resume
+		task.mu.Unlock()
+		if resume == nil {
+			return ctx.Err()
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-resume:
+		}
+	}
+}
+
 func (m *Transfers) Retry(sessionID, id string) error {
 	if _, err := m.files.Session(sessionID); err != nil {
 		return err
@@ -287,6 +328,7 @@ func (m *Transfers) worker() {
 			actual, err := m.run(ctx, task, info)
 			task.mu.Lock()
 			task.executing = false
+			task.resume = nil
 			task.closers = nil
 			if ctx.Err() != nil {
 				task.info.State = "cancelled"
@@ -313,6 +355,11 @@ func (m *Transfers) progress(task *transferTask, bytes, total int64, directory b
 		task.info.Total = total
 		task.info.Directory = directory
 	}
+	// A write already in flight may finish after pause. Account for its bytes
+	// but keep the displayed progress frozen until the resume event.
+	if task.info.State == "paused" {
+		return
+	}
 	elapsed := time.Since(task.started).Seconds()
 	if elapsed > 0 {
 		task.info.BytesPerSecond = float64(task.info.Transferred) / elapsed
@@ -329,7 +376,7 @@ func (m *Transfers) copy(ctx context.Context, task *transferTask, destination io
 	defer func() { source.Close(); destination.Close(); task.mu.Lock(); task.closers = nil; task.mu.Unlock() }()
 	buffer := make([]byte, 64*1024)
 	for {
-		if err := ctx.Err(); err != nil {
+		if err := task.waitReady(ctx); err != nil {
 			return err
 		}
 		count, readErr := source.Read(buffer)
@@ -370,7 +417,7 @@ func (m *Transfers) run(ctx context.Context, task *transferTask, info Transfer) 
 	var total int64
 	var walk func(string, int) error
 	walk = func(relative string, depth int) error {
-		if err := ctx.Err(); err != nil {
+		if err := task.waitReady(ctx); err != nil {
 			return err
 		}
 		if len(entries) >= 10000 || depth > 64 {
@@ -456,7 +503,7 @@ func (m *Transfers) run(ctx context.Context, task *transferTask, info Transfer) 
 		}
 	}
 	for _, entry := range entries {
-		if err := ctx.Err(); err != nil {
+		if err := task.waitReady(ctx); err != nil {
 			return "", err
 		}
 		remote := info.RemotePath
@@ -506,7 +553,7 @@ func (m *Transfers) run(ctx context.Context, task *transferTask, info Transfer) 
 			return "", err
 		}
 	}
-	if err := ctx.Err(); err != nil {
+	if err := task.waitReady(ctx); err != nil {
 		return "", err
 	}
 	if upload {

@@ -1,6 +1,10 @@
 package files
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -164,5 +168,59 @@ func TestTransferRejectsSymlinksAndPreservesRemoteCollisions(t *testing.T) {
 	}
 	if state := awaitTransfer(t, events, task.ID, terminalTransfer); state.State != "failed" {
 		t.Fatal("symlink was followed during transfer")
+	}
+}
+
+type pausingWriter struct {
+	bytes.Buffer
+	afterFirstWrite func()
+}
+
+func (w *pausingWriter) Write(p []byte) (int, error) {
+	n, err := w.Buffer.Write(p)
+	if w.afterFirstWrite != nil {
+		w.afterFirstWrite()
+		w.afterFirstWrite = nil
+	}
+	return n, err
+}
+func (*pausingWriter) Close() error { return nil }
+
+func TestPausedCopyCanResumeOrCancel(t *testing.T) {
+	for _, action := range []string{"resume", "cancel"} {
+		t.Run(action, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			task := &transferTask{ctx: ctx, cancel: cancel, info: Transfer{SessionID: "session", ID: "file", State: "running"}, started: time.Now()}
+			m := &Transfers{tasks: map[string]*transferTask{"file": task}}
+			paused := make(chan struct{})
+			dest := &pausingWriter{afterFirstWrite: func() { m.SetPaused("session", "file", true); close(paused) }}
+			data := bytes.Repeat([]byte("sample"), 50000)
+			done := make(chan error, 1)
+			go func() { done <- m.copy(ctx, task, dest, io.NopCloser(bytes.NewReader(data))) }()
+			<-paused
+			select {
+			case <-done:
+				t.Fatal("copy continued while paused")
+			case <-time.After(20 * time.Millisecond):
+			}
+			if action == "cancel" {
+				m.Cancel("session", "file")
+			} else {
+				m.SetPaused("session", "file", false)
+			}
+			select {
+			case err := <-done:
+				if action == "cancel" {
+					if !errors.Is(err, context.Canceled) {
+						t.Fatalf("cancel: %v", err)
+					}
+				} else if err != nil || !bytes.Equal(dest.Bytes(), data) {
+					t.Fatal("resumed copy differs", err)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("paused copy stuck")
+			}
+		})
 	}
 }

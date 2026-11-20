@@ -104,7 +104,7 @@ export function ConnectionWorkspace({
   const [statusTarget, setStatusTarget] = useState<HTMLDivElement | null>(null)
   const [transferRequest, setTransferRequest] = useState(0)
   const [size, setSize] = useState<number | string>('50%')
-  const activeTransfers = transfers.filter((t) => t.state === 'running' || t.state === 'queued')
+  const activeTransfers = transfers.filter((t) => t.state === 'running' || t.state === 'queued' || t.state === 'paused')
   const failed = transfers.filter((t) => t.state === 'failed').length
   const total = activeTransfers.reduce((sum, t) => sum + t.total, 0)
   const transferred = activeTransfers.reduce((sum, t) => sum + t.transferred, 0)

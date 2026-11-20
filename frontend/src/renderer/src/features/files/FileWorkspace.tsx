@@ -340,7 +340,7 @@ export function FileWorkspace({
     otherColumnsWidth +
     resolvedWidths[fillColumn.key] * layoutScale
   const failedTransfers = transfers.filter((t) => t.state === 'failed').length
-  const activeTransfers = transfers.filter((t) => ['running', 'queued'].includes(t.state))
+  const activeTransfers = transfers.filter((t) => ['running', 'queued', 'paused'].includes(t.state))
   const seenActiveTransferIDs = useRef(new Set<string>())
   useEffect(() => {
     const activeIDs = new Set(activeTransfers.map((t) => t.id))

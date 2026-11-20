@@ -49,7 +49,7 @@ export interface FileTransfer {
   name: string
   remotePath: string
   localPath: string
-  state: 'queued' | 'running' | 'completed' | 'cancelled' | 'failed'
+  state: 'queued' | 'paused' | 'running' | 'completed' | 'cancelled' | 'failed'
   transferred: number
   bytesPerSecond?: number
   total: number
@@ -73,6 +73,8 @@ export interface FilesApi {
   pathsForFiles(files: File[]): string[]
   image(id: string, path: string): Promise<{ dataURL: string; size: number }>
   download(id: string, paths: string[]): Promise<void>
+  pause(id: string, transferID: string): Promise<void>
+  resume(id: string, transferID: string): Promise<void>
   cancel(id: string, transferID: string): Promise<void>
   retry(id: string, transferID: string): Promise<void>
   clearCompleted(id: string): Promise<void>

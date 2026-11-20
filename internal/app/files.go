@@ -209,12 +209,14 @@ func (a *App) desktopFiles(raw []json.RawMessage) (any, error) {
 			}
 		}
 		return nil, nil
-	case "cancel", "retry", "removeTransfer", "reveal":
+	case "pause", "resume", "cancel", "retry", "removeTransfer", "reveal":
 		transferID, err := argument[string](args, 1)
 		if err != nil {
 			return nil, err
 		}
 		switch op {
+		case "pause", "resume":
+			return nil, a.transfers().SetPaused(id, transferID, op == "pause")
 		case "cancel":
 			return nil, a.transfers().Cancel(id, transferID)
 		case "retry":

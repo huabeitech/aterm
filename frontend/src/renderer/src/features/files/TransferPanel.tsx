@@ -27,10 +27,11 @@ import type { FileTransfer } from '../../../../shared/contracts/files'
 import { fileSize, uploadTimeRemaining } from './fileFormat'
 import { FileState } from './FileState'
 
-const active = (t: FileTransfer) => t.state === 'queued' || t.state === 'running'
+const active = (t: FileTransfer) => t.state === 'queued' || t.state === 'running' || t.state === 'paused'
 const retryable = (t: FileTransfer) => t.state === 'failed' || t.state === 'cancelled'
 const stateLabel = (t: FileTransfer) =>
   ({
+    paused: translate('files:transferPaused'),
     queued: translate('files:transferQueued'),
     running: translate('files:transferRunning'),
     completed: translate('files:transferCompleted'),
@@ -304,7 +305,7 @@ export function TransferPanel({
               </div>
               <div className="files-transfer-progress min-w-0">
                 <small>{progressLabel(t)}</small>
-                {t.state === 'running' && (
+                {(t.state === 'running' || t.state === 'paused') && (
                   <small className="files-transfer-speed">
                     {fileSize(t.bytesPerSecond ?? 0)}/s
                     {t.direction === 'upload' && <> · {uploadTimeRemaining(t)}</>}
@@ -318,6 +319,17 @@ export function TransferPanel({
                 )}
               </div>
               <div className="files-transfer-actions flex items-center justify-end gap-1">
+                {(t.state === 'running' || t.state === 'paused') && (
+                  <ActionButton
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void run(() => t.state === 'paused'
+                      ? desktop.files.resume(sessionID, t.id)
+                      : desktop.files.pause(sessionID, t.id))}
+                  >
+                    {t.state === 'paused' ? translate('files:resume') : translate('files:pause')}
+                  </ActionButton>
+                )}
                 {active(t) ? (
                   <ActionButton
                     size="sm"
