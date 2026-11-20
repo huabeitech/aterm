@@ -41,7 +41,7 @@ export function HostDetails({
       <div className="shrink-0 border-b border-border/60 px-3 pt-3 pb-3">
         {actions(
           <div className="min-w-0">
-            <h2 className="m-0 truncate text-sm leading-tight font-semibold text-[var(--mac-text)]" title={host.name}>
+            <h2 className="m-0 truncate text-base leading-tight font-semibold text-[var(--mac-text)]" title={host.name}>
               {host.name}
             </h2>
             <div className="mt-1 flex min-w-0 font-mono text-sm text-[var(--mac-secondary-text)]">

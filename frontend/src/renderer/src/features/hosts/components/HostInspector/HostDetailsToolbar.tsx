@@ -45,8 +45,9 @@ export function HostDetailsToolbar({
         <div className="flex items-center gap-1">
           <Tip title={t('hosts:openSshTerminal')}>
             <ActionButton
+              variant="default"
               size="xs"
-              className="h-6 text-sm shadow-none"
+              className="h-6 text-sm shadow-none has-[>svg]:px-2.5"
               icon={<Terminal aria-hidden="true" />}
               disabled={disabled}
               onClick={onConnect}
@@ -57,8 +58,9 @@ export function HostDetailsToolbar({
           </Tip>
           <Tip title={t('hosts:openSftp')}>
             <ActionButton
+              variant="default"
               size="xs"
-              className="h-6 text-sm shadow-none"
+              className="h-6 text-sm shadow-none has-[>svg]:px-2.5"
               icon={<FolderOpen aria-hidden="true" />}
               disabled={disabled}
               onClick={onOpenFiles}
