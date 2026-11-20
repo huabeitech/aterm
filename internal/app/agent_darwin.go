@@ -25,13 +25,15 @@ type agentConfig struct {
 	Enabled bool `json:"enabled"`
 }
 type agentState struct {
-	mu        sync.Mutex
-	dir       string
-	server    *http.Server
-	config    agentConfig
-	pending   *agentOpen
-	leaseRoot context.Context
-	revoke    context.CancelFunc
+	mu            sync.Mutex
+	dir           string
+	server        *http.Server
+	config        agentConfig
+	pending       *agentOpen
+	leaseRoot     context.Context
+	revoke        context.CancelFunc
+	readyWindowID uint
+	windowReady   chan struct{}
 }
 type agentOpen struct {
 	id     string
@@ -59,6 +61,22 @@ func (a *App) startAgents(dir string) error {
 	return nil
 }
 func (s *agentState) socket() string { return filepath.Join(s.dir, "agent.sock") }
+
+func (s *agentState) skillProfile() agentbridge.SkillProfile {
+	profile := agentbridge.SkillProfile{Socket: s.socket()}
+	if executable, err := os.Executable(); err == nil {
+		macos := filepath.Dir(executable)
+		contents := filepath.Dir(macos)
+		bundle := filepath.Dir(contents)
+		if filepath.Base(macos) == "MacOS" && filepath.Base(contents) == "Contents" && filepath.Ext(bundle) == ".app" {
+			profile.Bundle = bundle
+			if os.Getenv("ATERM_DATA_DIR") != "" {
+				profile.DataDir = s.dir
+			}
+		}
+	}
+	return profile
+}
 func (a *App) listenAgents() error {
 	s := &a.agents
 	// The desktop profile lock is held until shutdown.
@@ -171,18 +189,16 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 			var locked bool
 			locked, err = a.svc.AgentRouteRequiresUnlock(ctx, route)
 			if err == nil && locked {
-				if window := a.mainWindow(); window != nil {
-					window.Show()
-					window.Focus()
-				}
-				a.emitEvent("agent:unlock", map[string]string{"id": p.id})
-				select {
-				case ok := <-p.done:
-					if !ok {
-						err = errors.New("VAULT_LOCKED")
+				if err = a.waitForAgentWindow(ctx); err == nil {
+					a.emitEvent("agent:unlock", map[string]string{"id": p.id})
+					select {
+					case ok := <-p.done:
+						if !ok {
+							err = errors.New("VAULT_LOCKED")
+						}
+					case <-ctx.Done():
+						err = ctx.Err()
 					}
-				case <-ctx.Done():
-					err = ctx.Err()
 				}
 			}
 		}
@@ -212,18 +228,29 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	switch op {
+	case "ready":
+		window := a.mainWindow()
+		if window == nil {
+			return nil, errors.New("MAIN_WINDOW_REQUIRED")
+		}
+		s.readyWindowID = window.ID()
+		if s.windowReady != nil {
+			close(s.windowReady)
+			s.windowReady = nil
+		}
+		return nil, nil
 	case "config":
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"config": s.config, "skillInstalled": agentbridge.SkillInstalled(home, s.socket())}, nil
+		return map[string]any{"config": s.config, "skillInstalled": agentbridge.SkillInstalled(home, s.skillProfile())}, nil
 	case "installSkill":
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return nil, err
 		}
-		return nil, agentbridge.InstallSkill(home, s.socket())
+		return nil, agentbridge.InstallSkill(home, s.skillProfile())
 	case "save":
 		cfg, err := argument[agentConfig](args, 0)
 		if err != nil {
@@ -274,4 +301,32 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 	default:
 	}
 	return nil, nil
+}
+
+func (a *App) waitForAgentWindow(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	window, err := a.showMainWindow()
+	if err != nil {
+		return err
+	}
+	s := &a.agents
+	for {
+		s.mu.Lock()
+		if s.readyWindowID == window.ID() {
+			s.mu.Unlock()
+			return ctx.Err()
+		}
+		if s.windowReady == nil {
+			s.windowReady = make(chan struct{})
+		}
+		ready := s.windowReady
+		s.mu.Unlock()
+		select {
+		case <-ready:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

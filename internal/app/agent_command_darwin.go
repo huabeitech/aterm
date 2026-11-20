@@ -58,7 +58,12 @@ func (a *App) agentCommand(ctx, lease context.Context, route service.AgentRoute)
 			args = append(args, "-o", "PubkeyAuthentication=no", "-o", "PreferredAuthentications=password,keyboard-interactive", "-o", "BatchMode=no")
 		case strings.HasPrefix(h.IdentityFile, keys.Prefix):
 			mode = "vault_signer"
-			signer, err := a.svc.ManagedAgentSigner(ctx, h.IdentityFile, a.credentialPrompter("agent"))
+			signer, err := a.svc.ManagedAgentSigner(ctx, h.IdentityFile, func(ctx context.Context, prompt service.CredentialPrompt) ([]string, error) {
+				if err := a.waitForAgentWindow(ctx); err != nil {
+					return nil, err
+				}
+				return a.credentialPrompter("agent")(ctx, prompt)
+			})
 			if err != nil {
 				return nil, err
 			}

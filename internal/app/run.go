@@ -3,13 +3,18 @@ package app
 import (
 	"io/fs"
 	"log/slog"
+	"ssh-connect/internal/desktop/platform"
 	"ssh-connect/internal/desktop/product"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
-func Run(assets fs.FS) error {
+func Run(assets fs.FS, background bool) error {
+	policy := application.ActivationPolicyRegular
+	if background {
+		policy = application.ActivationPolicyAccessory
+	}
 	// Create an instance of the app structure
 	appService := NewApp()
 	productInfo := product.Info()
@@ -28,6 +33,7 @@ func Run(assets fs.FS) error {
 		ShouldQuit: appService.shouldQuitEditors,
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
+			ActivationPolicy: policy,
 		},
 	})
 	appService.setWailsApp(wailsApp)
@@ -38,7 +44,15 @@ func Run(assets fs.FS) error {
 		}
 	})
 	wailsApp.Menu.SetApplicationMenu(applicationMenu())
-	if _, err := appService.createMainWindow(); err != nil {
+	if background {
+		wailsApp.Event.OnApplicationEvent(events.Mac.ApplicationShouldHandleReopen, func(_ *application.ApplicationEvent) {
+			if appService.mainWindow() == nil {
+				if _, err := appService.showMainWindow(); err != nil {
+					slog.Error("could not open aTerm window", "error", err)
+				}
+			}
+		})
+	} else if _, err := appService.createMainWindow(); err != nil {
 		return err
 	}
 
@@ -51,4 +65,14 @@ func applicationMenu() *application.Menu {
 	menu.AddRole(application.EditMenu)
 	menu.AddRole(application.WindowMenu)
 	return menu
+}
+
+func (a *App) showMainWindow() (application.Window, error) {
+	platform.PromoteToForeground()
+	window, err := a.createMainWindow()
+	if err == nil {
+		window.Show()
+		window.Focus()
+	}
+	return window, err
 }

@@ -184,6 +184,7 @@ export function useTerminalWorkbench(
       try { unlocked = await current.current.unlock() }
       finally { await agentRequest('unlocked', id, unlocked).catch(() => {}) }
     })
+    void agentRequest('ready').catch(() => {})
     return () => { offAgent(); offPlugin() }
   }, [])
   function activate(id: string) {

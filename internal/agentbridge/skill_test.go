@@ -44,7 +44,7 @@ func TestInstalledSkillQueriesProfileWithoutMCP(t *testing.T) {
 	defer server.Close()
 	home := t.TempDir()
 	for range 2 {
-		if err = InstallSkill(home, socket); err != nil {
+		if err = InstallSkill(home, SkillProfile{Socket: socket}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -56,7 +56,7 @@ func TestInstalledSkillQueriesProfileWithoutMCP(t *testing.T) {
 	if err = os.WriteFile(filepath.Join(path, "SKILL.md"), []byte("custom"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if InstallSkill(home, socket) == nil {
+	if InstallSkill(home, SkillProfile{Socket: socket}) == nil {
 		t.Fatal("overwrote a user-modified skill")
 	}
 }
