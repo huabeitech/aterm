@@ -85,6 +85,7 @@ export function useHostWorkbench(
   const { ensureSecureDataUnlocked } = useSecureData(setBusyAction)
   const selected = hosts.find((h) => h.id === selectedID) ?? null
   const visibleSelectedIDs = selectedHostIDs.filter((id) => hosts.some((h) => h.id === id))
+  const selectedInspectorHostID = visibleSelectedIDs.length === 1 ? visibleSelectedIDs[0] : undefined
   const reportSuccess = (text: string) => {
     void message.success(text)
   }
@@ -277,8 +278,8 @@ export function useHostWorkbench(
     inspectorOpen && (editorMode === 'create' || (editorMode === 'edit' && !!selected))
   function renderHostInspector(activeHostID?: string) {
     const count = activeHostID ? 1 : visibleSelectedIDs.length
-    const id = activeHostID ?? visibleSelectedIDs[0]
-    const host = count === 1 ? hosts.find((item) => item.id === id) : undefined
+    const hostID = activeHostID ?? selectedInspectorHostID
+    const host = hosts.find((item) => item.id === hostID)
     if (!host) {
       const title = count > 1
         ? t('hosts:hostsSelected', { count })
@@ -295,6 +296,7 @@ export function useHostWorkbench(
         </div>
       )
     }
+    const id = host.id
     return (
       <div key={id} className="h-full min-h-0 min-w-0">
         <HostDetails
@@ -414,6 +416,7 @@ export function useHostWorkbench(
     busy: !!busyAction,
     selectView,
     selectDirectory,
+    selectedInspectorHostID,
     renderHostInspector
   }
 }

@@ -259,6 +259,23 @@ function Workbench({
   const activeHostID =
     tabs.workspaceTabs.find((tab) => tab.id === tabs.activeWorkspaceTab)?.hostID ??
     terminal.tabSessions.find((session) => session.id === activeConnectionID)?.hostID
+  const inspectorHostID = inspectedHostID ?? activeHostID
+  const displayedHostID = showInspector
+    ? inspectorHostID ?? library.selectedInspectorHostID
+    : undefined
+  const previousInspector = useRef({ workspaceTabs: tabs.workspaceTabs, displayedHostID })
+  useLayoutEffect(() => {
+    const previous = previousInspector.current
+    previousInspector.current = { workspaceTabs: tabs.workspaceTabs, displayedHostID }
+    if (!previous.displayedHostID || previous.workspaceTabs === tabs.workspaceTabs) return
+
+    // Closing a tab can change the active host, so compare against the host shown before removal.
+    const remainingTabIDs = new Set(tabs.workspaceTabs.map((tab) => tab.id))
+    const closedDisplayedHostTab = previous.workspaceTabs.some(
+      (tab) => tab.hostID === previous.displayedHostID && !remainingTabIDs.has(tab.id),
+    )
+    if (closedDisplayedHostTab) setShowInspector(false)
+  }, [tabs.workspaceTabs, displayedHostID])
   const isFiles = !!activeConnectionID && connectionViews[activeConnectionID] === 'files'
   const isConnectionPlugin =
     !!activeConnectionID && connectionViews[activeConnectionID]?.startsWith('plugin:')
@@ -754,7 +771,7 @@ function Workbench({
                 : 'home'
         }
         onSidebarWidthCommit={sidebar.commitWidth}
-        inspector={library.renderHostInspector(inspectedHostID ?? activeHostID)}
+        inspector={library.renderHostInspector(inspectorHostID)}
         inspectorWidth={inspectorWidth}
         toggleInspectorShortcut={settings.toggleInspectorShortcut}
         inspectorOpen={showInspector}
