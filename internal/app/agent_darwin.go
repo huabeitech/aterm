@@ -171,6 +171,10 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 			var locked bool
 			locked, err = a.svc.AgentRouteRequiresUnlock(ctx, route)
 			if err == nil && locked {
+				if window := a.mainWindow(); window != nil {
+					window.Show()
+					window.Focus()
+				}
 				a.emitEvent("agent:unlock", map[string]string{"id": p.id})
 				select {
 				case ok := <-p.done:

@@ -14,7 +14,8 @@ import (
 	"time"
 )
 
-// Run only against the disposable loopback parity fixture.
+// Run only against the disposable loopback parity fixture. Respond to the
+// macOS connection confirmation manually. The fixture drives the vault UI.
 func TestMain(m *testing.M) {
 	if len(os.Args) != 2 || os.Args[1] != "--agent-acceptance" {
 		os.Exit(m.Run())
@@ -52,7 +53,7 @@ func TestMain(m *testing.M) {
 				panic(e)
 			}
 			for time.Now().Before(deadline) {
-				w.ExecJS(`(()=>{const buttons=[...document.querySelectorAll('button')];const allow=buttons.find(b=>['Allow','允许','允許'].includes(b.textContent.trim()));if(allow&&document.body.innerText.includes('127.0.0.1'))allow.click();const input=document.querySelector('.sync-password-dialog input[type=password]');if(input&&!input.value){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'fixture-vault-password');input.dispatchEvent(new Event('input',{bubbles:true}));const unlock=buttons.find(b=>['Unlock','解锁','解鎖'].includes(b.textContent.trim()));unlock?.click()}})()`)
+				w.ExecJS(`(()=>{const input=document.querySelector('.sync-password-dialog input[type=password]');if(input&&!input.value){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'fixture-vault-password');input.dispatchEvent(new Event('input',{bubbles:true}));const unlock=[...document.querySelectorAll('button')].find(b=>['Unlock','解锁','解鎖'].includes(b.textContent.trim()));unlock?.click()}})()`)
 				if len(a.terminal.IDs()) != 0 {
 					panic("unexpected aTerm terminal")
 				}
