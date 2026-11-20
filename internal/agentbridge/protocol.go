@@ -9,6 +9,7 @@ type Request struct {
 type Host struct {
 	ID      string `json:"hostId"`
 	Name    string `json:"name"`
+	Alias   string `json:"alias"`
 	Group   string `json:"group,omitempty"`
 	Address string `json:"address"`
 	Port    int    `json:"port"`

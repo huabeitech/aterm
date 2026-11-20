@@ -144,7 +144,16 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, h := range hosts {
 			if strings.Contains(strings.ToLower(h.DisplayName()+" "+h.Remark+" "+h.HostName), strings.ToLower(in.Query)) {
-				result.Hosts = append(result.Hosts, agentbridge.Host{ID: h.ID, Name: h.DisplayName(), Group: h.DirectoryID, Address: h.HostName, Port: sshPort(h.Port), User: h.User, Remark: h.Remark})
+				result.Hosts = append(result.Hosts, agentbridge.Host{
+					ID:      h.ID,
+					Name:    h.DisplayName(),
+					Alias:   h.Alias,
+					Group:   h.DirectoryID,
+					Address: h.HostName,
+					Port:    sshPort(h.Port),
+					User:    h.User,
+					Remark:  h.Remark,
+				})
 			}
 		}
 	case in.Method != "prepare" || in.HostID == "":
