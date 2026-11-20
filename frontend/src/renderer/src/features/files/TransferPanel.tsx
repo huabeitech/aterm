@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { desktop } from '../../api/app'
 import type { FileTransfer } from '../../../../shared/contracts/files'
-import { fileSize } from './fileFormat'
+import { fileSize, uploadTimeRemaining } from './fileFormat'
 import { FileState } from './FileState'
 
 const active = (t: FileTransfer) => t.state === 'queued' || t.state === 'running'
@@ -307,6 +307,7 @@ export function TransferPanel({
                 {t.state === 'running' && (
                   <small className="files-transfer-speed">
                     {fileSize(t.bytesPerSecond ?? 0)}/s
+                    {t.direction === 'upload' && <> · {uploadTimeRemaining(t)}</>}
                   </small>
                 )}
                 {active(t) && (

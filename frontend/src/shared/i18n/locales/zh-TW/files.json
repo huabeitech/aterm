@@ -150,6 +150,8 @@
   "activeTransfers_other": "{{count}} 項傳輸正在進行",
   "completedTransfers_one": "已完成 {{count}} 項傳輸",
   "completedTransfers_other": "已完成 {{count}} 項傳輸",
+  "transferTimeRemaining": "預計剩餘 {{duration}}",
+  "transferEstimatingTime": "正在估算剩餘時間…",
   "transferQueued": "等待中",
   "transferRunning": "傳輸中",
   "transferCompleted": "已完成",

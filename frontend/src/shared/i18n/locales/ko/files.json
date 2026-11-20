@@ -150,6 +150,8 @@
   "activeTransfers_other": "전송 {{count}}개 진행 중",
   "completedTransfers_one": "전송 {{count}}개 완료",
   "completedTransfers_other": "전송 {{count}}개 완료",
+  "transferTimeRemaining": "예상 남은 시간: {{duration}}",
+  "transferEstimatingTime": "남은 시간 계산 중…",
   "transferQueued": "대기 중",
   "transferRunning": "전송 중",
   "transferCompleted": "완료",

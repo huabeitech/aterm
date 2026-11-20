@@ -150,6 +150,8 @@
   "activeTransfers_other": "{{count}} 件転送中",
   "completedTransfers_one": "{{count}} 件の転送が完了",
   "completedTransfers_other": "{{count}} 件の転送が完了",
+  "transferTimeRemaining": "推定残り時間: {{duration}}",
+  "transferEstimatingTime": "残り時間を計算中…",
   "transferQueued": "待機中",
   "transferRunning": "転送中",
   "transferCompleted": "完了",

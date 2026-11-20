@@ -150,6 +150,8 @@
   "activeTransfers_other": "{{count}} transferencias en curso",
   "completedTransfers_one": "{{count}} transferencia completada",
   "completedTransfers_other": "{{count}} transferencias completadas",
+  "transferTimeRemaining": "Tiempo restante estimado: {{duration}}",
+  "transferEstimatingTime": "Calculando el tiempo restante…",
   "transferQueued": "En espera",
   "transferRunning": "Transfiriendo",
   "transferCompleted": "Completado",
