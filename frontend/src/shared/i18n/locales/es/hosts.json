@@ -147,6 +147,7 @@
   "unableToCopyHostname": "No se pudo copiar el nombre del host.",
   "yes": "Sí",
   "no": "No",
+  "copyConnectionAddress": "Copiar dirección de conexión",
   "copySshCommand2": "Copiar comando SSH",
   "copied2": "¡Copiado!",
   "openSftp": "Abrir SFTP",

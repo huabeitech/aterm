@@ -147,6 +147,7 @@
   "unableToCopyHostname": "Impossible de copier le nom d’hôte.",
   "yes": "Oui",
   "no": "Non",
+  "copyConnectionAddress": "Copier l’adresse de connexion",
   "copySshCommand2": "Copier la commande SSH",
   "copied2": "Copié !",
   "openSftp": "Ouvrir SFTP",

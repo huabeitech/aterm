@@ -46,7 +46,7 @@ export function HostDetailsToolbar({
           <Tip title={t('hosts:openSshTerminal')}>
             <ActionButton
               size="xs"
-              className="h-6"
+              className="h-6 text-sm shadow-none"
               icon={<Terminal aria-hidden="true" />}
               disabled={disabled}
               onClick={onConnect}
@@ -58,7 +58,7 @@ export function HostDetailsToolbar({
           <Tip title={t('hosts:openSftp')}>
             <ActionButton
               size="xs"
-              className="h-6"
+              className="h-6 text-sm shadow-none"
               icon={<FolderOpen aria-hidden="true" />}
               disabled={disabled}
               onClick={onOpenFiles}
@@ -68,12 +68,12 @@ export function HostDetailsToolbar({
             </ActionButton>
           </Tip>
         </div>
-        <div className="ml-auto flex flex-wrap justify-end items-center gap-0.5">
-          {action(t('hosts:edit'), <SquarePen size={16} />, onEdit)}
-          {action(t('hosts:copySshCommand'), <Copy size={16} />, onCopy)}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-0.5">
+          {action(t('hosts:edit'), <SquarePen size={14} />, onEdit)}
+          {action(t('hosts:copySshCommand'), <Copy size={14} />, onCopy)}
           {action(
             t(favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites'),
-            favorite ? <PinOff size={16} /> : <Pin size={16} />,
+            favorite ? <PinOff size={14} /> : <Pin size={14} />,
             onFavorite
           )}
           {pluginActions}

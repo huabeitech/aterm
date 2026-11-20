@@ -147,6 +147,7 @@
   "unableToCopyHostname": "ホスト名をコピーできませんでした。",
   "yes": "はい",
   "no": "いいえ",
+  "copyConnectionAddress": "接続アドレスをコピー",
   "copySshCommand2": "SSH コマンドをコピー",
   "copied2": "コピーしました！",
   "openSftp": "SFTP を開く",

@@ -147,6 +147,7 @@
   "unableToCopyHostname": "無法複製主機地址。",
   "yes": "是",
   "no": "否",
+  "copyConnectionAddress": "複製連線位址",
   "copySshCommand2": "複製 SSH 命令",
   "copied2": "已複製！",
   "openSftp": "開啟 SFTP",

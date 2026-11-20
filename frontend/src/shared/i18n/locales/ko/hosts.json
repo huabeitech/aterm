@@ -147,6 +147,7 @@
   "unableToCopyHostname": "호스트 이름을 복사하지 못했습니다.",
   "yes": "예",
   "no": "아니요",
+  "copyConnectionAddress": "연결 주소 복사",
   "copySshCommand2": "SSH 명령 복사",
   "copied2": "복사했습니다!",
   "openSftp": "SFTP 열기",
