@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "Always Allow",
+  "agent.grantHelp": "Always Allow applies to this host for all local programs that can access aTerm’s AI interface. You can revoke it in Settings.",
+  "agent.savedGrants": "Saved authorizations",
+  "agent.revokeGrant": "Revoke",
+  "agent.revokeAllGrants": "Revoke All",
   "agent.skillLabel": "Agent skill",
   "agent.skillInstall": "Install skill",
   "agent.skillInstalled": "Installed",

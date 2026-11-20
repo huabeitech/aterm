@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "Sempre permitir",
+  "agent.grantHelp": "Esta permissão vale para este host e todos os programas locais com acesso à interface de IA do aTerm. Você pode revogá-la nos ajustes.",
+  "agent.savedGrants": "Permissões salvas",
+  "agent.revokeGrant": "Revogar",
+  "agent.revokeAllGrants": "Revogar todas",
   "agent.skillLabel": "Habilidade do agente",
   "agent.skillInstall": "Instalar",
   "agent.skillInstalled": "Instalada",

@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "항상 허용",
+  "agent.grantHelp": "항상 허용은 이 호스트에 대해 aTerm AI 인터페이스에 접근할 수 있는 모든 로컬 프로그램에 적용됩니다. 설정에서 취소할 수 있습니다.",
+  "agent.savedGrants": "저장된 권한",
+  "agent.revokeGrant": "취소",
+  "agent.revokeAllGrants": "모두 취소",
   "agent.skillLabel": "에이전트 스킬",
   "agent.skillInstall": "스킬 설치",
   "agent.skillInstalled": "설치됨",

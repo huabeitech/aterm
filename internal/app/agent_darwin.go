@@ -4,8 +4,10 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -22,8 +24,46 @@ import (
 )
 
 type agentConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool                  `json:"enabled"`
+	Grants  map[string]agentGrant `json:"grants,omitempty"`
 }
+
+type agentGrant struct {
+	Name        string   `json:"name"`
+	Endpoint    string   `json:"endpoint"`
+	Fingerprint [32]byte `json:"fingerprint"`
+}
+
+func agentRouteFingerprint(hosts []service.Host) [32]byte {
+	type hop struct {
+		ID, Address, User, Identity, ProxyJump, JumpHostID, CreatedAt string
+		Port                                                          int
+		Password                                                      bool
+	}
+	hops := make([]hop, 0, len(hosts))
+	for _, host := range hosts {
+		hops = append(hops, hop{
+			ID: host.ID, Address: host.HostName, User: host.User, Identity: host.IdentityFile,
+			ProxyJump: host.ProxyJump, JumpHostID: host.JumpHostID, CreatedAt: host.CreatedAt,
+			Port: sshPort(host.Port), Password: host.PasswordAuth,
+		})
+	}
+	data, _ := json.Marshal(hops)
+	return sha256.Sum256(data)
+}
+
+func (s *agentState) writeConfig(cfg agentConfig) error {
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	if err = fsutil.AtomicWriteFile(filepath.Join(s.dir, "agent-access.json"), data, 0600); err != nil {
+		return err
+	}
+	s.config = cfg
+	return nil
+}
+
 type agentState struct {
 	mu            sync.Mutex
 	dir           string
@@ -184,7 +224,7 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 		root := s.leaseRoot
 		s.pending = p
 		s.mu.Unlock()
-		route, err := a.approveAgentRoute(ctx, in.HostID)
+		route, remember, err := a.approveAgentRoute(ctx, in.HostID)
 		if err == nil {
 			var locked bool
 			locked, err = a.svc.AgentRouteRequiresUnlock(ctx, route)
@@ -208,6 +248,18 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 			result.Connection, err = a.agentCommand(ctx, lease, route)
 		}
 		s.mu.Lock()
+		grantSaved := false
+		if remember && err == nil && ctx.Err() == nil && s.config.Enabled {
+			cfg := s.config
+			cfg.Grants = make(map[string]agentGrant, len(s.config.Grants)+1)
+			maps.Copy(cfg.Grants, s.config.Grants)
+			cfg.Grants[in.HostID] = agentGrant{
+				Name: route.Hosts()[0].DisplayName(), Endpoint: route.Endpoints()[0],
+				Fingerprint: agentRouteFingerprint(route.Hosts()),
+			}
+			err = s.writeConfig(cfg)
+			grantSaved = err == nil
+		}
 		if err != nil || ctx.Err() != nil || !s.config.Enabled {
 			result.Connection = nil
 			result.Error = "PREPARATION_FAILED"
@@ -217,6 +269,9 @@ func (a *App) agentHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		cancel()
 		s.pending = nil
+		if grantSaved {
+			defer a.emitEvent("agent:grantsChanged", nil)
+		}
 	}
 	s.mu.Unlock()
 	if err := json.NewEncoder(w).Encode(result); err == nil && result.Connection != nil {
@@ -244,7 +299,28 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"config": s.config, "skillInstalled": agentbridge.SkillInstalled(home, s.skillProfile())}, nil
+		return map[string]any{"config": map[string]bool{"enabled": s.config.Enabled}, "skillInstalled": agentbridge.SkillInstalled(home, s.skillProfile())}, nil
+	case "grants":
+		return maps.Clone(s.config.Grants), nil
+	case "revokeGrant":
+		hostID, err := argument[string](args, 0)
+		if err != nil {
+			return nil, err
+		}
+		cfg := s.config
+		cfg.Grants = maps.Clone(cfg.Grants)
+		if hostID == "" {
+			cfg.Grants = nil
+		} else {
+			delete(cfg.Grants, hostID)
+		}
+		if err = s.writeConfig(cfg); err != nil {
+			return nil, err
+		}
+		if s.pending != nil {
+			s.pending.cancel()
+		}
+		return maps.Clone(s.config.Grants), nil
 	case "installSkill":
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -261,11 +337,8 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 				return nil, err
 			}
 		}
-		data, err := json.Marshal(cfg)
-		if err != nil {
-			return nil, err
-		}
-		if err = fsutil.AtomicWriteFile(filepath.Join(s.dir, "agent-access.json"), data, 0600); err != nil {
+		cfg.Grants = s.config.Grants
+		if err = s.writeConfig(cfg); err != nil {
 			if !s.config.Enabled && s.server != nil {
 				s.revoke()
 				s.server.Close()
@@ -273,7 +346,6 @@ func (a *App) agentDesktop(op string, args []json.RawMessage) (any, error) {
 			}
 			return nil, err
 		}
-		s.config = cfg
 		if s.pending != nil {
 			s.pending.cancel()
 		}

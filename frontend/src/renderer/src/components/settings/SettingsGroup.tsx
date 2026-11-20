@@ -24,7 +24,7 @@ export function SettingRow({
   children,
   error
 }: {
-  label: string
+  label: ReactNode
   children: ReactNode
   error?: string
 }) {

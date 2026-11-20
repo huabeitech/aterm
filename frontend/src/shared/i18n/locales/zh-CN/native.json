@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "总是允许",
+  "agent.grantHelp": "总是允许适用于此主机，所有能访问 aTerm AI 接口的本地程序均可使用此授权。你可以在设置中撤销。",
+  "agent.savedGrants": "已保存的授权",
+  "agent.revokeGrant": "撤销",
+  "agent.revokeAllGrants": "全部撤销",
   "agent.skillLabel": "Agent 技能",
   "agent.skillInstall": "安装 Skill",
   "agent.skillInstalled": "已安装",

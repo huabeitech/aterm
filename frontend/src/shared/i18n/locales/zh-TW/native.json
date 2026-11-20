@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "一律允許",
+  "agent.grantHelp": "一律允許適用於此主機，所有可存取 aTerm AI 介面的本機程式皆可使用此授權。你可以在設定中撤銷。",
+  "agent.savedGrants": "已儲存的授權",
+  "agent.revokeGrant": "撤銷",
+  "agent.revokeAllGrants": "全部撤銷",
   "agent.skillLabel": "代理程式技能",
   "agent.skillInstall": "安裝 Skill",
   "agent.skillInstalled": "已安裝",

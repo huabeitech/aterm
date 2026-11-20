@@ -17,24 +17,31 @@ import (
 
 // approveAgentRoute keeps the resolved route in the desktop process while
 // asking the user to approve its saved destination.
-func (a *App) approveAgentRoute(ctx context.Context, hostID string) (service.AgentRoute, error) {
+func (a *App) approveAgentRoute(ctx context.Context, hostID string) (service.AgentRoute, bool, error) {
 	if !service.LocalTerminalAvailable() {
-		return service.AgentRoute{}, errors.New("AGENT_UNAVAILABLE")
+		return service.AgentRoute{}, false, errors.New("AGENT_UNAVAILABLE")
 	}
 	svc, err := a.service()
 	if err != nil {
-		return service.AgentRoute{}, err
+		return service.AgentRoute{}, false, err
 	}
 	route, err := svc.PrepareAgentRoute(ctx, hostID)
 	if err != nil {
-		return service.AgentRoute{}, err
+		return service.AgentRoute{}, false, err
+	}
+	s := &a.agents
+	s.mu.Lock()
+	grant, saved := s.config.Grants[hostID]
+	s.mu.Unlock()
+	if saved && grant.Fingerprint == agentRouteFingerprint(route.Hosts()) {
+		return route, false, ctx.Err()
 	}
 	target := route.Hosts()[0]
 	var directory string
 	if target.DirectoryID != "" {
 		directories, err := svc.ListDirectories(ctx)
 		if err != nil {
-			return service.AgentRoute{}, err
+			return service.AgentRoute{}, false, err
 		}
 		directory = agentDirectoryPath(target.DirectoryID, directories)
 	}
@@ -42,7 +49,7 @@ func (a *App) approveAgentRoute(ctx context.Context, hostID string) (service.Age
 		revision := a.desktopLocaleRevision.Load()
 		preferences, err := a.desktopPreferences()
 		if err != nil {
-			return service.AgentRoute{}, err
+			return service.AgentRoute{}, false, err
 		}
 		preference, _ := preferences["language"].(string)
 		var systemLanguages []string
@@ -50,26 +57,26 @@ func (a *App) approveAgentRoute(ctx context.Context, hostID string) (service.Age
 			systemLanguages = platform.PreferredLanguages()
 		}
 		messages := i18n.NativeMessages(preference, systemLanguages)
-		body := agentApprovalBody(messages, target, directory, route.Endpoints()[0])
+		body := agentApprovalBody(messages, target, directory, route.Endpoints()[0]) + "\n\n" + messages["agent.grantHelp"]
 		localeChanged := func() bool { return a.desktopLocaleRevision.Load() != revision }
 		if localeChanged() {
 			continue
 		}
 		accepted, err := platform.ConfirmAgentConnection(ctx, messages["agent.openTitle"], body,
-			messages["agent.rejectConnection"], messages["agent.allowConnection"], localeChanged)
+			messages["agent.rejectConnection"], messages["agent.allowConnection"], messages["agent.alwaysAllow"], localeChanged)
 		if err != nil {
 			log.Printf("aTerm native AI connection dialog: %v", err)
-			return service.AgentRoute{}, err
+			return service.AgentRoute{}, false, err
 		}
 		if localeChanged() {
 			continue
 		}
-		if accepted && ctx.Err() == nil {
-			return route, nil
+		if accepted != platform.AgentDenied && ctx.Err() == nil {
+			return route, accepted == platform.AgentAllowedAlways, nil
 		}
 		break
 	}
-	return service.AgentRoute{}, errors.New("APPROVAL_DECLINED")
+	return service.AgentRoute{}, false, errors.New("APPROVAL_DECLINED")
 }
 
 func agentDirectoryPath(id string, directories []service.Directory) string {

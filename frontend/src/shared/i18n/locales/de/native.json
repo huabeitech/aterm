@@ -1,4 +1,9 @@
 {
+  "agent.alwaysAllow": "Immer erlauben",
+  "agent.grantHelp": "Diese Erlaubnis gilt für diesen Host und alle lokalen Programme mit Zugriff auf die KI-Schnittstelle von aTerm. Sie kann in den Einstellungen widerrufen werden.",
+  "agent.savedGrants": "Gespeicherte Berechtigungen",
+  "agent.revokeGrant": "Widerrufen",
+  "agent.revokeAllGrants": "Alle widerrufen",
   "agent.skillLabel": "Agenten-Skill",
   "agent.skillInstall": "Skill installieren",
   "agent.skillInstalled": "Installiert",

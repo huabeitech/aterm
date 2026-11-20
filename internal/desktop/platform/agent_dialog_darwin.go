@@ -9,13 +9,13 @@ package platform
 #include <stdlib.h>
 
 static CFUserNotificationRef atermCreateAgentDialog(
-	const char *title, const char *message, const char *reject, const char *allow,
+	const char *title, const char *message, const char *reject, const char *allow, const char *always,
 	CFTimeInterval timeout, SInt32 *status
 ) {
 	const void *keys[] = {
 		kCFUserNotificationAlertHeaderKey, kCFUserNotificationAlertMessageKey,
 		kCFUserNotificationDefaultButtonTitleKey, kCFUserNotificationAlternateButtonTitleKey,
-		kCFUserNotificationIconURLKey
+		kCFUserNotificationOtherButtonTitleKey, kCFUserNotificationIconURLKey
 	};
 	CFBundleRef bundle = CFBundleGetMainBundle();
 	CFURLRef icon = bundle == NULL ? NULL :
@@ -25,9 +25,9 @@ static CFUserNotificationRef atermCreateAgentDialog(
 		CFStringCreateWithCString(NULL, message, kCFStringEncodingUTF8),
 		CFStringCreateWithCString(NULL, reject, kCFStringEncodingUTF8),
 		CFStringCreateWithCString(NULL, allow, kCFStringEncodingUTF8),
-		icon
+		CFStringCreateWithCString(NULL, always, kCFStringEncodingUTF8), icon
 	};
-	CFIndex count = icon == NULL ? 4 : 5;
+	CFIndex count = icon == NULL ? 5 : 6;
 	CFDictionaryRef options = CFDictionaryCreate(NULL, keys, values, count,
 		&kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 	CFUserNotificationRef dialog = CFUserNotificationCreate(NULL, timeout,
@@ -67,25 +67,35 @@ func PreferredLanguages() []string {
 	return result
 }
 
+type AgentApproval int
+
+const (
+	AgentDenied AgentApproval = iota
+	AgentAllowedOnce
+	AgentAllowedAlways
+)
+
 // ConfirmAgentConnection presents a system dialog independently of app windows.
-func ConfirmAgentConnection(ctx context.Context, title, message, reject, allow string, localeChanged func() bool) (bool, error) {
+func ConfirmAgentConnection(ctx context.Context, title, message, reject, allow, always string, localeChanged func() bool) (AgentApproval, error) {
 	if ctx.Err() != nil {
-		return false, nil
+		return AgentDenied, nil
 	}
 	nativeTitle, nativeMessage := C.CString(title), C.CString(message)
 	nativeReject, nativeAllow := C.CString(reject), C.CString(allow)
+	nativeAlways := C.CString(always)
 	var timeout C.CFTimeInterval
 	if deadline, ok := ctx.Deadline(); ok {
 		timeout = C.CFTimeInterval(max(time.Until(deadline).Seconds(), 0.001))
 	}
 	var status C.SInt32
-	dialog := C.atermCreateAgentDialog(nativeTitle, nativeMessage, nativeReject, nativeAllow, timeout, &status)
+	dialog := C.atermCreateAgentDialog(nativeTitle, nativeMessage, nativeReject, nativeAllow, nativeAlways, timeout, &status)
+	C.free(unsafe.Pointer(nativeAlways))
 	C.free(unsafe.Pointer(nativeTitle))
 	C.free(unsafe.Pointer(nativeMessage))
 	C.free(unsafe.Pointer(nativeReject))
 	C.free(unsafe.Pointer(nativeAllow))
 	if dialog == 0 {
-		return false, fmt.Errorf("could not present system dialog (status %d)", status)
+		return AgentDenied, fmt.Errorf("could not present system dialog (status %d)", status)
 	}
 	defer C.CFRelease(C.CFTypeRef(dialog))
 	// Short receives let cancellation and locale changes close the system dialog
@@ -95,14 +105,22 @@ func ConfirmAgentConnection(ctx context.Context, title, message, reject, allow s
 		status = C.CFUserNotificationReceiveResponse(dialog, 0.2, &response)
 		switch status {
 		case 0:
-			return ctx.Err() == nil && !localeChanged() && response == C.kCFUserNotificationAlternateResponse, nil
+			if ctx.Err() == nil && !localeChanged() {
+				switch response {
+				case C.kCFUserNotificationAlternateResponse:
+					return AgentAllowedOnce, nil
+				case C.kCFUserNotificationOtherResponse:
+					return AgentAllowedAlways, nil
+				}
+			}
+			return AgentDenied, nil
 		case C.MACH_RCV_TIMED_OUT:
 			continue
 		default:
 			C.CFUserNotificationCancel(dialog)
-			return false, fmt.Errorf("could not receive system dialog response (status %d)", status)
+			return AgentDenied, fmt.Errorf("could not receive system dialog response (status %d)", status)
 		}
 	}
 	C.CFUserNotificationCancel(dialog)
-	return false, nil
+	return AgentDenied, nil
 }
