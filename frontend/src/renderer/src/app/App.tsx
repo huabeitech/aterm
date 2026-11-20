@@ -420,7 +420,7 @@ function Workbench({
         break
       }
       case 'toggle-inspector':
-        toggleInspector()
+        if (!isSettings) toggleInspector()
         break
       case 'toggle-sidebar':
         if (!isSettings) sidebar.toggle()
@@ -584,7 +584,7 @@ function Workbench({
         if (id === 'move-left') return activeIndex > 0
         if (id === 'move-right')
           return activeIndex >= 0 && activeIndex < tabs.workspaceTabs.length - 1
-        if (id === 'find') return !isSettings
+        if (id === 'find' || id === 'toggle-inspector') return !isSettings
         return true
       })
       .map(({ id, label, englishLabel, shortcut }) => ({

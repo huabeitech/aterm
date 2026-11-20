@@ -48,8 +48,8 @@ export function AppShell({
   onInspectorWidthCommit,
   onSidebarWidthCommit
 }: AppShellProps) {
-  const sidebarAvailable = mode !== 'settings'
-  const sidebarHidden = !sidebarAvailable || sidebarCollapsed
+  const sidebarsAvailable = mode !== 'settings'
+  const sidebarHidden = !sidebarsAvailable || sidebarCollapsed
   const sidebarLabel = t(sidebarCollapsed ? 'hosts:showSidebar' : 'hosts:hideSidebar')
   const inspectorLabel = t(inspectorOpen ? 'hosts:hideHostDetails' : 'hosts:showHostDetails')
   const toggleWindowMaximise = (event: MouseEvent<HTMLElement>) => {
@@ -81,7 +81,7 @@ export function AppShell({
         )}
         onDoubleClick={toggleWindowMaximise}
       >
-        {sidebarAvailable && (
+        {sidebarsAvailable && (
           <Tip title={`${sidebarLabel} (${formatCommandPaletteShortcut(toggleSidebarShortcut)})`}>
             <IconButton
               className="mr-2 h-7 shrink-0 rounded-[7px] border border-transparent text-[var(--mac-secondary-text)] hover:bg-[var(--workspace-tab-hover-background)] hover:border-[var(--workspace-tab-hover-border)] hover:text-[var(--mac-text)] aria-pressed:bg-[var(--workspace-tab-active-background)] aria-pressed:border-[var(--workspace-tab-active-border)] aria-pressed:text-[var(--workspace-tab-active-text)] aria-pressed:shadow-[var(--workspace-tab-active-shadow)] [-webkit-app-region:no-drag]"
@@ -96,17 +96,19 @@ export function AppShell({
           </Tip>
         )}
         {header}
-        <Tip title={`${inspectorLabel} (${formatCommandPaletteShortcut(toggleInspectorShortcut)})`}>
-          <IconButton
-            className="ml-2 h-7 shrink-0 rounded-[7px] border border-transparent text-[var(--mac-secondary-text)] hover:bg-[var(--workspace-tab-hover-background)] aria-pressed:bg-[var(--workspace-tab-active-background)] aria-pressed:border-[var(--workspace-tab-active-border)] [-webkit-app-region:no-drag]"
-            aria-label={inspectorLabel}
-            aria-expanded={inspectorOpen}
-            aria-pressed={inspectorOpen}
-            aria-controls="host-inspector-sidebar"
-            icon={<PanelRight size={16} />}
-            onClick={onToggleInspector}
-          />
-        </Tip>
+        {sidebarsAvailable && (
+          <Tip title={`${inspectorLabel} (${formatCommandPaletteShortcut(toggleInspectorShortcut)})`}>
+            <IconButton
+              className="ml-2 h-7 shrink-0 rounded-[7px] border border-transparent text-[var(--mac-secondary-text)] hover:bg-[var(--workspace-tab-hover-background)] aria-pressed:bg-[var(--workspace-tab-active-background)] aria-pressed:border-[var(--workspace-tab-active-border)] [-webkit-app-region:no-drag]"
+              aria-label={inspectorLabel}
+              aria-expanded={inspectorOpen}
+              aria-pressed={inspectorOpen}
+              aria-controls="host-inspector-sidebar"
+              icon={<PanelRight size={16} />}
+              onClick={onToggleInspector}
+            />
+          </Tip>
+        )}
       </header>
       <SidebarLayout
         preferredWidth={sidebarWidth}
@@ -118,7 +120,7 @@ export function AppShell({
           side="right"
           sidebarID="host-inspector-sidebar"
           preferredWidth={inspectorWidth}
-          hidden={!inspectorOpen}
+          hidden={!sidebarsAvailable || !inspectorOpen}
           onWidthCommit={onInspectorWidthCommit}
           sidebar={
             <aside aria-label={t('hosts:hostDetails')} className="min-w-0 min-h-0">
