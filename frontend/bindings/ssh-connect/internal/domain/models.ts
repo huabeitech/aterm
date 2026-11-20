@@ -144,7 +144,6 @@ export interface Host {
     "serverAliveCountMax": number;
     "connectTimeout": number;
     "remark": string;
-    "favorite": boolean;
     "lastUsedAt": string;
     "sortOrders": { [_ in string]?: number } | null;
     "createdAt": string;
@@ -172,7 +171,6 @@ export interface HostInput {
     "serverAliveCountMax": number;
     "connectTimeout": number;
     "remark": string;
-    "favorite": boolean;
 }
 
 export interface HostSnippetImportInput {

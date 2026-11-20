@@ -37,7 +37,7 @@ func TestDecodeActualElectronAESLibraryBackup(t *testing.T) {
 	byAlias := map[string]int{}
 	for i, h := range workspace.Hosts {
 		byAlias[h.Alias] = i
-		if h.IdentityFile != "/fixture/id_ed25519" || !h.Favorite || !h.Compression || !h.ForwardAgent || h.Port != 2222 {
+		if h.IdentityFile != "/fixture/id_ed25519" || !h.Compression || !h.ForwardAgent || h.Port != 2222 {
 			t.Fatal("legacy connection options changed", h)
 		}
 	}

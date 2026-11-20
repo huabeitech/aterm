@@ -2,29 +2,25 @@ import { t } from '../../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { IconButton, Tip } from '@/components/ui/desktop'
 import { ActionButton } from '@/components/ui/workbench-controls'
-import { Copy, FolderOpen, Pin, PinOff, SquarePen, Terminal } from 'lucide-react'
+import { Copy, FolderOpen, SquarePen, Terminal } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export function HostDetailsToolbar({
   identity,
-  favorite,
   disabled,
   pluginActions,
   onConnect,
   onEdit,
   onOpenFiles,
-  onCopy,
-  onFavorite
+  onCopy
 }: {
   identity: ReactNode
-  favorite: boolean
   disabled: boolean
   pluginActions: ReactNode
   onConnect: () => void
   onEdit: () => void
   onOpenFiles: () => void
   onCopy: () => void
-  onFavorite: () => void
 }) {
   useTranslation()
   const action = (label: string, icon: ReactNode, onClick: () => void) => (
@@ -73,11 +69,6 @@ export function HostDetailsToolbar({
         <div className="ml-auto flex flex-wrap items-center justify-end gap-0.5">
           {action(t('hosts:edit'), <SquarePen size={14} />, onEdit)}
           {action(t('hosts:copySshCommand'), <Copy size={14} />, onCopy)}
-          {action(
-            t(favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites'),
-            favorite ? <PinOff size={14} /> : <Pin size={14} />,
-            onFavorite
-          )}
           {pluginActions}
         </div>
       </div>

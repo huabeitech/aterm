@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import {compareAllHosts, hostSortScope, formFromHost, formToInput, validateForm} from '../src/renderer/src/features/hosts/model/hostModel'
 import {fixtureHost} from './support/fixtures'
 
-test('All Hosts retains favorite/recent ordering and has no manual scope', () => {
-  const hosts=[fixtureHost('old',{lastUsedAt:'2024-01-01'}),fixtureHost('favorite',{favorite:true}),fixtureHost('recent',{lastUsedAt:'2026-01-01'})]
-  assert.deepEqual(hosts.sort(compareAllHosts).map(host=>host.alias),['favorite','recent','old'])
+test('All Hosts retains recent ordering and has no manual scope', () => {
+  const hosts=[fixtureHost('old',{lastUsedAt:'2024-01-01'}),fixtureHost('unused'),fixtureHost('recent',{lastUsedAt:'2026-01-01'})]
+  assert.deepEqual(hosts.sort(compareAllHosts).map(host=>host.alias),['recent','old','unused'])
   assert.equal(hostSortScope('all',null),null)
 })
 test('host form validation reports required fields and invalid port without transport models', () => {

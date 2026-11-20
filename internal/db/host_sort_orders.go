@@ -166,7 +166,7 @@ func normalizeHostSortScope(scopeType string, scopeID string) (string, string) {
 	scopeType = strings.TrimSpace(scopeType)
 	scopeID = strings.TrimSpace(scopeID)
 	switch scopeType {
-	case domain.HostSortScopeAll, domain.HostSortScopeFavorites, domain.HostSortScopeUncategorized:
+	case domain.HostSortScopeAll, domain.HostSortScopeUncategorized:
 		return scopeType, ""
 	case domain.HostSortScopeDirectory:
 		return scopeType, scopeID
@@ -202,7 +202,6 @@ func defaultScopeIDForDirectoryID(directoryID string) string {
 func deriveHostSortOrders(hosts []domain.Host) []domain.HostSortOrder {
 	sortOrders := make([]domain.HostSortOrder, 0, len(hosts)*2)
 	allHosts := append([]domain.Host(nil), hosts...)
-	favoriteOrder := 0
 	for order, host := range allHosts {
 		sortOrders = append(sortOrders, domain.HostSortOrder{
 			ScopeType: domain.HostSortScopeAll,
@@ -212,17 +211,6 @@ func deriveHostSortOrders(hosts []domain.Host) []domain.HostSortOrder {
 			CreatedAt: host.CreatedAt,
 			UpdatedAt: host.UpdatedAt,
 		})
-		if host.Favorite {
-			sortOrders = append(sortOrders, domain.HostSortOrder{
-				ScopeType: domain.HostSortScopeFavorites,
-				ScopeID:   "",
-				HostID:    host.ID,
-				SortOrder: favoriteOrder,
-				CreatedAt: host.CreatedAt,
-				UpdatedAt: host.UpdatedAt,
-			})
-			favoriteOrder++
-		}
 	}
 	byScope := make(map[string][]domain.Host)
 	for _, host := range hosts {
@@ -283,11 +271,6 @@ func seedHostSortOrdersForHost(exec sqlReadWriter, host domain.Host) error {
 	}
 	if err := upsertHostSortOrder(exec, domain.HostSortScopeAll, "", host.ID, allOrder, now); err != nil {
 		return err
-	}
-	if host.Favorite {
-		if err := upsertHostSortOrderAtEnd(exec, domain.HostSortScopeFavorites, "", host.ID, now); err != nil {
-			return err
-		}
 	}
 	return nil
 }

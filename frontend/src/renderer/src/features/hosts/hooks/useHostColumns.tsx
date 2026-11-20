@@ -16,7 +16,7 @@ type HostColumn = {
   onHeaderCell?: () => { width: number; minWidth: number; onResize: (width: number) => void }
   render?: (value: unknown, host: domain.Host) => ReactNode
 }
-import { Check, Copy, Pin } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
 import { ClipboardSetText } from '../../../api/runtime'
 import { domain } from '../../../api/types'
 import type { BusyAction } from '../../../components/common/types'
@@ -35,7 +35,6 @@ type ColumnKey =
   | 'serverAliveInterval'
   | 'serverAliveCountMax'
   | 'connectTimeout'
-  | 'favorite'
   | 'remark'
   | 'lastUsedAt'
   | 'createdAt'
@@ -54,7 +53,6 @@ const defaultWidths: Record<ColumnKey, number> = {
   serverAliveInterval: 180,
   serverAliveCountMax: 240,
   connectTimeout: 190,
-  favorite: 90,
   remark: 220,
   lastUsedAt: 170,
   createdAt: 170,
@@ -98,14 +96,6 @@ export function useHostColumns({
                 <span className="min-w-0 truncate text-sm font-normal" title={host.name}>
                   {host.name}
                 </span>
-                {host.favorite && (
-                  <Pin
-                    className="host-favorite-icon flex-none text-muted-foreground"
-                    size={12}
-                    fill="currentColor"
-                    aria-label={t('hosts:favorite')}
-                  />
-                )}
               </span>
             </div>
             <CopySSHCommandButton host={host} disabled={!!busyAction} onCopy={onCopySSHCommand} />
@@ -260,18 +250,6 @@ export function useHostColumns({
           onResize: (width: number) => resize('connectTimeout', width)
         }),
         render: (_, host) => secondsLabel(host.connectTimeout)
-      },
-      {
-        title: t('hosts:favorite'),
-        dataIndex: 'favorite',
-        key: 'favorite',
-        width: columnWidths.favorite,
-        onHeaderCell: () => ({
-          width: columnWidths.favorite,
-          minWidth: 80,
-          onResize: (width: number) => resize('favorite', width)
-        }),
-        render: (_, host) => yesNo(host.favorite)
       },
       {
         title: t('hosts:notes'),

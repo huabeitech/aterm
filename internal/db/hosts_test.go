@@ -126,106 +126,6 @@ func TestMoveHostsAppendsToTargetDirectoryOrder(t *testing.T) {
 	}
 }
 
-func TestHostFavoritePersistsAcrossCreateListAndUpdate(t *testing.T) {
-	store := openTestStore(t)
-
-	created, err := store.CreateHost(service.HostInput{
-		Name:     "prod-api",
-		Alias:    "prod-api",
-		HostName: "10.0.0.12",
-		Port:     22,
-		Favorite: true,
-	})
-	if err != nil {
-		t.Fatalf("CreateHost() error = %v", err)
-	}
-	if !created.Favorite {
-		t.Fatal("CreateHost() Favorite = false, want true")
-	}
-
-	hosts, err := store.ListHosts()
-	if err != nil {
-		t.Fatalf("ListHosts() error = %v", err)
-	}
-	if len(hosts) != 1 || !hosts[0].Favorite {
-		t.Fatalf("ListHosts()[0].Favorite = %v, want true", hosts[0].Favorite)
-	}
-
-	updated, err := store.UpdateHost(created.ID, service.HostInput{
-		Name:     created.Alias,
-		Alias:    created.Alias,
-		HostName: created.HostName,
-		Port:     created.Port,
-		Favorite: false,
-	})
-	if err != nil {
-		t.Fatalf("UpdateHost() error = %v", err)
-	}
-	if updated.Favorite {
-		t.Fatal("UpdateHost() Favorite = true, want false")
-	}
-}
-
-func TestOpenMigratesHostFavoriteColumn(t *testing.T) {
-	t.Skip("No upgrade path is supported before the first release.")
-	path := filepath.Join(t.TempDir(), "app.db")
-	raw, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("sql.Open() error = %v", err)
-	}
-	_, err = raw.Exec(`
-CREATE TABLE hosts (
-  id TEXT PRIMARY KEY,
-  directory_id TEXT NOT NULL DEFAULT '',
-  alias TEXT NOT NULL UNIQUE,
-  host_name TEXT NOT NULL,
-  user TEXT NOT NULL DEFAULT '',
-  port INTEGER NOT NULL DEFAULT 22,
-  identity_file TEXT NOT NULL DEFAULT '',
-  proxy_jump TEXT NOT NULL DEFAULT '',
-  forward_agent INTEGER NOT NULL DEFAULT 0,
-  compression INTEGER NOT NULL DEFAULT 0,
-  server_alive_interval INTEGER NOT NULL DEFAULT 0,
-  server_alive_count_max INTEGER NOT NULL DEFAULT 0,
-  connect_timeout INTEGER NOT NULL DEFAULT 0,
-  remark TEXT NOT NULL DEFAULT '',
-  enabled INTEGER NOT NULL DEFAULT 1,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at DATETIME NOT NULL,
-  updated_at DATETIME NOT NULL
-);
-INSERT INTO hosts (id, alias, host_name, created_at, updated_at)
-VALUES ('host-1', 'prod-api', '10.0.0.12', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
-`)
-	if err != nil {
-		t.Fatalf("seed old hosts schema error = %v", err)
-	}
-	if err := raw.Close(); err != nil {
-		t.Fatalf("raw.Close() error = %v", err)
-	}
-
-	store, err := Open(path)
-	if err != nil {
-		t.Fatalf("Open() migrated store error = %v", err)
-	}
-	t.Cleanup(func() {
-		if err := store.Close(); err != nil {
-			t.Fatalf("Close() error = %v", err)
-		}
-	})
-
-	hosts, err := store.ListHosts()
-	if err != nil {
-		t.Fatalf("ListHosts() error = %v", err)
-	}
-	if len(hosts) != 1 {
-		t.Fatalf("ListHosts() len = %d, want 1", len(hosts))
-	}
-	if hosts[0].Favorite {
-		t.Fatal("migrated Favorite = true, want default false")
-	}
-}
-
 func TestMarkHostUsedPersistsLastUsedAt(t *testing.T) {
 	store := openTestStore(t)
 
@@ -520,7 +420,6 @@ func TestExportHostConfigSnapshotExcludesSettingsAndIncludesHostUsage(t *testing
 		User:        "ubuntu",
 		Port:        22,
 		DirectoryID: directory.ID,
-		Favorite:    true,
 	})
 	if err != nil {
 		t.Fatalf("CreateHost() error = %v", err)
@@ -551,13 +450,9 @@ func TestExportHostConfigSnapshotExcludesSettingsAndIncludesHostUsage(t *testing
 	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("snapshot app_settings table err = %v, name = %q, want no table", err, appSettingsName)
 	}
-	var favorite int
 	var lastUsedAt string
-	if err := raw.QueryRow(`SELECT favorite, last_used_at FROM hosts WHERE alias = 'prod-api';`).Scan(&favorite, &lastUsedAt); err != nil {
+	if err := raw.QueryRow(`SELECT last_used_at FROM hosts WHERE alias = 'prod-api';`).Scan(&lastUsedAt); err != nil {
 		t.Fatalf("snapshot host state query error = %v", err)
-	}
-	if favorite != 1 {
-		t.Fatalf("snapshot favorite = %d, want 1", favorite)
 	}
 	if lastUsedAt != "2026-07-02T12:00:00Z" {
 		t.Fatalf("snapshot last_used_at = %q, want synced usage time", lastUsedAt)
@@ -583,7 +478,6 @@ func TestImportHostConfigSnapshotReplacesHostsAndDirectoriesOnly(t *testing.T) {
 		HostName:    "10.0.0.20",
 		Port:        22,
 		DirectoryID: directory.ID,
-		Favorite:    true,
 	})
 	if err != nil {
 		t.Fatalf("source CreateHost() error = %v", err)
@@ -594,6 +488,17 @@ func TestImportHostConfigSnapshotReplacesHostsAndDirectoriesOnly(t *testing.T) {
 	snapshotPath := filepath.Join(t.TempDir(), "cloud.db")
 	if _, err := source.ExportHostConfigSnapshot(snapshotPath); err != nil {
 		t.Fatalf("source ExportHostConfigSnapshot() error = %v", err)
+	}
+
+	// Older snapshots may include a pinned host and its separate ordering.
+	raw, err := sql.Open("sqlite", snapshotPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = raw.Exec(`ALTER TABLE hosts ADD COLUMN favorite INTEGER NOT NULL DEFAULT 1;
+INSERT INTO host_sort_orders SELECT 'favorites', '', id, 0, created_at, updated_at FROM hosts;`)
+	if closeErr := raw.Close(); closeErr != nil || err != nil {
+		t.Fatalf("prepare older snapshot: %v, close: %v", err, closeErr)
 	}
 
 	target := openTestStore(t)
@@ -622,9 +527,6 @@ func TestImportHostConfigSnapshotReplacesHostsAndDirectoriesOnly(t *testing.T) {
 	}
 	if len(hosts) != 1 || hosts[0].Alias != "cloud-api" {
 		t.Fatalf("target hosts = %+v, want only cloud-api", hosts)
-	}
-	if !hosts[0].Favorite {
-		t.Fatal("imported Favorite = false, want true")
 	}
 	if hosts[0].LastUsedAt != "2026-07-02T12:00:00Z" {
 		t.Fatalf("imported LastUsedAt = %q, want synced usage time", hosts[0].LastUsedAt)

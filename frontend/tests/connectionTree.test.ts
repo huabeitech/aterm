@@ -24,7 +24,6 @@ const host = (id: string, directoryID = '', extra: Partial<domain.Host> = {}): d
   serverAliveCountMax: 0,
   connectTimeout: 0,
   remark: '',
-  favorite: false,
   lastUsedAt: '',
   sortOrders: {},
   createdAt: '',
@@ -61,8 +60,8 @@ test('search reveals matching descendants and ancestors without changing disclos
 })
 test('the complete tree includes every connection and honors directory sort order', () => {
   const items = [
-    host('a', 'prod', { favorite: true, sortOrders: { 'directory:prod': 2 } }),
-    host('z', 'prod', { favorite: true, sortOrders: { 'directory:prod': 1 } }),
+    host('a', 'prod', { sortOrders: { 'directory:prod': 2 } }),
+    host('z', 'prod', { sortOrders: { 'directory:prod': 1 } }),
     host('recent', 'child', { lastUsedAt: '2026-01-01T00:00:00Z' })
   ]
   assert.deepEqual(

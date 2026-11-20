@@ -933,7 +933,6 @@ func TestAppServiceDownloadSyncSnapshotCreatesBackupAndUpdatesStatus(t *testing.
 		Alias:      "cloud-api",
 		HostName:   "10.0.0.20",
 		Port:       22,
-		Favorite:   true,
 		LastUsedAt: "2026-07-11T08:00:00Z",
 	}}
 	if _, err := app.UploadSyncSnapshot(context.Background()); err != nil {
@@ -960,8 +959,8 @@ func TestAppServiceDownloadSyncSnapshotCreatesBackupAndUpdatesStatus(t *testing.
 	if len(store.importedSnapshots) != 1 {
 		t.Fatalf("importedSnapshots len = %d, want 1", len(store.importedSnapshots))
 	}
-	if len(store.hosts) != 1 || !store.hosts[0].Favorite || store.hosts[0].LastUsedAt != "2026-07-11T08:00:00Z" {
-		t.Fatalf("downloaded host state = %+v, want synced favorite and recent-use state", store.hosts)
+	if len(store.hosts) != 1 || store.hosts[0].LastUsedAt != "2026-07-11T08:00:00Z" {
+		t.Fatalf("downloaded host state = %+v, want synced recent-use state", store.hosts)
 	}
 
 	status, err := app.GetSyncStatus(context.Background())

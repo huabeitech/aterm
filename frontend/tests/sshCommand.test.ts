@@ -21,7 +21,6 @@ const host = (identityFile: string): domain.Host => ({
   serverAliveCountMax: 0,
   connectTimeout: 0,
   remark: '',
-  favorite: false,
   lastUsedAt: '',
   sortOrders: {},
   createdAt: '',

@@ -282,7 +282,7 @@ CREATE TABLE host_sort_orders (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (scope_type, scope_id, host_id)
 );
-` + hostSchema + pluginDataSchema)
+` + hostSchema + dropHostFavoriteColumn + pluginDataSchema)
 	return err
 }
 
@@ -311,7 +311,7 @@ func readSnapshotHosts(raw *sql.DB) ([]domain.Host, error) {
 	rows, err := raw.Query(`
 SELECT id, directory_id, ` + nameColumn + `, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
-       remark, favorite, last_used_at, created_at, updated_at
+       remark, last_used_at, created_at, updated_at
 FROM hosts
 ORDER BY created_at ASC, alias ASC;
 `)
@@ -363,6 +363,7 @@ func readSnapshotHostSortOrders(raw *sql.DB, hosts []domain.Host) ([]domain.Host
 	rows, err := raw.Query(`
 SELECT scope_type, scope_id, host_id, sort_order, created_at, updated_at
 FROM host_sort_orders
+WHERE scope_type != 'favorites'
 ORDER BY scope_type ASC, scope_id ASC, sort_order ASC;
 `)
 	if err != nil {
@@ -413,12 +414,12 @@ func insertHosts(exec sqlExecer, hosts []domain.Host) error {
 INSERT INTO hosts (
   id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
   compression, server_alive_interval, server_alive_count_max, connect_timeout,
-  remark, favorite, last_used_at, created_at, updated_at
-) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  remark, last_used_at, created_at, updated_at
+) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 `,
 			host.ID, host.DirectoryID, host.DisplayName(), host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 			boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
-			host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
+			host.ServerAliveCountMax, host.ConnectTimeout, host.Remark,
 			host.LastUsedAt, host.CreatedAt, host.UpdatedAt,
 		); err != nil {
 			if isUniqueAliasError(err) {

@@ -19,7 +19,6 @@ type Host struct {
 	ServerAliveCountMax int            `json:"serverAliveCountMax"`
 	ConnectTimeout      int            `json:"connectTimeout"`
 	Remark              string         `json:"remark"`
-	Favorite            bool           `json:"favorite"`
 	LastUsedAt          string         `json:"lastUsedAt"`
 	SortOrders          map[string]int `json:"sortOrders"`
 	CreatedAt           string         `json:"createdAt"`
@@ -56,7 +55,6 @@ type HostInput struct {
 	ServerAliveCountMax int    `json:"serverAliveCountMax"`
 	ConnectTimeout      int    `json:"connectTimeout"`
 	Remark              string `json:"remark"`
-	Favorite            bool   `json:"favorite"`
 }
 
 // Directory is a persisted sidebar directory record.
@@ -83,7 +81,6 @@ type DirectoryMoveInput struct {
 
 const (
 	HostSortScopeAll           = "all"
-	HostSortScopeFavorites     = "favorites"
 	HostSortScopeDirectory     = "directory"
 	HostSortScopeUncategorized = "uncategorized"
 )

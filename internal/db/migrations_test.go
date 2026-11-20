@@ -87,8 +87,11 @@ func TestOpenMigratesAndRecordsExistingDatabase(t *testing.T) {
 	seedVersionOneSchema(t, raw)
 	if _, err := raw.Exec(`
 DROP TABLE directories;
-INSERT INTO hosts (id, alias, host_name, created_at, updated_at)
-VALUES ('test-id', 'old-alias', 'test.example', '2026-01-01', '2026-01-01');
+INSERT INTO hosts (id, alias, host_name, favorite, created_at, updated_at)
+VALUES ('test-id', 'old-alias', 'test.example', 1, '2026-01-01', '2026-01-01');
+INSERT INTO host_sort_orders VALUES
+ ('favorites', '', 'test-id', 0, '', ''),
+ ('uncategorized', '', 'test-id', 3, '', '');
 `); err != nil {
 		t.Fatalf("create existing hosts table: %v", err)
 	}
@@ -114,6 +117,12 @@ VALUES ('test-id', 'old-alias', 'test.example', '2026-01-01', '2026-01-01');
 	host, err := store.GetHost("test-id")
 	if err != nil || host.Name != "old-alias" || host.Alias != "old-alias" {
 		t.Fatalf("legacy host after migration: %+v, %v", host, err)
+	}
+	if present, err := schemaHasColumn(store, "hosts", "favorite"); err != nil || present {
+		t.Fatalf("retired host column after migration: present=%v, err=%v", present, err)
+	}
+	if len(host.SortOrders) != 1 || host.SortOrders["uncategorized:"] != 3 {
+		t.Fatalf("unexpected sort orders after migration: %v", host.SortOrders)
 	}
 }
 

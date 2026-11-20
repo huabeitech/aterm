@@ -49,7 +49,6 @@ const emptyForm: FormState = {
   serverAliveCountMax: '',
   connectTimeout: '',
   remark: '',
-  favorite: false
 }
 export function useHostWorkbench(
   connectHost: (id: string) => void,
@@ -225,7 +224,6 @@ export function useHostWorkbench(
     onConnectHost: connectHost,
     onOpenFiles: openFiles,
     onDeleteHosts: editor.confirmDeleteHosts,
-    onToggleFavoriteHost: editor.toggleFavoriteHost,
     onCopySSHCommand: copySSHCommand,
     onBatchAddHosts: editor.openBatchAdd,
     onMoveHosts: directory.moveHostsToDirectory,
@@ -303,14 +301,12 @@ export function useHostWorkbench(
           actions={(identity) => (
             <HostDetailsToolbar
               identity={identity}
-              favorite={host.favorite}
               disabled={!!busyAction}
               pluginActions={renderPluginActions(id, !!busyAction)}
               onConnect={() => connectHost(id)}
               onEdit={() => editor.startEditHost(id)}
               onOpenFiles={() => openFiles(id)}
               onCopy={() => void copySSHCommand(id)}
-              onFavorite={() => void editor.toggleFavoriteHost(id)}
             />
           )}
           host={host}

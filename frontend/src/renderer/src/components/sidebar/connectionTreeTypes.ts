@@ -30,7 +30,6 @@ export interface ConnectionTreeProps {
   onConnectHost: (id: string) => void
   onOpenFiles: (id: string) => void
   onDeleteHosts: (ids: string[]) => void
-  onToggleFavoriteHost: (id: string) => void
   onCopySSHCommand: (id: string) => void
   onBatchAddHosts: () => void
   onMoveHosts: (ids: string[], directoryID: string, orderedIDs?: string[]) => void

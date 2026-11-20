@@ -76,7 +76,7 @@ func checkLegacyRestore(t *testing.T, path string) {
 	targetID := ""
 	jumpID := ""
 	for _, host := range hosts {
-		if host.IdentityFile != "/fixture/id_ed25519" || host.Port != 2222 || !host.Compression || !host.ForwardAgent || !host.Favorite {
+		if host.IdentityFile != "/fixture/id_ed25519" || host.Port != 2222 || !host.Compression || !host.ForwardAgent {
 			t.Fatal("legacy host options changed", host)
 		}
 		if host.Alias == "fixture-target" {

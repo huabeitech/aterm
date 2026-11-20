@@ -249,7 +249,10 @@ func validate(w *Workspace) error {
 				return errors.New("invalid legacy sort scope")
 			}
 			switch kind {
-			case "all", "favorites", "uncategorized":
+			case "favorites":
+				delete(h.SortOrders, scope)
+				continue
+			case "all", "uncategorized":
 				if id != "" {
 					return errors.New("invalid legacy sort scope")
 				}

@@ -24,7 +24,6 @@ export function formFromHost(host: domain.Host): FormState {
     serverAliveCountMax: optionalNumberToString(host.serverAliveCountMax),
     connectTimeout: optionalNumberToString(host.connectTimeout),
     remark: host.remark,
-    favorite: host.favorite
   }
 }
 
@@ -47,7 +46,6 @@ export function formToInput(form: FormState): domain.HostInput {
     serverAliveCountMax: parseOptionalNumber(form.serverAliveCountMax, 0),
     connectTimeout: parseOptionalNumber(form.connectTimeout, 0),
     remark: form.remark,
-    favorite: form.favorite
   }
 }
 
@@ -68,7 +66,6 @@ export function hostSortScope(
   activeDirectoryID: string | null
 ): HostSortScope | null {
   if (activeView === 'all') return null
-  if (activeView === 'favorites') return { type: 'favorites', id: '' }
   if (activeView === 'uncategorized') return { type: 'uncategorized', id: '' }
   if (activeView === 'directory' && activeDirectoryID)
     return { type: 'directory', id: activeDirectoryID }
@@ -87,7 +84,6 @@ export function hostSortScopeKey(scope: HostSortScope): string {
 }
 
 export function compareAllHosts(a: domain.Host, b: domain.Host) {
-  if (a.favorite !== b.favorite) return a.favorite ? -1 : 1
   const recentDifference = timestampValue(b.lastUsedAt) - timestampValue(a.lastUsedAt)
   return recentDifference || a.name.localeCompare(b.name)
 }

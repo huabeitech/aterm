@@ -2,7 +2,7 @@ import { t, i18n } from '../../../../../shared/i18n'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
 import type { ActionItem } from '@/components/ui/desktop'
-import { Copy, Edit3, Eye, FolderOpen, Pin, Trash2, Zap } from 'lucide-react'
+import { Copy, Edit3, Eye, FolderOpen, Trash2, Zap } from 'lucide-react'
 import { domain } from '../../../api/types'
 
 type State = { host: domain.Host; ids: string[]; x: number; y: number }
@@ -14,7 +14,6 @@ type Options = {
   onConnectHost: (id: string) => void
   onOpenFiles: (id: string) => void
   onCopySSHCommand: (id: string) => void
-  onToggleFavoriteHost: (id: string) => void
   onDeleteHost: (id: string) => void
   onDeleteHosts: (ids: string[]) => void
 }
@@ -66,13 +65,6 @@ export function useHostContextMenu(options: Options) {
         : []),
       { key: 'open', icon: <Eye size={14} />, label: t('hosts:details') },
       { key: 'edit', icon: <Edit3 size={14} />, label: t('hosts:edit') },
-      {
-        key: 'favorite',
-        icon: <Pin size={14} fill={contextMenu.host.favorite ? 'currentColor' : 'none'} />,
-        label: contextMenu.host.favorite
-          ? t('hosts:removeFromFavorites')
-          : t('hosts:addToFavorites')
-      },
       { key: 'copy-ssh-command', icon: <Copy size={14} />, label: t('hosts:copySshCommand') },
       { type: 'divider' },
       { key: 'delete', danger: true, icon: <Trash2 size={14} />, label: t('hosts:delete') }
@@ -92,7 +84,6 @@ export function useHostContextMenu(options: Options) {
     if (key === 'edit') options.onEditHost(host.id)
     if (key === 'connect') options.onConnectHost(host.id)
     if (key === 'files') options.onOpenFiles(host.id)
-    if (key === 'favorite') options.onToggleFavoriteHost(host.id)
     if (key === 'copy-ssh-command') options.onCopySSHCommand(host.id)
     if (key === 'delete') options.onDeleteHost(host.id)
     if (key === 'delete-selected') options.onDeleteHosts(ids)

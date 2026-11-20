@@ -7,8 +7,6 @@ import {
   FolderOpen,
   Pencil,
   Server,
-  Pin,
-  PinOff,
   Trash2,
   Zap
 } from 'lucide-react'
@@ -173,11 +171,6 @@ export function ConnectionTreeNodeRow({
           run: () => onRename(host)
         },
         {
-          label: host.favorite ? t('hosts:removeFromFavorites') : t('hosts:addToFavorites'),
-          icon: host.favorite ? <PinOff size={14} /> : <Pin size={14} />,
-          run: () => props.onToggleFavoriteHost(host.id)
-        },
-        {
           label: t('hosts:copySshCommand'),
           icon: <Copy size={14} />,
           run: () => props.onCopySSHCommand(host.id)
@@ -198,7 +191,7 @@ export function ConnectionTreeNodeRow({
         tabIndex={tabIndex}
         onFocus={onFocus}
         draggable={!disabled}
-        className={cn(rowClass, 'group/host host-tree-item')}
+        className={cn(rowClass, 'host-tree-item')}
         style={
           {
             paddingLeft: rowIndent(node.depth),
@@ -238,31 +231,6 @@ export function ConnectionTreeNodeRow({
         <span className="w-3 shrink-0" aria-hidden="true" />
         <Server size={16} className="connection-node-icon shrink-0 text-muted-foreground" />
         <span className="truncate">{host.name}</span>
-        <button
-          type="button"
-          aria-label={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
-          title={t(host.favorite ? 'hosts:removeFromFavorites' : 'hosts:addToFavorites')}
-          aria-pressed={host.favorite}
-          disabled={disabled}
-          draggable={false}
-          className={cn(
-            'ml-auto flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-            !host.favorite &&
-              'opacity-0 group-hover/host:opacity-100 group-focus-within/host:opacity-100'
-          )}
-          onClick={(e) => {
-            e.stopPropagation()
-            props.onToggleFavoriteHost(host.id)
-          }}
-          onDoubleClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          {host.favorite ? (
-            <PinOff size={12} aria-hidden="true" />
-          ) : (
-            <Pin size={12} aria-hidden="true" />
-          )}
-        </button>
       </div>
     </TreeMenu>
   )

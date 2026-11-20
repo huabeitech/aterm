@@ -46,7 +46,6 @@ type HostListProps = {
   onConnectHost: (id: string) => void
   onOpenFiles: (id: string) => void
   onCopySSHCommand: (id: string) => Promise<boolean>
-  onToggleFavoriteHost: (id: string) => void
   onDeleteHost: (id: string) => void
   onDeleteHosts: (ids: string[]) => void
   onAddHost: () => void
@@ -69,7 +68,6 @@ const HOST_COLUMNS_DEFAULT_STATE: HostColumnState = {
   serverAliveInterval: { show: false },
   serverAliveCountMax: { show: false },
   connectTimeout: { show: false },
-  favorite: { show: false },
   lastUsedAt: { show: false },
   createdAt: { show: false },
   updatedAt: { show: false }
@@ -98,7 +96,6 @@ export const HostList = memo(function HostList({
   onConnectHost,
   onOpenFiles,
   onCopySSHCommand,
-  onToggleFavoriteHost,
   onDeleteHost,
   onDeleteHosts,
   onAddHost,
@@ -136,7 +133,6 @@ export const HostList = memo(function HostList({
       onConnectHost,
       onOpenFiles,
       onCopySSHCommand,
-      onToggleFavoriteHost,
       onDeleteHost,
       onDeleteHosts
     })

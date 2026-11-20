@@ -27,7 +27,6 @@ const emptyForm: FormState = {
   serverAliveCountMax: '',
   connectTimeout: '',
   remark: '',
-  favorite: false
 }
 
 interface HostEditorActionsOptions {
@@ -262,30 +261,6 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     }
   }
 
-  async function toggleFavoriteHost(id: string) {
-    const host = options.hosts.find((item) => item.id === id)
-    if (!host) return
-    options.setBusyAction('favorite')
-    try {
-      options.setSelectedID(host.id)
-      const updated = await options.updateHost(host.id, {
-        ...hostToInput(host),
-        favorite: !host.favorite
-      })
-      await options.refreshAll(updated.id)
-      options.reportSuccess(
-        updated.favorite ? t('hosts:addedToFavorites') : t('hosts:removedFromFavorites')
-      )
-    } catch (error) {
-      options.reportError(errorText(error))
-    } finally {
-      options.setBusyAction(null)
-    }
-  }
-  async function toggleSelectedFavorite() {
-    if (options.selected) await toggleFavoriteHost(options.selected.id)
-  }
-
   return {
     editorMode,
     setEditorMode,
@@ -310,8 +285,6 @@ export function useHostEditorActions(options: HostEditorActionsOptions) {
     confirmDeleteHost,
     confirmDeleteHosts,
     renameHost,
-    toggleFavoriteHost,
-    toggleSelectedFavorite
   }
 }
 

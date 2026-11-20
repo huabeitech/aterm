@@ -12,7 +12,7 @@ func (s *Store) ListHosts() ([]domain.Host, error) {
 	rows, err := s.db.Query(`
 SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
-       remark, favorite, last_used_at, created_at, updated_at
+       remark, last_used_at, created_at, updated_at
 FROM hosts
 ORDER BY directory_id ASC, created_at ASC, alias ASC;
 `)
@@ -67,12 +67,12 @@ func (s *Store) CreateHost(input domain.HostInput) (domain.Host, error) {
 INSERT INTO hosts (
   id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
   compression, server_alive_interval, server_alive_count_max, connect_timeout,
-  remark, favorite, last_used_at, created_at, updated_at
-) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  remark, last_used_at, created_at, updated_at
+) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 `,
 		host.ID, host.DirectoryID, host.Name, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 		boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
-		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
+		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark,
 		host.LastUsedAt, host.CreatedAt, host.UpdatedAt,
 	)
 	if err != nil {
@@ -122,12 +122,12 @@ func (s *Store) UpdateHost(id string, input domain.HostInput) (domain.Host, erro
 UPDATE hosts
 SET directory_id = ?, name = ?, alias = NULLIF(?, ''), host_name = ?, user = ?, port = ?, identity_file = ?, password_auth = ?, proxy_jump = ?, jump_host_id = ?,
     forward_agent = ?, compression = ?, server_alive_interval = ?, server_alive_count_max = ?,
-    connect_timeout = ?, remark = ?, favorite = ?, updated_at = ?
+    connect_timeout = ?, remark = ?, updated_at = ?
 WHERE id = ?;
 `,
 		host.DirectoryID, host.Name, host.Alias, host.HostName, host.User, host.Port, host.IdentityFile, boolToInt(host.PasswordAuth), host.ProxyJump, host.JumpHostID,
 		boolToInt(host.ForwardAgent), boolToInt(host.Compression), host.ServerAliveInterval,
-		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark, boolToInt(host.Favorite),
+		host.ServerAliveCountMax, host.ConnectTimeout, host.Remark,
 		host.UpdatedAt, host.ID,
 	)
 	if err != nil {
@@ -141,16 +141,6 @@ WHERE id = ?;
 			return domain.Host{}, err
 		}
 		if err = upsertHostSortOrderAtEnd(tx, defaultHostScopeType(host), defaultHostScopeID(host), host.ID, now); err != nil {
-			return domain.Host{}, err
-		}
-	}
-	if host.Favorite && !existing.Favorite {
-		if err = upsertHostSortOrderAtEnd(tx, domain.HostSortScopeFavorites, "", host.ID, now); err != nil {
-			return domain.Host{}, err
-		}
-	}
-	if !host.Favorite && existing.Favorite {
-		if err = deleteHostSortOrder(tx, domain.HostSortScopeFavorites, "", host.ID); err != nil {
 			return domain.Host{}, err
 		}
 	}
@@ -285,7 +275,7 @@ func (s *Store) GetHost(id string) (domain.Host, error) {
 	row := s.db.QueryRow(`
 SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
-       remark, favorite, last_used_at, created_at, updated_at
+       remark, last_used_at, created_at, updated_at
 FROM hosts
 WHERE id = ?;
 `, id)
@@ -353,7 +343,6 @@ func hostFromInput(id string, input domain.HostInput, createdAt, updatedAt strin
 		ServerAliveCountMax: input.ServerAliveCountMax,
 		ConnectTimeout:      input.ConnectTimeout,
 		Remark:              input.Remark,
-		Favorite:            input.Favorite,
 		LastUsedAt:          "",
 		CreatedAt:           createdAt,
 		UpdatedAt:           updatedAt,
@@ -371,7 +360,7 @@ func (s *Store) listHostsByIDs(ids []string) ([]domain.Host, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`
 SELECT id, directory_id, name, alias, host_name, user, port, identity_file, password_auth, proxy_jump, jump_host_id, forward_agent,
        compression, server_alive_interval, server_alive_count_max, connect_timeout,
-       remark, favorite, last_used_at, created_at, updated_at
+       remark, last_used_at, created_at, updated_at
 FROM hosts
 WHERE id IN (%s)
 ORDER BY directory_id ASC, created_at ASC, alias ASC;

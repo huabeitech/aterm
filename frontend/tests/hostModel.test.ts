@@ -23,7 +23,6 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   serverAliveCountMax: '',
   connectTimeout: '',
   remark: '',
-  favorite: false,
   ...overrides
 })
 

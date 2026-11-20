@@ -29,7 +29,6 @@ type HostSnippetImportResult = domain.HostSnippetImportResult
 
 const (
 	HostSortScopeAll           = domain.HostSortScopeAll
-	HostSortScopeFavorites     = domain.HostSortScopeFavorites
 	HostSortScopeDirectory     = domain.HostSortScopeDirectory
 	HostSortScopeUncategorized = domain.HostSortScopeUncategorized
 

@@ -8,7 +8,7 @@ import (
 func scanHost(scanner hostScanner) (domain.Host, error) {
 	var host domain.Host
 	var alias sql.NullString
-	var passwordAuth, forwardAgent, compression, favorite int
+	var passwordAuth, forwardAgent, compression int
 	err := scanner.Scan(
 		&host.ID,
 		&host.DirectoryID,
@@ -27,7 +27,6 @@ func scanHost(scanner hostScanner) (domain.Host, error) {
 		&host.ServerAliveCountMax,
 		&host.ConnectTimeout,
 		&host.Remark,
-		&favorite,
 		&host.LastUsedAt,
 		&host.CreatedAt,
 		&host.UpdatedAt,
@@ -36,7 +35,6 @@ func scanHost(scanner hostScanner) (domain.Host, error) {
 	host.ForwardAgent = forwardAgent == 1
 	host.PasswordAuth = passwordAuth == 1
 	host.Compression = compression == 1
-	host.Favorite = favorite == 1
 	return host, err
 }
 

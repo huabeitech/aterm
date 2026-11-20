@@ -1,6 +1,6 @@
 import { domain as service } from '../../api/types'
 
-export type ViewID = 'all' | 'favorites' | 'recent' | 'uncategorized' | 'directory' | 'settings'
+export type ViewID = 'all' | 'recent' | 'uncategorized' | 'directory' | 'settings'
 export type EditorMode = 'view' | 'create' | 'edit'
 export type BusyAction =
   | 'export'
@@ -8,14 +8,13 @@ export type BusyAction =
   | 'save'
   | 'delete'
   | 'directory'
-  | 'favorite'
   | 'settings'
   | 'sync'
   | 'sshDirectory'
   | 'syncDirectory'
   | null
 export type HostSortScope = {
-  type: 'all' | 'favorites' | 'directory' | 'uncategorized'
+  type: 'all' | 'directory' | 'uncategorized'
   id: string
 }
 export type DirectoryEditorState =
@@ -48,5 +47,4 @@ export type FormState = {
   serverAliveCountMax: string
   connectTimeout: string
   remark: string
-  favorite: boolean
 }

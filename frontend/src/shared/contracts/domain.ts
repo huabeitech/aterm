@@ -45,7 +45,6 @@ export namespace domain {
     serverAliveCountMax: number
     connectTimeout: number
     remark: string
-    favorite: boolean
     lastUsedAt: string
     sortOrders: Record<string, number>
     createdAt: string

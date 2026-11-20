@@ -906,8 +906,6 @@ function Workbench({
                   hosts={library.hosts}
                   searchShortcut={settings.commandPaletteShortcut}
                   onConnect={library.sidebarProps.onConnectHost}
-                  onTogglePinned={library.sidebarProps.onToggleFavoriteHost}
-                  pinBusy={!!library.sidebarProps.busyAction}
                   onCreate={() => library.sidebarProps.onCreateHost('')}
                   onSearch={() => showSearch()}
                   onLocalTerminal={
