@@ -24,7 +24,7 @@ type Props = {
   transfers: FileTransfer[]
   unlock: () => Promise<boolean>
   terminal: ReactNode
-  renderFiles: (target: HTMLElement | null, transferRequest: number) => ReactNode
+  renderFiles: (target: HTMLElement | null, transferRequest: number, visible: boolean) => ReactNode
   onReconnectSSH: () => void
   onReconnectSFTP: () => void
   onViewChange: (view: ConnectionView) => void
@@ -104,7 +104,7 @@ export function ConnectionWorkspace({
   const [statusTarget, setStatusTarget] = useState<HTMLDivElement | null>(null)
   const [transferRequest, setTransferRequest] = useState(0)
   const [size, setSize] = useState<number | string>('50%')
-  const activeTransfers = transfers.filter((t) => t.state === 'running' || t.state === 'queued' || t.state === 'paused')
+  const activeTransfers = transfers.filter((t) => t.state === 'running' || t.state === 'queued' || t.state === 'paused' || t.state === 'conflict')
   const failed = transfers.filter((t) => t.state === 'failed').length
   const total = activeTransfers.reduce((sum, t) => sum + t.total, 0)
   const transferred = activeTransfers.reduce((sum, t) => sum + t.transferred, 0)
@@ -135,7 +135,7 @@ export function ConnectionWorkspace({
   const files = (
     <div className="file-workspace-container h-full min-h-0" data-active={active && fileVisible}>
       {fileSession ? (
-        renderFiles(statusTarget, transferRequest)
+        renderFiles(statusTarget, transferRequest, active && fileVisible)
       ) : (
         <div className="connection-empty">
           <FolderOpen size={24} aria-hidden="true" />

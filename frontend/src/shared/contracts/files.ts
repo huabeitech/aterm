@@ -42,6 +42,17 @@ export type FileMutation =
   | { kind: 'rename'; path: string; destination: string }
   | { kind: 'delete'; paths: string[] }
   | { kind: 'chmod'; path: string; mode: string }
+export interface UploadConflict {
+  id: string
+  path: string
+  localKind: 'file' | 'folder'
+  remoteKind: 'file' | 'folder' | 'link' | 'special'
+  localSize: number
+  remoteSize: number
+  localTime: string
+  remoteTime: string
+  multiple: boolean
+}
 export interface FileTransfer {
   id: string
   sessionID: string
@@ -49,7 +60,10 @@ export interface FileTransfer {
   name: string
   remotePath: string
   localPath: string
-  state: 'queued' | 'paused' | 'running' | 'completed' | 'cancelled' | 'failed'
+  conflict?: UploadConflict
+  uploaded?: number
+  skipped?: number
+  state: 'conflict' | 'skipped' | 'queued' | 'paused' | 'running' | 'completed' | 'cancelled' | 'failed'
   transferred: number
   bytesPerSecond?: number
   total: number
@@ -73,6 +87,7 @@ export interface FilesApi {
   pathsForFiles(files: File[]): string[]
   image(id: string, path: string): Promise<{ dataURL: string; size: number }>
   download(id: string, paths: string[]): Promise<void>
+  resolveConflict(id: string, transferID: string, choice: {id: string; action: 'skip' | 'overwrite'; all: boolean}): Promise<void>
   pause(id: string, transferID: string): Promise<void>
   resume(id: string, transferID: string): Promise<void>
   cancel(id: string, transferID: string): Promise<void>

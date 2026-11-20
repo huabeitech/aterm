@@ -218,7 +218,7 @@ function Workbench({
           onReconnectSFTP={() => {
             if (fileSession) void files.reconnect(fileSession.id)
           }}
-          renderFiles={(target, request) => files.renderPage(id, target, request)}
+          renderFiles={(target, request, visible) => files.renderPage(id, target, request, visible)}
           onViewChange={(view) => {
             setConnectionViews((previous) => ({ ...previous, [id]: view }))
             if (view === 'files' || view === 'split') {

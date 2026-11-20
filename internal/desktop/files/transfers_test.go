@@ -42,7 +42,7 @@ func awaitTransfer(t *testing.T, events <-chan Transfer, id string, done func(Tr
 	}
 }
 func terminalTransfer(value Transfer) bool {
-	return value.State == "completed" || value.State == "failed" || value.State == "cancelled"
+	return value.State == "skipped" || value.State == "completed" || value.State == "failed" || value.State == "cancelled"
 }
 func TestTransferStagesTreesAndNeverOverwritesExistingDownloads(t *testing.T) {
 	files, id, transfers, events := transferFixture(t)
@@ -151,8 +151,12 @@ func TestTransferRejectsSymlinksAndPreservesRemoteCollisions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if state := awaitTransfer(t, events, task.ID, terminalTransfer); state.State != "failed" {
-		t.Fatal("remote collision was overwritten")
+	conflict := awaitTransfer(t, events, task.ID, func(v Transfer) bool { return v.Conflict != nil })
+	if err := transfers.ResolveConflict(id, task.ID, UploadChoice{ID: conflict.Conflict.ID, Action: "skip"}); err != nil {
+		t.Fatal(err)
+	}
+	if state := awaitTransfer(t, events, task.ID, terminalTransfer); state.State != "skipped" || state.Total != 0 {
+		t.Fatal("expected skipped upload", state)
 	}
 	text, err := files.ReadText(id, "/existing")
 	if err != nil || text.Text != "original" {
@@ -222,5 +226,180 @@ func TestPausedCopyCanResumeOrCancel(t *testing.T) {
 				t.Fatal("paused copy stuck")
 			}
 		})
+	}
+}
+
+func TestFolderUploadConflictDecisions(t *testing.T) {
+	files, id, m, events := transferFixture(t)
+	s, _ := files.Session(id)
+	src := t.TempDir()
+	if err := s.Client.Mkdir("/project"); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"a", "b", "c", "d", "remote-only"} {
+		writeFixture(t, s.Client, "/project/"+name, "old")
+	}
+	for _, name := range []string{"a", "b", "c", "d", "new"} {
+		if err := os.WriteFile(filepath.Join(src, name), []byte("new"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(src, "empty"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	task, err := m.Queue(id, "upload", src, "/project")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, step := range []struct {
+		name, action string
+		all          bool
+	}{{"a", "overwrite", false}, {"b", "skip", false}, {"c", "skip", true}} {
+		v := awaitTransfer(t, events, task.ID, func(v Transfer) bool { return v.Conflict != nil || terminalTransfer(v) })
+		if v.Conflict == nil || v.Conflict.Path != "/project/"+step.name {
+			t.Fatalf("unexpected conflict: %#v", v)
+		}
+		if err := m.ResolveConflict(id, task.ID, UploadChoice{v.Conflict.ID, step.action, step.all}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	v := awaitTransfer(t, events, task.ID, terminalTransfer)
+	if v.State != "completed" || v.Skipped != 3 || v.Uploaded != 2 || v.Transferred != 6 {
+		t.Fatalf("unexpected outcome: %#v", v)
+	}
+	for name, want := range map[string]string{"a": "new", "b": "old", "c": "old", "d": "old", "remote-only": "old", "new": "new"} {
+		got, err := files.ReadText(id, "/project/"+name)
+		if err != nil || got.Text != want {
+			t.Fatalf("%s: %s %v", name, got.Text, err)
+		}
+	}
+	if fi, err := s.Client.Stat("/project/empty"); err != nil || !fi.IsDir() {
+		t.Fatal("missing empty folder", err)
+	}
+}
+
+func TestUploadBatchPolicyAndTargetRecheck(t *testing.T) {
+	files, id, m, events := transferFixture(t)
+	s, _ := files.Session(id)
+	src := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(src, []byte("replacement"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	batch := NewUploadBatch(true)
+	for _, name := range []string{"/first", "/second", "/later"} {
+		writeFixture(t, s.Client, name, "original")
+	}
+	queue := func(name string, b *UploadBatch) Transfer {
+		job, err := m.QueueUpload(id, src, name, b)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return job
+	}
+	next := func(job Transfer) Transfer {
+		v := awaitTransfer(t, events, job.ID, func(v Transfer) bool { return v.Conflict != nil || terminalTransfer(v) })
+		if v.Conflict == nil {
+			t.Fatalf("expected conflict: %#v", v)
+		}
+		return v
+	}
+	resolve := func(v Transfer, action string, all bool) {
+		if err := m.ResolveConflict(id, v.ID, UploadChoice{v.Conflict.ID, action, all}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first := next(queue("/first", batch))
+	second := next(queue("/second", batch))
+	free := queue("/unrelated", NewUploadBatch(false))
+	if v := awaitTransfer(t, events, free.ID, terminalTransfer); v.State != "completed" {
+		t.Fatal(v)
+	}
+	resolve(first, "overwrite", true)
+	for finished := 0; finished < 2; {
+		select {
+		case v := <-events:
+			if terminalTransfer(v) && (v.ID == first.ID || v.ID == second.ID) {
+				if v.State != "completed" {
+					t.Fatal(v)
+				}
+				finished++
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatal("pending batch conflicts did not finish")
+		}
+	}
+	later := next(queue("/later", NewUploadBatch(false)))
+	writeFixture(t, s.Client, "/later", "changed after prompt")
+	resolve(later, "overwrite", false)
+	changed := next(later)
+	if changed.Conflict.ID == later.Conflict.ID || changed.Conflict.RemoteSize == later.Conflict.RemoteSize {
+		t.Fatal("stale conflict details")
+	}
+	if err := m.Cancel(id, later.ID); err != nil {
+		t.Fatal(err)
+	}
+	if v := awaitTransfer(t, events, later.ID, terminalTransfer); v.State != "cancelled" {
+		t.Fatal(v)
+	}
+	got, err := files.ReadText(id, "/later")
+	if err != nil || got.Text != "changed after prompt" {
+		t.Fatal("cancel lost original", err)
+	}
+}
+
+func TestOverwriteAllNeverReplacesIncompatibleEntries(t *testing.T) {
+	files, id, m, events := transferFixture(t)
+	s, _ := files.Session(id)
+	src := t.TempDir()
+	if err := s.Client.Mkdir("/merge"); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"a", "link", "folder"} {
+		if err := os.WriteFile(filepath.Join(src, name), []byte("replacement"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(src, "tree"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "tree", "child"), []byte("child"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, s.Client, "/merge/a", "old")
+	writeFixture(t, s.Client, "/merge/tree", "original")
+	if err := s.Client.Mkdir("/merge/folder"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Client.Symlink("/merge/tree", "/merge/link"); err != nil {
+		t.Fatal(err)
+	}
+	job, err := m.Queue(id, "upload", src, "/merge")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, kind := range []string{"file", "folder", "link", "file"} {
+		v := awaitTransfer(t, events, job.ID, func(v Transfer) bool { return v.Conflict != nil || terminalTransfer(v) })
+		if v.Conflict == nil || v.Conflict.RemoteKind != kind {
+			t.Fatalf("expected %s, got %#v", kind, v)
+		}
+		choice := UploadChoice{v.Conflict.ID, "overwrite", true}
+		if v.Conflict.Path != "/merge/a" {
+			if m.ResolveConflict(id, job.ID, choice) == nil {
+				t.Fatal("incompatible overwrite accepted")
+			}
+			choice.Action = "skip"
+			choice.All = false
+		}
+		if err := m.ResolveConflict(id, job.ID, choice); err != nil {
+			t.Fatal(err)
+		}
+	}
+	v := awaitTransfer(t, events, job.ID, terminalTransfer)
+	if v.State != "completed" || v.Skipped != 3 || v.Uploaded != 1 || v.Total != 11 {
+		t.Fatal(v)
+	}
+	got, err := files.ReadText(id, "/merge/tree")
+	if err != nil || got.Text != "original" {
+		t.Fatal(got, err)
 	}
 }

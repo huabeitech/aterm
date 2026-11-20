@@ -187,6 +187,16 @@ func (a *App) desktopFiles(raw []json.RawMessage) (any, error) {
 			return nil, err
 		}
 		return nil, a.queueUploads(id, directory, paths)
+	case "resolveConflict":
+		transferID, err := argument[string](args, 1)
+		if err != nil {
+			return nil, err
+		}
+		choice, err := argument[desktopfiles.UploadChoice](args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return nil, a.transfers().ResolveConflict(id, transferID, choice)
 	case "download":
 		paths, err := argument[[]string](args, 1)
 		if err != nil {
@@ -244,8 +254,9 @@ func (a *App) desktopFiles(raw []json.RawMessage) (any, error) {
 }
 
 func (a *App) queueUploads(id, directory string, paths []string) error {
+	batch := desktopfiles.NewUploadBatch(len(paths) > 1)
 	for _, local := range paths {
-		if _, err := a.transfers().Queue(id, "upload", local, path.Join(directory, filepath.Base(local))); err != nil {
+		if _, err := a.transfers().QueueUpload(id, local, path.Join(directory, filepath.Base(local)), batch); err != nil {
 			return err
 		}
 	}

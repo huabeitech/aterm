@@ -74,6 +74,7 @@ import type {
 } from '../../../../shared/contracts/files'
 
 import { fileSize } from './fileFormat'
+import { UploadConflictDialog } from './UploadConflictDialog'
 import { TransferPanel } from './TransferPanel'
 import { FileState, FileListLoading } from './FileState'
 import './files.css'
@@ -113,6 +114,7 @@ const icon = (entry: RemoteEntry, size = 18) =>
     <FileText size={size} />
   )
 interface Props {
+  visible: boolean
   statusTarget?: HTMLElement | null
   transferRequest?: number
   layoutScale: number
@@ -134,6 +136,7 @@ function readInitialFileColumnsState() {
   }
 }
 export function FileWorkspace({
+  visible: workspaceVisible,
   layoutScale,
   session,
   transfers,
@@ -340,7 +343,14 @@ export function FileWorkspace({
     otherColumnsWidth +
     resolvedWidths[fillColumn.key] * layoutScale
   const failedTransfers = transfers.filter((t) => t.state === 'failed').length
-  const activeTransfers = transfers.filter((t) => ['running', 'queued', 'paused'].includes(t.state))
+  const activeTransfers = transfers.filter((t) => ['running', 'queued', 'paused', 'conflict'].includes(t.state))
+  const [conflictID, setConflictID] = useState<string | null>(null)
+  const [hiddenConflict, setHiddenConflict] = useState<string | null>(null)
+  const conflicts = transfers.filter((item) => item.conflict)
+  const conflict = conflicts.find((item) => item.id === conflictID) ?? conflicts[0]
+  useEffect(() => {
+    if (conflict) setConflictID(conflict.id)
+  }, [conflict?.id])
   const seenActiveTransferIDs = useRef(new Set<string>())
   useEffect(() => {
     const activeIDs = new Set(activeTransfers.map((t) => t.id))
@@ -1263,10 +1273,19 @@ export function FileWorkspace({
             sessionID={session.id}
             transfers={transfers}
             ready={ready}
+            onResolve={(id) => { setConflictID(id); setHiddenConflict(null) }}
             onClose={() => setTransfersOpen(false)}
           />
         )}
       </div>
+      {workspaceVisible && conflict?.conflict && hiddenConflict !== conflict.conflict.id && (
+        <UploadConflictDialog key={conflict.conflict.id} conflict={conflict.conflict}
+          onClose={() => setHiddenConflict(conflict.conflict!.id)}
+          onChoose={(action, all) => desktop.files.resolveConflict(session.id, conflict.id, {
+            id: conflict.conflict!.id, action, all
+          })}
+        />
+      )}
       <WorkbenchDialog
         title={dialog ? t(`files:${dialog.title}`) : undefined}
         open={!!dialog}

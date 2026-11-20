@@ -210,6 +210,7 @@ const desktop: DesktopApi = {
     upload: (...args) => invokeFiles('upload', ...args),
     download: (...args) => invokeFiles('download', ...args),
     cancel: (...args) => invokeFiles('cancel', ...args),
+    resolveConflict: (...args) => invokeFiles('resolveConflict', ...args),
     pause: (...args) => invokeFiles('pause', ...args),
     resume: (...args) => invokeFiles('resume', ...args),
     retry: (...args) => invokeFiles('retry', ...args),

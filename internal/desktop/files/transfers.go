@@ -16,20 +16,26 @@ import (
 )
 
 type Transfer struct {
-	ID             string  `json:"id"`
-	SessionID      string  `json:"sessionID"`
-	Direction      string  `json:"direction"`
-	Name           string  `json:"name"`
-	RemotePath     string  `json:"remotePath"`
-	LocalPath      string  `json:"localPath"`
-	State          string  `json:"state"`
-	Transferred    int64   `json:"transferred"`
-	Total          int64   `json:"total"`
-	BytesPerSecond float64 `json:"bytesPerSecond"`
-	Error          string  `json:"error,omitempty"`
-	Directory      bool    `json:"directory,omitempty"`
+	Conflict       *UploadConflict `json:"conflict,omitempty"`
+	Uploaded       int             `json:"uploaded,omitempty"`
+	Skipped        int             `json:"skipped,omitempty"`
+	ID             string          `json:"id"`
+	SessionID      string          `json:"sessionID"`
+	Direction      string          `json:"direction"`
+	Name           string          `json:"name"`
+	RemotePath     string          `json:"remotePath"`
+	LocalPath      string          `json:"localPath"`
+	State          string          `json:"state"`
+	Transferred    int64           `json:"transferred"`
+	Total          int64           `json:"total"`
+	BytesPerSecond float64         `json:"bytesPerSecond"`
+	Error          string          `json:"error,omitempty"`
+	Directory      bool            `json:"directory,omitempty"`
 }
 type transferTask struct {
+	slotHeld  bool // Owned by the executing goroutine.
+	batch     *UploadBatch
+	answer    chan string
 	mu        sync.Mutex
 	info      Transfer
 	ctx       context.Context
@@ -58,15 +64,14 @@ type Transfers struct {
 	cancel  context.CancelFunc
 	queue   chan transferJob
 	workers sync.WaitGroup
+	slots   chan struct{}
 }
 
 func NewTransfers(files *Manager, emit func(any)) *Transfers {
 	ctx, cancel := context.WithCancel(context.Background())
-	manager := &Transfers{tasks: map[string]*transferTask{}, files: files, emit: emit, ctx: ctx, cancel: cancel, queue: make(chan transferJob, 1000)}
-	for i := 0; i < 2; i++ {
-		manager.workers.Add(1)
-		go manager.worker()
-	}
+	manager := &Transfers{tasks: map[string]*transferTask{}, files: files, emit: emit, ctx: ctx, cancel: cancel, slots: make(chan struct{}, 2), queue: make(chan transferJob, 1000)}
+	manager.workers.Add(1)
+	go manager.worker()
 	return manager
 }
 func (m *Transfers) send(info Transfer) {
@@ -91,6 +96,12 @@ func portableName(name string) error {
 	return nil
 }
 func (m *Transfers) Queue(sessionID, direction, local, remote string) (Transfer, error) {
+	return m.queueTask(sessionID, direction, local, remote, NewUploadBatch(false))
+}
+func (m *Transfers) QueueUpload(sessionID, local, remote string, batch *UploadBatch) (Transfer, error) {
+	return m.queueTask(sessionID, "upload", local, remote, batch)
+}
+func (m *Transfers) queueTask(sessionID, direction, local, remote string, batch *UploadBatch) (Transfer, error) {
 	if _, err := m.files.Session(sessionID); err != nil {
 		return Transfer{}, err
 	}
@@ -109,7 +120,7 @@ func (m *Transfers) Queue(sessionID, direction, local, remote string) (Transfer,
 		return Transfer{}, err
 	}
 	ctx, cancel := context.WithCancel(m.ctx)
-	task := &transferTask{info: Transfer{ID: uuid.NewString(), SessionID: sessionID, Direction: direction, Name: name, RemotePath: remote, LocalPath: filepath.Clean(local), State: "queued"}, ctx: ctx, cancel: cancel, attempt: 1}
+	task := &transferTask{batch: batch, info: Transfer{ID: uuid.NewString(), SessionID: sessionID, Direction: direction, Name: name, RemotePath: remote, LocalPath: filepath.Clean(local), State: "queued"}, ctx: ctx, cancel: cancel, attempt: 1}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.ctx.Err() != nil {
@@ -222,6 +233,9 @@ func (m *Transfers) Retry(sessionID, id string) error {
 	task.info.Total = 0
 	task.info.BytesPerSecond = 0
 	task.info.Error = ""
+	task.info.Uploaded = 0
+	task.info.Skipped = 0
+	task.batch = NewUploadBatch(false)
 	m.send(task.info)
 	select {
 	case m.queue <- transferJob{task: task, attempt: task.attempt}:
@@ -239,7 +253,7 @@ func (m *Transfers) ClearCompleted(sessionID string) {
 	ids := []string{}
 	for id, task := range m.tasks {
 		task.mu.Lock()
-		if task.info.SessionID == sessionID && task.info.State == "completed" && !task.executing {
+		if task.info.SessionID == sessionID && (task.info.State == "completed" || task.info.State == "skipped") && !task.executing {
 			delete(m.tasks, id)
 			ids = append(ids, id)
 		}
@@ -311,41 +325,62 @@ func (m *Transfers) worker() {
 		case <-m.ctx.Done():
 			return
 		case job := <-m.queue:
-			task := job.task
-			task.mu.Lock()
-			if task.attempt != job.attempt || task.info.State != "queued" || task.ctx.Err() != nil {
-				task.mu.Unlock()
-				continue
+			select {
+			case m.slots <- struct{}{}:
+			case <-m.ctx.Done():
+				return
 			}
-			task.executing = true
-			task.info.State = "running"
-			task.started = time.Now()
-			task.notified = task.started
-			info := task.info
-			ctx := task.ctx
-			m.send(info)
-			task.mu.Unlock()
-			actual, err := m.run(ctx, task, info)
-			task.mu.Lock()
-			task.executing = false
-			task.resume = nil
-			task.closers = nil
-			if ctx.Err() != nil {
-				task.info.State = "cancelled"
-				task.info.Error = ""
-			} else if err != nil {
-				task.info.State = "failed"
-				task.info.Error = err.Error()
-			} else {
-				task.info.State = "completed"
-				task.info.Total = task.info.Transferred
-				task.info.LocalPath = actual
-			}
-			task.info.BytesPerSecond = 0
-			m.send(task.info)
-			task.mu.Unlock()
+			m.workers.Add(1)
+			go m.execute(job)
 		}
 	}
+}
+func (m *Transfers) execute(job transferJob) {
+	defer m.workers.Done()
+	task := job.task
+
+	task.mu.Lock()
+	if task.attempt != job.attempt || task.info.State != "queued" || task.ctx.Err() != nil {
+		task.mu.Unlock()
+		<-m.slots
+		return
+	}
+	task.slotHeld = true
+	task.executing = true
+	task.info.State = "running"
+	task.started = time.Now()
+	task.notified = task.started
+	info := task.info
+	ctx := task.ctx
+	m.send(info)
+	task.mu.Unlock()
+	actual, err := m.run(ctx, task, info)
+	task.mu.Lock()
+	task.info.Conflict = nil
+	task.executing = false
+	task.resume = nil
+	task.closers = nil
+	if ctx.Err() != nil {
+		task.info.State = "cancelled"
+		task.info.Error = ""
+	} else if err != nil {
+		task.info.State = "failed"
+		task.info.Error = err.Error()
+	} else {
+		task.info.State = "completed"
+		if task.info.Skipped > 0 && task.info.Uploaded == 0 {
+			task.info.State = "skipped"
+		}
+		task.info.Total = task.info.Transferred
+		task.info.LocalPath = actual
+	}
+	task.info.BytesPerSecond = 0
+	if task.slotHeld {
+		<-m.slots
+		task.slotHeld = false
+	}
+	m.send(task.info)
+	task.mu.Unlock()
 }
 func (m *Transfers) progress(task *transferTask, bytes, total int64, directory bool) {
 	task.mu.Lock()
@@ -474,79 +509,46 @@ func (m *Transfers) run(ctx context.Context, task *transferTask, info Transfer) 
 	}
 	directory := entries[0].directory
 	m.progress(task, 0, total, directory)
+	if upload {
+		return info.LocalPath, m.uploadTree(ctx, task, client, info, entries)
+	}
 	// Stage beside the destination. Existing content is never opened for truncation.
 	suffix := ".aterm-" + uuid.NewString()
-	remoteTemp := path.Join(path.Dir(info.RemotePath), suffix)
 	localTemp := filepath.Join(filepath.Dir(info.LocalPath), suffix)
-	if upload {
-		if _, err := client.Lstat(info.RemotePath); err == nil {
-			return "", errors.New("remote destination already exists")
-		} else if !os.IsNotExist(err) {
+	if directory {
+		if err := os.Mkdir(localTemp, 0700); err != nil {
 			return "", err
 		}
-		if directory {
-			if err := client.Mkdir(remoteTemp); err != nil {
-				return "", err
-			}
-			defer func() { remaining := 10001; _ = removeTree(client, remoteTemp, 0, &remaining) }()
-		} else {
-			defer client.Remove(remoteTemp)
-		}
+		defer os.RemoveAll(localTemp)
 	} else {
-		if directory {
-			if err := os.Mkdir(localTemp, 0o700); err != nil {
-				return "", err
-			}
-			defer os.RemoveAll(localTemp)
-		} else {
-			defer os.Remove(localTemp)
-		}
+		defer os.Remove(localTemp)
 	}
 	for _, entry := range entries {
 		if err := task.waitReady(ctx); err != nil {
 			return "", err
 		}
 		remote := info.RemotePath
-		local := info.LocalPath
-		if upload {
-			remote = remoteTemp
-		} else {
-			local = localTemp
-		}
+		local := localTemp
 		if directory {
 			remote = path.Join(remote, entry.relative)
 			local = filepath.Join(local, filepath.FromSlash(entry.relative))
 		}
 		if entry.directory {
 			if entry.relative != "" {
-				if upload {
-					err = client.Mkdir(remote)
-				} else {
-					err = os.Mkdir(local, 0o700)
-				}
+				err = os.Mkdir(local, 0o700)
 				if err != nil {
 					return "", err
 				}
 			}
 			continue
 		}
-		var source io.ReadCloser
-		var destination io.WriteCloser
-		if upload {
-			source, err = os.Open(local)
-			if err == nil {
-				destination, err = client.OpenFile(remote, os.O_CREATE|os.O_EXCL|os.O_WRONLY)
-			}
-		} else {
-			source, err = client.Open(remote)
-			if err == nil {
-				destination, err = os.OpenFile(local, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-			}
-		}
+		source, err := client.Open(remote)
 		if err != nil {
-			if source != nil {
-				source.Close()
-			}
+			return "", err
+		}
+		destination, err := os.OpenFile(local, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+		if err != nil {
+			source.Close()
 			return "", err
 		}
 		if err := m.copy(ctx, task, destination, source); err != nil {
@@ -556,16 +558,6 @@ func (m *Transfers) run(ctx context.Context, task *transferTask, info Transfer) 
 	if err := task.waitReady(ctx); err != nil {
 		return "", err
 	}
-	if upload {
-		if _, err := client.Lstat(info.RemotePath); err == nil {
-			return "", errors.New("remote destination already exists")
-		}
-		if err := client.Rename(remoteTemp, info.RemotePath); err != nil {
-			return "", err
-		}
-		return info.LocalPath, nil
-	}
-
 	destination := info.LocalPath
 	if directory {
 		if _, err := os.Lstat(destination); err == nil {

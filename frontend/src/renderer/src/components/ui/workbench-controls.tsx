@@ -387,7 +387,7 @@ export function WorkbenchDialog({
   width?: number
   actions?: ReactNode
   restoreFocus?: boolean
-  onOpened?: () => void
+  onOpened?: (event: Event) => void
 }) {
   useTranslation()
   return (
@@ -423,7 +423,7 @@ export function WorkbenchDialog({
         onCloseAutoFocus={(event) => {
           if (!restoreFocus) event.preventDefault()
         }}
-        onOpenAutoFocus={() => onOpened?.()}
+        onOpenAutoFocus={onOpened}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

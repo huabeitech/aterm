@@ -27,10 +27,12 @@ import type { FileTransfer } from '../../../../shared/contracts/files'
 import { fileSize, uploadTimeRemaining } from './fileFormat'
 import { FileState } from './FileState'
 
-const active = (t: FileTransfer) => t.state === 'queued' || t.state === 'running' || t.state === 'paused'
+const active = (t: FileTransfer) => t.state === 'conflict' || t.state === 'queued' || t.state === 'running' || t.state === 'paused'
 const retryable = (t: FileTransfer) => t.state === 'failed' || t.state === 'cancelled'
 const stateLabel = (t: FileTransfer) =>
   ({
+    conflict: translate('files:waitingConflict'),
+    skipped: translate('files:skipped'),
     paused: translate('files:transferPaused'),
     queued: translate('files:transferQueued'),
     running: translate('files:transferRunning'),
@@ -39,18 +41,23 @@ const stateLabel = (t: FileTransfer) =>
     failed: translate('files:transferFailed')
   })[t.state]
 const progressLabel = (t: FileTransfer) =>
-  t.state === 'completed'
+  t.state === 'skipped' ? stateLabel(t) :
+  t.state === 'completed' && t.directory && t.skipped
+    ? translate('files:uploadSummary', { uploaded: t.uploaded ?? 0, skipped: t.skipped })
+    : t.state === 'completed'
     ? `${translate('files:transferCompleted')} · ${fileSize(t.total)}`
     : `${stateLabel(t)} · ${fileSize(t.transferred)}${t.total ? ` / ${fileSize(t.total)}` : ''}`
 export function TransferPanel({
   sessionID,
   transfers,
   ready,
+  onResolve,
   onClose
 }: {
   sessionID: string
   transfers: FileTransfer[]
   ready: boolean
+  onResolve: (id: string) => void
   onClose: () => void
 }) {
   useTranslation()
@@ -68,11 +75,11 @@ export function TransferPanel({
     all: transfers.length,
     active: transfers.filter(active).length,
     failed: transfers.filter((t) => t.state === 'failed').length,
-    completed: transfers.filter((t) => t.state === 'completed').length,
+    completed: transfers.filter((t) => (t.state === 'completed' || t.state === 'skipped')).length,
     cancelled: transfers.filter((t) => t.state === 'cancelled').length
   }
   const filtered = transfers.filter(
-    (t) => filter === 'all' || (filter === 'active' ? active(t) : t.state === filter)
+    (t) => filter === 'all' || (filter === 'active' ? active(t) : t.state === filter || (filter === 'completed' && t.state === 'skipped'))
   )
   const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / size)))
   async function run(action: () => Promise<unknown>) {
@@ -305,7 +312,7 @@ export function TransferPanel({
               </div>
               <div className="files-transfer-progress min-w-0">
                 <small>{progressLabel(t)}</small>
-                {(t.state === 'running' || t.state === 'paused') && (
+                {(t.state === 'running' || t.state === 'paused' || t.state === 'conflict') && (
                   <small className="files-transfer-speed">
                     {fileSize(t.bytesPerSecond ?? 0)}/s
                     {t.direction === 'upload' && <> · {uploadTimeRemaining(t)}</>}
@@ -319,6 +326,11 @@ export function TransferPanel({
                 )}
               </div>
               <div className="files-transfer-actions flex items-center justify-end gap-1">
+                {t.conflict && (
+                  <ActionButton size="sm" onClick={() => onResolve(t.id)}>
+                    {translate('files:resolveConflict')}
+                  </ActionButton>
+                )}
                 {(t.state === 'running' || t.state === 'paused') && (
                   <ActionButton
                     size="sm"

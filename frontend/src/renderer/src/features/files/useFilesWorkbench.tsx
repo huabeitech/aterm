@@ -80,7 +80,7 @@ export function useFilesWorkbench(
   )
   useEffect(() => {
     const preventLoss = (event: BeforeUnloadEvent) => {
-      if (current.current.transfers.some((t) => ['queued', 'running'].includes(t.state))) {
+      if (current.current.transfers.some((t) => ['queued', 'running', 'paused', 'conflict'].includes(t.state))) {
         event.preventDefault()
         event.returnValue = ''
       }
@@ -183,7 +183,7 @@ export function useFilesWorkbench(
     if (
       id &&
       current.current.transfers.some(
-        (t) => t.sessionID === id && ['queued', 'running'].includes(t.state)
+        (t) => t.sessionID === id && ['queued', 'running', 'paused', 'conflict'].includes(t.state)
       )
     ) {
       const confirmed = await new Promise<boolean>((resolve) =>
@@ -283,11 +283,12 @@ export function useFilesWorkbench(
     close,
     sessions,
     transfers,
-    renderPage(ownerID: string, statusTarget: HTMLElement | null, transferRequest: number) {
+    renderPage(ownerID: string, statusTarget: HTMLElement | null, transferRequest: number, visible: boolean) {
       const session = sessions.find((s) => s.ownerID === ownerID)
       return session ? (
         <FileWorkspace
           key={session.id}
+          visible={visible}
           layoutScale={layoutScale}
           session={session}
           transfers={transfers.filter((t) => t.sessionID === session.id)}
