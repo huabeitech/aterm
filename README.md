@@ -2,38 +2,31 @@
 
 English | [简体中文](README.zh-CN.md)
 
-aTerm is a terminal application built for server management, with a focus on SSH workflows. It brings local terminals, SSH connections, server organization, and remote file editing into one workspace.
+aTerm is a terminal app for server management and an alternative to Termius. Manage SSH hosts, use local and remote terminals, and work with remote files over SFTP in one workspace.
+
+## Preview
+
+![aTerm on macOS showing SSH hosts and the SFTP file browser](docs/images/aterm-workspace.png)
 
 ## Features
 
-- **Host management** — organize connections in directories, search hosts, and import SSH connection settings.
-- **SSH terminals** — work with tabbed connections, split terminal layouts, managed SSH keys, and jump hosts.
-- **SSH tunnels** — save and control local port forwarding for private services, reuse jump hosts, and keep tunnels running independently of terminal tabs.
-- **Remote files** — browse files over SFTP, upload and download files, track transfers, and edit remote text files with Monaco Editor.
-- **Local terminals** — open a local shell alongside remote connections.
-- **Workspace extensions** — install and manage plugins with permission controls.
-- **Personalization and backups** — manage terminal themes and preferences, and export or restore encrypted backups.
+- **Terminals.** Open local shells and SSH sessions in tabs or split panes.
+- **Host management.** Organize and search hosts, import SSH settings, and connect with SSH keys and jump hosts.
+- **Remote files.** Browse and transfer files over SFTP, and edit remote text files in place.
+- **SSH tunnels.** Save and manage [local port forwarding](docs/ssh-tunnels.md) to reach private services.
+- **Plugins.** Install plugins and control their permissions.
+- **Preferences and backups.** Customize terminal themes and export or restore encrypted backups.
 
-## Built for everyday server work
+## Download and install
 
-Move between local shells and remote servers, keep connections organized, and work with terminals and remote files in the same workspace. aTerm follows native macOS interface conventions to keep everyday operations familiar and straightforward.
+[Download from GitHub Releases](https://github.com/huabeitech/aterm/releases/latest).
 
-## Terminals in one workspace
+- **macOS 12 or later.** Choose the Apple Silicon or Intel ZIP, then extract the app.
+- **Windows.** Choose the x64 or ARM64 ZIP, then extract it and run `aTerm.exe`. WebView2 is required.
+- **Ubuntu 24.04.** Choose the x64 or ARM64 DEB and run `sudo apt install ./<filename>.deb`.
 
-Open local shells and SSH sessions side by side. Use tabs to switch between connections and split terminal layouts to work across multiple sessions.
+See the release notes for installation details.
 
-## Keep servers organized
+## Feedback and license
 
-Group connections into directories and find hosts with search. Import SSH connection settings, manage SSH keys, and connect through jump hosts.
-
-## Access private services
-
-Open **Tunnels** in the bottom view bar of a saved SSH connection, or use **SSH tunnels** in the sidebar for the global view. Save a local address and port, select an SSH host, and enter the target address as reached from that host. Start the tunnel and connect your browser or database tool to the local address. Tunnels stop when aTerm quits; saved configurations are included in encrypted backups. See [SSH tunnel management](docs/ssh-tunnels.md) for lifecycle and troubleshooting details.
-
-## Work with remote files
-
-Browse server files over SFTP without leaving your workspace. Upload and download files, follow transfer progress, and edit remote text files with the built-in editor.
-
-## Make the workspace your own
-
-Choose terminal themes and adjust preferences to suit your workflow. Extend the workspace with plugins, control their permissions, and export or restore encrypted backups.
+Report bugs or suggest features in [GitHub Issues](https://github.com/huabeitech/aterm/issues). aTerm is licensed under [Apache 2.0](LICENSE).
