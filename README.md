@@ -4,9 +4,29 @@ English | [简体中文](README.zh-CN.md)
 
 aTerm is a terminal app for server management and an alternative to Termius. Manage SSH hosts, use local and remote terminals, and work with remote files over SFTP in one workspace.
 
-## Preview
+### Home
 
-![aTerm on macOS showing SSH hosts and the SFTP file browser](docs/images/aterm-workspace.png)
+Find and open saved SSH hosts from the sidebar or pinned shortcuts.
+
+| Default light | Default dark |
+| --- | --- |
+| ![Home · Default light](docs/images/aterm-home-light.png) | ![Home · Default dark](docs/images/aterm-home-dark.png) |
+
+### SSH terminal
+
+Check Nginx status and read its access log on the staging host.
+
+| Default light | Default dark |
+| --- | --- |
+| ![SSH terminal · Default light](docs/images/aterm-terminal-light.png) | ![SSH terminal · Default dark](docs/images/aterm-terminal-dark.png) |
+
+### SFTP files
+
+Browse remote directories and configuration files on the same host.
+
+| Default light | Default dark |
+| --- | --- |
+| ![SFTP files · Default light](docs/images/aterm-sftp-light.png) | ![SFTP files · Default dark](docs/images/aterm-sftp-dark.png) |
 
 ## Features
 

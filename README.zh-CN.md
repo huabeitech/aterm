@@ -4,9 +4,29 @@
 
 aTerm 是一款面向服务器管理的终端应用，也是 Termius 的替代方案。你可以在同一个工作区管理 SSH 主机、使用本地和远程终端，以及通过 SFTP 处理远程文件。
 
-## 界面预览
+### 首页
 
-![aTerm 在 macOS 上的 SSH 主机列表和 SFTP 文件浏览器](docs/images/aterm-workspace.png)
+从侧栏或固定连接中查找并打开已保存的 SSH 主机。
+
+| 默认浅色 | 默认深色 |
+| --- | --- |
+| ![首页 · 默认浅色](docs/images/aterm-home-light.png) | ![首页 · 默认深色](docs/images/aterm-home-dark.png) |
+
+### SSH 终端
+
+查看预发布主机上的 Nginx 状态和访问日志。
+
+| 默认浅色 | 默认深色 |
+| --- | --- |
+| ![SSH 终端 · 默认浅色](docs/images/aterm-terminal-light.png) | ![SSH 终端 · 默认深色](docs/images/aterm-terminal-dark.png) |
+
+### SFTP 文件
+
+浏览同一台主机上的远程目录和配置文件。
+
+| 默认浅色 | 默认深色 |
+| --- | --- |
+| ![SFTP 文件 · 默认浅色](docs/images/aterm-sftp-light.png) | ![SFTP 文件 · 默认深色](docs/images/aterm-sftp-dark.png) |
 
 ## 主要功能
 
