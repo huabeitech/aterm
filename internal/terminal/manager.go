@@ -80,6 +80,7 @@ type Session struct {
 	outputDone         chan struct{}
 	closed             chan struct{}
 	writeMu            sync.Mutex
+	resizeMu           sync.Mutex
 	cancel             context.CancelFunc
 
 	pluginTitle        string
@@ -149,6 +150,8 @@ func (m *Manager) openSSHWithOptions(alias string, options LaunchOptions, connec
 		Title:        alias,
 		Alias:        alias,
 		Kind:         "ssh",
+		Columns:      120,
+		Rows:         32,
 		State:        "connecting",
 		StartedAt:    time.Now().UTC().Format(time.RFC3339),
 		output:       fmt.Appendf(nil, "Connecting to %s...\r\n", alias),
@@ -297,7 +300,10 @@ func (m *Manager) attachSSH(ctx context.Context, entry *Session, client *service
 		return fmt.Errorf("open SSH error output: %w", err)
 	}
 	modes := ssh.TerminalModes{ssh.ECHO: 1, ssh.TTY_OP_ISPEED: 14400, ssh.TTY_OP_OSPEED: 14400}
-	if err := session.RequestPty("xterm-256color", 32, 120, modes); err != nil {
+	m.mu.RLock()
+	columns, rows := entry.Columns, entry.Rows
+	m.mu.RUnlock()
+	if err := session.RequestPty("xterm-256color", rows, columns, modes); err != nil {
 		session.Close()
 		client.Close()
 		return fmt.Errorf("request remote terminal: %w", err)
@@ -307,18 +313,38 @@ func (m *Manager) attachSSH(ctx context.Context, entry *Session, client *service
 		client.Close()
 		return fmt.Errorf("start remote shell: %w", err)
 	}
+	if err := m.finishSSHSetup(entry, session, client, stdin, alias, columns, rows); err != nil {
+		session.Close()
+		client.Close()
+		return err
+	}
+	m.emitEvent(terminalEventName, OutputEvent{SessionID: entry.ID, State: "running"})
+	go m.forwardSSHOutput(entry, stdout, stderr)
+	go m.waitForSSHExit(entry)
+	return nil
+}
+
+// Serialize the final size update and session publication with incoming resizes.
+func (m *Manager) finishSSHSetup(entry *Session, session *ssh.Session, client *service.NativeSSHClient, stdin io.WriteCloser, alias string, ptyColumns, ptyRows int) error {
+	entry.resizeMu.Lock()
+	defer entry.resizeMu.Unlock()
+
+	m.mu.RLock()
+	columns, rows := entry.Columns, entry.Rows
+	m.mu.RUnlock()
+	if columns != ptyColumns || rows != ptyRows {
+		if err := session.WindowChange(rows, columns); err != nil {
+			return fmt.Errorf("resize remote terminal: %w", err)
+		}
+	}
 	if entry.initialCommand != "" {
 		if _, err := stdin.Write([]byte(entry.initialCommand + "\r")); err != nil {
-			session.Close()
-			client.Close()
 			return fmt.Errorf("start plugin terminal command: %w", err)
 		}
 	}
 	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.sessions[entry.ID] != entry || entry.State != "connecting" {
-		m.mu.Unlock()
-		session.Close()
-		client.Close()
 		return context.Canceled
 	}
 	entry.Title = alias
@@ -330,10 +356,6 @@ func (m *Manager) attachSSH(ctx context.Context, entry *Session, client *service
 	entry.sshSession = session
 	entry.stdin = stdin
 	entry.State = "running"
-	m.mu.Unlock()
-	m.emitEvent(terminalEventName, OutputEvent{SessionID: entry.ID, State: "running"})
-	go m.forwardSSHOutput(entry, stdout, stderr)
-	go m.waitForSSHExit(entry)
 	return nil
 }
 
@@ -802,21 +824,28 @@ func (m *Manager) Resize(id string, columns, rows uint16) error {
 	if err != nil {
 		return err
 	}
+	session.resizeMu.Lock()
+	defer session.resizeMu.Unlock()
+
 	m.mu.RLock()
 	state := session.State
 	sshSession := session.sshSession
 	terminalPTY := session.pty
 	m.mu.RUnlock()
-	if state != "running" {
-		return nil
+	if state == "running" {
+		if sshSession != nil {
+			err = sshSession.WindowChange(int(rows), int(columns))
+		} else if terminalPTY != nil {
+			err = terminalPTY.Resize(columns, rows)
+		}
 	}
-	if sshSession != nil {
-		return sshSession.WindowChange(int(rows), int(columns))
+	if err != nil {
+		return err
 	}
-	if terminalPTY == nil {
-		return nil
-	}
-	return terminalPTY.Resize(columns, rows)
+	m.mu.Lock()
+	session.Columns, session.Rows = int(columns), int(rows)
+	m.mu.Unlock()
+	return nil
 }
 
 func (m *Manager) Close(id string) error {

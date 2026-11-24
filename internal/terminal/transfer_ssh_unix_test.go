@@ -25,9 +25,8 @@ import (
 	"ssh-connect/internal/service"
 )
 
-// The remote tool is an independent lrzsz process behind an authenticated SSH
-// channel. No user's sshd, hosts, agent or files participate in this fixture.
-func zmodemSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientKey ssh.PublicKey) string {
+// The remote command runs in a real PTY behind an authenticated SSH channel.
+func terminalSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientKey ssh.PublicKey, onPTYRequest func(pty.Winsize)) string {
 	t.Helper()
 	_, private, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -49,9 +48,10 @@ func zmodemSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientK
 		t.Fatal(err)
 	}
 	stopListener := context.AfterFunc(ctx, func() { listener.Close() })
-	t.Cleanup(func() { stopListener(); listener.Close() })
 	done := make(chan struct{})
 	t.Cleanup(func() {
+		stopListener()
+		listener.Close()
 		select {
 		case <-done:
 		case <-time.After(time.Second):
@@ -84,12 +84,28 @@ func zmodemSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientK
 			}
 			// A session is used only once in this fixture; shell is a fixed tool, not a
 			// shell command constructed from untrusted request payloads.
+			var size pty.Winsize
 			for request := range requests {
 				switch request.Type {
-				case "pty-req", "env", "window-change":
+				case "pty-req":
+					var payload struct {
+						Term                         string
+						Columns, Rows, Width, Height uint32
+						Modes                        string
+					}
+					if err := ssh.Unmarshal(request.Payload, &payload); err != nil {
+						_ = request.Reply(false, nil)
+						continue
+					}
+					size = pty.Winsize{Cols: uint16(payload.Columns), Rows: uint16(payload.Rows)}
+					if onPTYRequest != nil {
+						onPTYRequest(size)
+					}
+					_ = request.Reply(true, nil)
+				case "env":
 					_ = request.Reply(true, nil)
 				case "shell":
-					terminal, err := pty.Start(command)
+					terminal, err := pty.StartWithSize(command, &size)
 					if err != nil {
 						_ = request.Reply(false, nil)
 						channel.Close()
@@ -97,9 +113,22 @@ func zmodemSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientK
 					}
 					_ = request.Reply(true, nil)
 					go func() { _, _ = io.Copy(terminal, channel); terminal.Close() }()
-					go ssh.DiscardRequests(requests)
-					// Drain the real remote PTY before publishing exit, including the final
-					// OO/CRC bytes left in its kernel buffer after the tool exits.
+					requestsDone := make(chan struct{})
+					go func() {
+						defer close(requestsDone)
+						for request := range requests {
+							var payload struct{ Columns, Rows, Width, Height uint32 }
+							if request.Type == "window-change" && ssh.Unmarshal(request.Payload, &payload) == nil {
+								if err := pty.Setsize(terminal, &pty.Winsize{Cols: uint16(payload.Columns), Rows: uint16(payload.Rows)}); err != nil {
+									t.Error(err)
+								}
+								_ = request.Reply(true, nil)
+							} else {
+								_ = request.Reply(false, nil)
+							}
+						}
+					}()
+					// Drain the remote PTY before publishing exit so buffered output is delivered.
 					_, _ = io.Copy(channel, terminal)
 
 					err = command.Wait()
@@ -110,6 +139,7 @@ func zmodemSSHPeer(t *testing.T, ctx context.Context, command *exec.Cmd, clientK
 					}
 					_, _ = channel.SendRequest("exit-status", false, ssh.Marshal(struct{ Status uint32 }{status}))
 					channel.Close()
+					<-requestsDone
 					return
 				default:
 					_ = request.Reply(false, nil)
@@ -168,7 +198,7 @@ func TestTerminalZmodemLrzszOverNativeSSH(t *testing.T) {
 			if err = os.WriteFile(identity, pem.EncodeToMemory(keyBlock), 0600); err != nil {
 				t.Fatal(err)
 			}
-			address := zmodemSSHPeer(t, ctx, command, clientSigner.PublicKey())
+			address := terminalSSHPeer(t, ctx, command, clientSigner.PublicKey(), nil)
 			hostname, portString, err := net.SplitHostPort(address)
 			if err != nil {
 				t.Fatal(err)

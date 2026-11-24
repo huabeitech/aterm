@@ -64,7 +64,7 @@ func TestTerminalExitSnapshotIncludesRealPTYTail(t *testing.T) {
 				if err := os.WriteFile(identity, pem.EncodeToMemory(block), 0600); err != nil {
 					t.Fatal(err)
 				}
-				address := zmodemSSHPeer(t, ctx, command, signer.PublicKey())
+				address := terminalSSHPeer(t, ctx, command, signer.PublicKey(), nil)
 				hostname, portString, err := net.SplitHostPort(address)
 				if err != nil {
 					t.Fatal(err)

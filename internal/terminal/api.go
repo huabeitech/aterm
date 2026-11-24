@@ -60,18 +60,13 @@ func (m *Manager) Present(id, hostID string, local bool) {
 	defer m.mu.Unlock()
 	if s := m.sessions[id]; s != nil {
 		s.HostID = hostID
-		s.Columns, s.Rows = 80, 24
+		if s.Columns == 0 || s.Rows == 0 {
+			s.Columns, s.Rows = 80, 24
+		}
 		if local {
 			m.localCounter++
 			s.LocalNumber = m.localCounter
 		}
-	}
-}
-func (m *Manager) SetSize(id string, cols, rows int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if s := m.sessions[id]; s != nil {
-		s.Columns, s.Rows = cols, rows
 	}
 }
 func (m *Manager) CancelTransfer(id string) error {

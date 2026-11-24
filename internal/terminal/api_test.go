@@ -12,7 +12,9 @@ func TestSnapshotDoesNotExposeMutableSessionMetadata(t *testing.T) {
 	code := -1
 	manager.sessions["fixture"] = &Session{ID: "fixture", HostID: "host", Kind: "local", State: "exited", ExitCode: &code, Remote: &openssh.RemoteContext{ID: "remote", Host: "original"}}
 	manager.Present("fixture", "host", true)
-	manager.SetSize("fixture", 120, 30)
+	if err := manager.Resize("fixture", 120, 30); err != nil {
+		t.Fatal(err)
+	}
 	snapshot, err := manager.Snapshot("fixture")
 	if err != nil {
 		t.Fatal(err)

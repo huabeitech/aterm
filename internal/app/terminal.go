@@ -242,6 +242,5 @@ func (a *App) desktopTerminalResize(args []json.RawMessage) (any, error) {
 	if err := a.ResizeTerminal(id, uint16(cols), uint16(rows)); err != nil {
 		return nil, err
 	}
-	a.terminal.SetSize(id, cols, rows)
 	return nil, nil
 }
