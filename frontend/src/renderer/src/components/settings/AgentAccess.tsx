@@ -4,8 +4,7 @@ import { Switch } from '../ui/switch'
 import { t } from '../../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Events } from '@wailsio/runtime'
-import { agentRequest, type AgentConfig } from '../../api/agent'
+import { agentRequest, onAgentGrantsChanged, type AgentConfig } from '../../api/agent'
 
 type AgentGrant = { name: string; endpoint: string }
 type AgentGrants = Record<string, AgentGrant> | null
@@ -32,7 +31,7 @@ export function AgentAccess() {
           }
         }).catch(() => { if (active && request === revision) setGrantFailed(true) })
     }
-    const unsubscribe = Events.On('agent:grantsChanged', reloadGrants)
+    const unsubscribe = onAgentGrantsChanged(reloadGrants)
     reloadGrants()
     agentRequest<{config: AgentConfig; skillInstalled: boolean}>('config')
       .then((result) => {

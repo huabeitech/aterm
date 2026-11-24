@@ -10,3 +10,7 @@ export function agentRequest<T>(method: string, ...args: unknown[]): Promise<T> 
 export function onAgentUnlock(handler: (request: {id: string}) => void) {
   return Events.On('agent:unlock', event => handler(event.data))
 }
+
+export function onAgentGrantsChanged(handler: () => void) {
+  return Events.On('agent:grantsChanged', handler)
+}
