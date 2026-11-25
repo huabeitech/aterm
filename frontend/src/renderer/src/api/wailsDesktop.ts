@@ -207,6 +207,7 @@ const desktop: DesktopApi = {
     mutate: (...args) => invokeFiles('mutate', ...args),
     readText: (...args) => invokeFiles('readText', ...args),
     saveText: (...args) => invokeFiles('saveText', ...args),
+    clipboardFilePaths: () => invokeFiles('clipboardFilePaths'),
     upload: (...args) => invokeFiles('upload', ...args),
     download: (...args) => invokeFiles('download', ...args),
     cancel: (...args) => invokeFiles('cancel', ...args),

@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Button } from '@/components/ui/button'
 import { Tip } from '@/components/ui/desktop'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { useAppUI } from '@/components/ui/confirm-provider'
 import {
   DropdownMenu,
@@ -188,6 +189,9 @@ export function FileWorkspace({
   const [dialogBusy, setDialogBusy] = useState(false)
   const [dialogError, setDialogError] = useState('')
   const dialogErrorID = useId()
+  const [pasteUpload, setPasteUpload] = useState<{ directory: string; paths: string[] } | null>(null)
+  const [pasteUploading, setPasteUploading] = useState(false)
+  const readingClipboard = useRef(false)
   const [listingError, setListingError] = useState<{ path: string; message: string } | null>(null)
   const selection = useMarqueeSelection(selected, setSelected, (paths) => {
     anchor.current = paths[0]
@@ -375,6 +379,31 @@ export function FileWorkspace({
       await desktop.files.upload(session.id, path, folder)
       setTransfersOpen(true)
     })
+  }
+  async function preparePasteUpload(directory: string) {
+    if (readingClipboard.current || pasteUpload) return
+    readingClipboard.current = true
+    try {
+      const paths = await desktop.files.clipboardFilePaths()
+      if (paths.length) setPasteUpload({ directory, paths })
+    } catch {
+      message.error(t('files:readClipboardFilesFailed'))
+    } finally {
+      readingClipboard.current = false
+    }
+  }
+  async function confirmPasteUpload() {
+    if (!pasteUpload || pasteUploading || !ready) return
+    setPasteUploading(true)
+    try {
+      await desktop.files.drop(session.id, pasteUpload.directory, pasteUpload.paths)
+      setTransfersOpen(true)
+    } catch (error) {
+      report(error)
+    } finally {
+      setPasteUpload(null)
+      setPasteUploading(false)
+    }
   }
   function startAddressEditing() {
     setAddress(path)
@@ -594,7 +623,14 @@ export function FileWorkspace({
       return
     }
     if (!selection.container.current?.contains(target) || target.closest('button')) return
-    if (mod && event.key.toLowerCase() === 'a') {
+    if (
+      mac && event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey &&
+      !event.nativeEvent.isComposing && event.key.toLowerCase() === 'v'
+    ) {
+      if (!workspaceVisible || !ready || !path || busy) return
+      event.preventDefault()
+      if (!event.repeat) void preparePasteUpload(path)
+    } else if (mod && event.key.toLowerCase() === 'a') {
       event.preventDefault()
       setSelected(visible.map((e) => e.path))
     } else if ((mod && event.key.toLowerCase() === 'r') || event.key === 'F5') {
@@ -1303,6 +1339,26 @@ export function FileWorkspace({
           onChoose={(action, all) => desktop.files.resolveConflict(session.id, conflict.id, {
             id: conflict.conflict!.id, action, all
           })}
+        />
+      )}
+      {workspaceVisible && pasteUpload && (
+        <ConfirmationDialog
+          title={t('files:confirmPasteUpload')}
+          content={
+            <>
+              <p>{t('files:pasteUploadDestination', { directory: pasteUpload.directory })}</p>
+              <ul className="mt-3 max-h-[min(180px,30dvh)] overflow-y-auto overscroll-contain text-xs font-mono [overflow-wrap:anywhere]">
+                {pasteUpload.paths.map((localPath) => (
+                  <li key={localPath} className="py-1">{localPath}</li>
+                ))}
+              </ul>
+            </>
+          }
+          okText={t('files:uploadFiles')}
+          pending={pasteUploading}
+          confirmDisabled={!ready}
+          onCancel={() => setPasteUpload(null)}
+          onConfirm={() => void confirmPasteUpload()}
         />
       )}
       <WorkbenchDialog

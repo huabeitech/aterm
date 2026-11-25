@@ -82,6 +82,7 @@ export interface FilesApi {
   mutate(id: string, mutation: FileMutation): Promise<void>
   readText(id: string, path: string): Promise<RemoteText>
   saveText(id: string, document: RemoteText): Promise<RemoteText>
+  clipboardFilePaths(): Promise<string[]>
   upload(id: string, directory: string, folder?: boolean): Promise<void>
   drop(id: string, directory: string, paths: string[]): Promise<void>
   pathsForFiles(files: File[]): string[]

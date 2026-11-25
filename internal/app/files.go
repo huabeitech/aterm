@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	desktopfiles "ssh-connect/internal/desktop/files"
+	"ssh-connect/internal/desktop/platform"
 	"ssh-connect/internal/desktop/terminalmeta"
 	"ssh-connect/internal/service"
 )
@@ -102,8 +103,11 @@ func (a *App) desktopFiles(raw []json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if op == "open" {
+	switch op {
+	case "open":
 		return a.openDesktopFiles(args)
+	case "clipboardFilePaths":
+		return platform.ClipboardFilePaths(), nil
 	}
 	id, err := argument[string](args, 0)
 	if err != nil {
