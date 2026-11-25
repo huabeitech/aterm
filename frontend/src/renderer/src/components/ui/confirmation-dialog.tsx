@@ -1,9 +1,9 @@
-import { useId, type KeyboardEvent, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './dialog'
+import { cycleDialogFocus, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './dialog'
 
 export type ConfirmationContent = {
   title: ReactNode
@@ -25,42 +25,6 @@ type ConfirmationDialogProps = ConfirmationContent & {
   extraAction?: { label: string; onClick: () => void }
   onConfirm: () => void
   onCancel: () => void
-}
-
-function cycleFocus(event: KeyboardEvent<HTMLDivElement>) {
-  if (
-    event.key !== 'Tab' ||
-    event.nativeEvent.isComposing ||
-    event.altKey ||
-    event.ctrlKey ||
-    event.metaKey
-  ) {
-    return
-  }
-
-  // WKWebView can skip buttons during native Tab navigation on macOS.
-  const controls = Array.from(
-    event.currentTarget.querySelectorAll<HTMLElement>(
-      'button, input, select, textarea, a[href], [contenteditable="true"], [tabindex]'
-    )
-  ).filter(
-    (element) =>
-      element.tabIndex >= 0 &&
-      !element.matches(':disabled') &&
-      !element.closest('[inert]') &&
-      element.getClientRects().length > 0 &&
-      getComputedStyle(element).visibility === 'visible'
-  )
-
-  event.preventDefault()
-  // Radix otherwise evaluates its own focus loop after focus has already moved.
-  event.stopPropagation()
-  if (!controls.length) return
-
-  const current = controls.indexOf(document.activeElement as HTMLElement)
-  const step = event.shiftKey ? -1 : 1
-  const next = current === -1 ? (event.shiftKey ? controls.length - 1 : 0) : current + step
-  controls[(next + controls.length) % controls.length]?.focus()
 }
 
 export function ConfirmationDialog({
@@ -97,7 +61,7 @@ export function ConfirmationDialog({
         onEscapeKeyDown={(event) => {
           if (pending) event.preventDefault()
         }}
-        onKeyDownCapture={cycleFocus}
+        onKeyDownCapture={cycleDialogFocus}
         onKeyDown={(event) => {
           if (
             submitOnEnter &&

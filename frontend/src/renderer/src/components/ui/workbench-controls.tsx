@@ -38,7 +38,7 @@ import {
 import { AlertCircle, X } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
+import { cycleDialogFocus, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -406,6 +406,7 @@ export function WorkbenchDialog({
         onEscapeKeyDown={(event) => {
           if (busy) event.preventDefault()
         }}
+        onKeyDownCapture={cycleDialogFocus}
         onKeyDown={(event) => {
           if (
             onSubmit &&
@@ -440,7 +441,7 @@ export function WorkbenchDialog({
         >
           {children}
         </div>
-        <DialogFooter>
+        <DialogFooter className="[&>button:focus-visible]:outline-2 [&>button:focus-visible]:outline-offset-2 [&>button:focus-visible]:outline-ring">
           {actions ?? (
             <>
               <Button variant="outline" disabled={busy} onClick={onClose}>

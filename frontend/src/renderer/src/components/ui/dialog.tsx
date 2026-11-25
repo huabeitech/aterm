@@ -47,6 +47,43 @@ function DialogOverlay({
   )
 }
 
+export function cycleDialogFocus(event: React.KeyboardEvent<HTMLDivElement>) {
+  if (
+    event.key !== 'Tab' ||
+    !event.currentTarget.contains(event.target as Node) ||
+    event.nativeEvent.isComposing ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return
+  }
+
+  // WKWebView can skip buttons during native Tab navigation on macOS.
+  const controls = Array.from(
+    event.currentTarget.querySelectorAll<HTMLElement>(
+      'button, input, select, textarea, a[href], [contenteditable="true"], [tabindex]'
+    )
+  ).filter(
+    (element) =>
+      element.tabIndex >= 0 &&
+      !element.matches(':disabled') &&
+      !element.closest('[inert]') &&
+      element.getClientRects().length > 0 &&
+      getComputedStyle(element).visibility === 'visible'
+  )
+
+  event.preventDefault()
+  // Radix otherwise evaluates its own focus loop after focus has already moved.
+  event.stopPropagation()
+  if (!controls.length) return
+
+  const current = controls.indexOf(document.activeElement as HTMLElement)
+  const step = event.shiftKey ? -1 : 1
+  const next = current === -1 ? (event.shiftKey ? controls.length - 1 : 0) : current + step
+  controls[(next + controls.length) % controls.length]?.focus()
+}
+
 function DialogContent({
   className,
   children,
